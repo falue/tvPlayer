@@ -164,21 +164,25 @@ def play_file(file, inpoint=0):
     if inpoint is None or not isinstance(inpoint, (int, float)) or inpoint < 0:
         inpoint = 0
 
-    # Stop the previous video if one is playing
-    if mpv_process is not None:
-        print("Stopping previous video...")
-        mpv_process.terminate()
-        mpv_process.wait()  # Ensure the previous process is fully terminated before starting a new one
+    ipc_socket_path = '/tmp/mpv_socket'  # Same as the one used in the subprocess command
 
-    # Command to play video in fullscreen using mpv
-    ipc_socket_path = '/tmp/mpv_socket'  # You can change this path
-    command = ['mpv', '--loop-file', '--start='+str(inpoint), '--fs', '--quiet', '--no-input-terminal', '--input-ipc-server=' + ipc_socket_path, '--wid='+str(window_id), file]
-    
-    # Print the command before executing it for debugging purposes
+    if mpv_process is not None and os.path.exists(ipc_socket_path):
+        print(f"Swapping to new file: {file} at {inpoint} seconds.")
+        # Use loadfile command to replace the video source without stopping mpv
+        command = f'echo \'{{"command": ["loadfile", "{file}", "replace", "start={inpoint}"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
+        subprocess.call(command, shell=True)
+    else:
+        print("Starting mpv process for the first time.")
+        # Command to play video in fullscreen using mpv
+        command = [
+            'mpv', '--loop-file', '--start=' + str(inpoint), '--fs', '--quiet',
+            '--no-input-terminal', '--input-ipc-server=' + ipc_socket_path, '--wid=' + str(window_id), file
+        ]
+        
+        # Execute the command and store the process
+        mpv_process = subprocess.Popen(command)
+
     print(f"Play file: {file}")
-    
-    # Execute the command without blocking the main loop and store the process
-    mpv_process = subprocess.Popen(command)
 
 
 def toggle_play():
@@ -193,13 +197,16 @@ def toggle_play():
 def stop_video():
     global playing, mpv_process
     playing = False
-    
-    # Terminate the mpv process if it's running
-    if mpv_process is not None:
-        print("Stopping video...")
-        mpv_process.terminate()
-        mpv_process.wait()  # Ensure the process is fully terminated
-        mpv_process = None  # Reset the process variable
+    ipc_socket_path = '/tmp/mpv_socket'  # Same as the one used in the subprocess command
+
+    if mpv_process is not None and os.path.exists(ipc_socket_path):
+        print("Stopping video and making screen black...")
+        # Send a loadfile null command to stop playback and clear the screen
+        command = 'echo \'{"command": ["loadfile", "null", "replace"]}\' | socat - UNIX-CONNECT:' + ipc_socket_path + ' > /dev/null 2>&1'
+        subprocess.call(command, shell=True)
+    else:
+        print("mpv IPC socket not found or mpv process not running.")
+
 
 def toggle_fullscreen():
     pygame.display.toggle_fullscreen()
