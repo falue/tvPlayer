@@ -17,7 +17,7 @@ TODO
 - if tv animation swap channel - show_white_noise() then sleep(1) then next video swap?
 - enable/disable "TV animations" by pressing "t"
 - white nmoise always stretch to screen; reset befiore another file plays
-- video_fitting is same for all files. should be a per-video-setting
+- switch_video_fitting is same for all files. should be a per-video-setting
  """
 
 # Customizing
@@ -35,6 +35,7 @@ fitting_modes = ['contain', 'stretch', 'cover']  # List of fitting modes
 current_fitting_index = 0  # Start with 'contain'
 is_black_screen = False
 current_file = ""
+brightness = 0  # 0 means 100% brightness
 
 # Initialize pygame for keyboard input and fullscreen handling
 pygame.init()
@@ -104,6 +105,16 @@ def set_brightness(value):
     else:
         print("mpv IPC socket not found.")
 
+def switch_video_brightness(value):
+    global brightness
+    brightness += value
+    if brightness < -100:
+        brightness = -100
+    if brightness >0:
+        brightness = 0
+    set_brightness(brightness)
+
+
 def toggle_black_screen():
     global is_black_screen
     if is_black_screen:
@@ -160,13 +171,19 @@ def check_keypresses():
             elif event.key == pygame.K_c:
                 print("keypress K_c")
                 # FIXME:
-                video_fitting()
+                switch_video_fitting()
             elif event.key == pygame.K_i and pygame.key.get_mods() & pygame.KMOD_SHIFT:
                 print("keypress K_i and SHIFT")
                 clear_inpoints(tv_channel)
             elif event.key == pygame.K_i:
                 print("keypress K_i")
                 set_inpoints(tv_channel)
+            elif event.key == pygame.K_PERIOD:
+                print("More brightness")
+                switch_video_brightness(5)
+            elif event.key == pygame.K_COMMA:
+                print("Less brightness")
+                switch_video_brightness(-5)
             elif pygame.K_0 <= event.key <= pygame.K_9:
                 print("keypress number "+ pygame.key.name(event.key))
                 go_to_channel(event.key - pygame.K_0 - 1)  # -1 because pressing 1 should play file on key 0 not file key nr 1
@@ -331,7 +348,7 @@ def get_current_video_position():
     return 0
 
 
-def video_fitting():
+def switch_video_fitting():
     global current_fitting_index
     # Update fitting mode index
     current_fitting_index = (current_fitting_index + 1) % len(fitting_modes)

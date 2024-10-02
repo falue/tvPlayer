@@ -58,6 +58,8 @@ Manually tested:
 | c               | video fitting (contain, stretch or cover)              |      |
 | i               | set inpoint (where the file starts to play)            |      |
 | I (i and SHIFT) | clear inpoint on this video                            |      |
+| ,               | reduce video brightness by 5%                          |      |
+| .               | increase video brightness by 5%                        |      |
 | number          | go to channel nr                                       |      |
 | else            | ignored                                                |      |
 
