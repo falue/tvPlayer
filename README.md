@@ -1,7 +1,7 @@
-## tvPlayer as digital props for film and TV
+# tvPlayer as digital props for film and TV
 WIP.
 
-### things to do
+## things to do to get this up and running
 1. run the install script to:
     - install dependencies
     - run `python tvPlayer.py` on autostart
@@ -16,6 +16,51 @@ bash install.sh
 2. ~~on the desktop, open any folder, go to `edit` > `preferences` > `volume management`~~
 3. ~~something something LXDE autostart script `nano ~/.config/lxsession/LXDE-pi/autostart`~~
 3. ~~install script takes care of autostart and creates a file here: `~/.config/autostart`~~
+
+
+## MPV player: PLayable media
+The media player [MPV](https://mpv.io/) ([doc wiki](https://github.com/mpv-player/mpv/wiki)) can play pretty much everything -
+*however*, filename-endings are fixed to work with `.mp4`, `.mkv`, `.avi`, `.mxf` and `.mov` (case insensitive).
+
+it uses ffmpeg to decode, so the [list of playable media](https://ffmpeg.org/general.html#Supported-File-Formats_002c-Codecs-or-Features) is huge.
+According to the mpv.io website:
+> File Formats: mpv supports a wide variety of media formats, including popular video files (e.g., MP4, MKV), audio codecs (e.g., AAC, MP3), and subtitles.
+
+Some cherry picked examples:
+- Containers: MP4, MKV, AVI, WebM, OGG, FLV, and more.
+- Video Codecs: H.264, HEVC, VP8, VP9, AV1, MPEG-4, MPEG-2, and others.
+- Audio Codecs: AAC, MP3, Vorbis, FLAC, Opus, AC3, and DTS.
+Subtitle Formats: SRT, ASS, SSA, VTT, and embedded subtitle tracks in containers like MKV.
+
+Manually tested:
+- [x] `.mp4` MPEG-4 AAC, H264
+- [x] `.avi` MPEG-4 mp3
+- [x] `.mkv` h264, yuv420p
+- [x] `.mxf` mpeg2video (4:2:2), yuv422p
+- [x] `.mp4` HEVC, H265
+- [x] `.mov` H264
+- [x] `.mkv` "4k UHD" h264 yuv420p works (but stuttering on raspberry pi4 @8gb) 
+
+## Keyboard controls
+
+| Keypress        | Action                                                 | Note |
+| --------------- | ------------------------------------------------------ | ---- |
+| UP              | next channel (next file)                               |      |
+| DOWN            | prev channel (next file)                               |      |
+| LEFT            | jump -5 seconds                                        |      |
+| RIGHT           | jump 5 seconds                                         |      |
+| LEFT and SHIFT  | pause and one frame backwards                          |      |
+| RIGHT and SHIFT | pause and one frame forwards                           |      |
+| p *or* space    | toggle play / pause                                    |      |
+| ESC             | toggle fullscreen                                      |      |
+| q               | shutdown raspberry pi                                  |      |
+| b               | toggle black screen                                    |      |
+| c               | video fitting (contain, stretch or cover)              |      |
+| i               | set inpoint (where the file starts to play)            |      |
+| I (i and SHIFT) | clear inpoint on this video                            |      |
+| number          | go to channel nr                                       |      |
+| else            | ignored                                                |      |
+
 
 
 ## SSH stuff
