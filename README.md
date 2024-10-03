@@ -17,6 +17,7 @@ Control it with a wireless keyboard and your actress ort actor can press what th
 - You can turn off the fancy effects. 
 - The files do not auto-progress from one to another. Each video loops itself until you "switch the channel" (play the next file on the USB device).
 - Change the brightness of the video to match exposure times of the camera.
+- If everythings lost, theres a [green screen](assets/greenscreen/) button
 
 # Hardware
 Tested successfully on Raspberry 4 (Debian bullseye).
@@ -80,6 +81,7 @@ Filetypes for images: `.png`, `.gif`, `.tiff`, `.bmp`
 | q               | shutdown raspberry pi                                  |      |
 | SHIFT and q     | exit program                                           |      |
 | b               | toggle black screen                                    |      |
+| g               | cycle through green screens                            |      |
 | c               | video fitting (contain, stretch or cover)              |      |
 | i               | set inpoint (where the file starts to play)            |      |
 | I (SHIFT and i) | clear inpoint on this video                            |      |

@@ -28,7 +28,7 @@ ipc_socket_path = '/tmp/mpv_socket'
 brightness = 0  # 0 means 100% brightness
 volume = 100  # 100 means max loudness
 active_overlays = {}  # Dictionary to store active overlay threads
-
+current_green_index = 0
 
 def pygame_init():
     global screen, window_id, ipc_socket_path
@@ -184,6 +184,21 @@ def toggle_black_screen():
         pause()
     is_black_screen = not is_black_screen
 
+def cycle_green_screen():
+    global current_green_index, current_file
+    max_green_templates = 19
+
+    # Only increase green index when already showing green
+    # if coming from another channel show the green thats was selected lastly
+    green_path = os.path.join(script_dir, 'assets', 'greenscreen', f'{current_green_index+1}.png')
+    if current_file == green_path:
+        current_green_index += 1
+        if current_green_index > max_green_templates:
+            current_green_index = 1
+        # Change path to new file
+        green_path = os.path.join(script_dir, 'assets', 'greenscreen', f'{current_green_index+1}.png')
+    play_file(green_path)
+
 def check_keypresses():
     global tv_channel
     for event in pygame.event.get():
@@ -226,6 +241,9 @@ def check_keypresses():
             elif event.key == pygame.K_b:
                 print("keypress [b]")
                 toggle_black_screen()
+            elif event.key == pygame.K_g:
+                print("keypress [g]")
+                cycle_green_screen()
             elif event.key == pygame.K_c:
                 print("keypress [c]")
                 cycle_video_fitting()
