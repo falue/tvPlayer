@@ -9,7 +9,7 @@ font_size = 150                     # Set the size of the font
 FONTCOLOR = (75, 255, 0, 255)       # Text color with full opacity (RGB with Alpha)
 BGCOLOR = (255, 255, 255, 0)        # Background color (transparent)
 custom_texts = ["AV", "--", "666"]  # List of additional custom texts
-font_path = "./W95FA.ttf"           # Change this path if the font is installed elsewhere
+font_path = "./W95FA-mono.ttf"           # Change this path if the font is installed elsewhere
 
 # Output directory for saving the images
 output_dir = "."
