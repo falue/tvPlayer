@@ -9,8 +9,16 @@ echo "Installing mpv and socat..."
 sudo apt-get install -y mpv socat
 
 # Install Python packages from requirements.txt
-echo "Installing Python libraries..."
-pip install -r requirements.txt
+# Detect Debian version and install Python packages accordingly
+debian_version=$(cat /etc/debian_version)
+if [[ "$debian_version" == 12* ]]; then
+    echo "Installing Python libraries using apt (Debian Bookworm)..."
+    sudo apt install -y python3-pip
+    sudo apt-get install -y $(grep -oP '^.*(?==)' requirements.txt | tr '\n' ' ')
+else
+    echo "Installing Python libraries using pip (Debian Bullseye)..."
+    pip install -r requirements.txt
+fi
 
 # Get the full path of the script to be executed
 USER_HOME=$(getent passwd $SUDO_USER | cut -d: -f6)
