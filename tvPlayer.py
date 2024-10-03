@@ -120,7 +120,7 @@ def update_files_from_usb():
                     for file in os.listdir(device_path):
                         allowed_fileendings = (
                             '.mp4', '.mkv', '.avi', '.mxf', '.mov',
-                            '.jpg', '.png', '.gif', '.pdf', '.heic', '.heif', '.tiff', '.webp', '.bmp'
+                            '.png', '.gif', '.tiff', '.bmp'
                         )
                         if file.lower().endswith(allowed_fileendings) and not file.startswith('.'):
                             filelist.append(os.path.join(device_path, file))

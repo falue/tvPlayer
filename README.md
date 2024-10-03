@@ -18,7 +18,7 @@ bash install.sh
 3. ~~install script takes care of autostart and creates a file here: `~/.config/autostart`~~
 
 
-## MPV player: PLayable media
+## MPV player: Playable media
 The media player [MPV](https://mpv.io/) ([doc wiki](https://github.com/mpv-player/mpv/wiki)) can play pretty much everything -
 *however*, filename-endings are fixed to work with `.mp4`, `.mkv`, `.avi`, `.mxf` and `.mov` (case insensitive).
 
@@ -40,6 +40,10 @@ Manually tested:
 - [x] `.mp4` HEVC, H265
 - [x] `.mov` H264
 - [x] `.mkv` "4k UHD" h264 yuv420p works (but stuttering on raspberry pi4 @8gb) 
+
+## Also works with images
+Filetypes for images: `.png`, `.gif`, `.tiff`, `.bmp`
+> *NOTICE:* Does ***not*** work with `.jpg`!
 
 ## Keyboard controls
 
