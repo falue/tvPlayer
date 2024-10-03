@@ -328,7 +328,7 @@ def go_to_channel(number):
 def play_file(file, inpoint=0.0):
     global mpv_process, current_file, ipc_socket_path
     if os.path.exists(ipc_socket_path):
-        print(f"Swapping to new file: {file} at {inpoint} seconds.")
+        print(f"Swapping to new file: {os.path.basename(file)} at {inpoint} seconds.")
         # Use loadfile command to replace the video source without stopping mpv
         command = f'echo \'{{"command": ["loadfile", "{file}", "replace", "start={inpoint}"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
         subprocess.call(command, shell=True)
@@ -499,7 +499,7 @@ def display_image(image_path, overlay_id, x, y, width, height, display_duration=
     thread.start()
     active_overlays[overlay_id] = thread
 
-    print(f"Displaying image: {image_path} (@ID:{overlay_id}) at x={x} y={y} for {display_duration} seconds")
+    print(f"Displaying image: {os.path.basename(image_path)} (@ID:{overlay_id}) at x={x} y={y} for {display_duration} seconds")
 
 
 def update_inpoints():
