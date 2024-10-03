@@ -134,6 +134,10 @@ def update_files_from_usb():
                     print(f"Device {device_path} was removed. Ignoring this device.")
                     filelist = []
                     continue
+                except Exception as e:
+                    print(f"Another error occurred: {e}. Ignoring this device.")
+                    filelist = []
+                    continue
         # Sort list naturally - 1.mp4, 2.mp4, 11.mp4 instead of 1.mp4, 11.mp4, 2.mp4
         filelist = natsorted(filelist, key=lambda x: x.lower())  # case insensitive
 
