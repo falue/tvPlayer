@@ -83,18 +83,17 @@ def player_init():
 
 def system_init():
     global filelist, inpoints, window_width, window_height
-    print("get usb root")
+    print("Get usb root")
     detect_usb_root()
-    print("get filelist")
+    print("Get filelist")
     update_files_from_usb()
     reset_inpoints()
-    print("initial filelist:")
-    print(filelist)
-    print("Screen size:")
+    print(f"Initial filelist ({len(filelist)}):")
+    print("  " + ("\n  ".join(f"Ch.{i+1} > {os.path.basename(file)}" for i, file in enumerate(filelist))))
     get_window_size()
-    print(f'{window_width} x {window_height}')
+    print(f"Screen size: {window_width} x {window_height}")
 
-    print("start video initially ")
+    print("Show first channel / first file")
     go_to_channel(0)
 
 def detect_usb_root():
@@ -125,11 +124,11 @@ def update_files_from_usb():
                         )
                         if file.lower().endswith(allowed_fileendings) and not file.startswith('.'):
                             filelist.append(os.path.join(device_path, file))
-                            # inpoints.append(0)  # Initialize inpoints to 0 for each file
                 except PermissionError:
+                    # Skip this device if it's no longer accessible
                     print(f"Permission denied while accessing: {device_path}. Ignoring this device.")
                     filelist = []
-                    continue  # Skip this device if it's no longer accessible
+                    continue
                 except FileNotFoundError:
                     print(f"Device {device_path} was removed. Ignoring this device.")
                     filelist = []
@@ -218,64 +217,64 @@ def check_keypresses():
             sys.exit()  # Exit the program when the window is closed
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_UP:
-                print("keypress K_UP")
+                print("keypress [UP]")
                 next_channel()
             elif event.key == pygame.K_DOWN:
-                print("keypress K_DOWN")
+                print("keypress [DOWN]")
                 prev_channel()
             elif event.key == pygame.K_RIGHT and pygame.key.get_mods() & pygame.KMOD_SHIFT:
-                print("keypress K_RIGHT and SHIFT")
+                print("keypress [SHIFT] + [RIGHT]")
                 pause()
                 seek(.04)  # smaller than 0.2s: frame-by-frame
             elif event.key == pygame.K_RIGHT:
-                print("keypress K_RIGHT")
+                print("keypress [RIGHT]")
                 seek(5)
             elif event.key == pygame.K_LEFT and pygame.key.get_mods() & pygame.KMOD_SHIFT:
-                print("keypress K_LEFT and SHIFT")
+                print("keypress [SHIFT] + [LEFT]")
                 pause()
                 seek(-.04)  # smaller than 0.2s: frame-by-frame
             elif event.key == pygame.K_LEFT:
-                print("keypress K_LEFT")
+                print("keypress [LEFT]")
                 seek(-5)
             elif event.key == pygame.K_SPACE or event.key == pygame.K_p:
-                print("keypress K_p")
+                print("keypress [p]")
                 toggle_play()
             elif event.key == pygame.K_ESCAPE:
-                print("keypress K_ESCAPE")
+                print("keypress [ESC]")
                 toggle_fullscreen()
             elif event.key == pygame.K_q:
-                print("keypress K_q")
+                print("keypress [q]")
                 shutdown()
             elif event.key == pygame.K_b:
-                print("keypress K_b")
+                print("keypress [b]")
                 toggle_black_screen()
             elif event.key == pygame.K_c:
-                print("keypress K_c")
+                print("keypress [c]")
                 # FIXME:
                 switch_video_fitting()
             elif event.key == pygame.K_i and pygame.key.get_mods() & pygame.KMOD_SHIFT:
-                print("keypress K_i and SHIFT")
+                print("keypress [SHIFT] + [i]")
                 clear_inpoints(tv_channel)
             elif event.key == pygame.K_i:
-                print("keypress K_i")
+                print("keypress [i]")
                 set_inpoints(tv_channel)
             elif event.key == pygame.K_PERIOD:
-                print("More brightness")
+                print("keypress [.] More brightness")
                 switch_video_brightness(5)
             elif event.key == pygame.K_COMMA:
-                print("Less brightness")
+                print("keypress [,] Less brightness")
                 switch_video_brightness(-5)
             elif event.key == pygame.K_t:
                 print("keypress [t]")
                 toggle_tv_animations()
             elif event.key == pygame.K_MINUS or (event.key == pygame.K_SLASH and pygame.key.get_mods() & pygame.KMOD_SHIFT) or pygame.key.name(event.key) == "[-]":
-                print("Less volume")
+                print("keypress [-] Less volume")
                 switch_volume(-10)
             elif event.key == pygame.K_PLUS or (event.key == pygame.K_1 and pygame.key.get_mods() & pygame.KMOD_SHIFT) or pygame.key.name(event.key) == "[+]":
-                print("More volume")
+                print("keypress [+] More volume")
                 switch_volume(10)
             elif pygame.K_0 <= event.key <= pygame.K_9:
-                print("keypress number "+ pygame.key.name(event.key))
+                print("keypress [number] "+ pygame.key.name(event.key))
                 go_to_channel(event.key - pygame.K_0 - 1)  # -1 because pressing 1 should play file on key 0 not file key nr 1
             else:
                 print("other key: "+ pygame.key.name(event.key))
@@ -522,8 +521,8 @@ def main():
         if filelist != old_filelist:
             # USB drive was taken out or inserted again
             update_inpoints()
-            print("filelist updated:")
-            print(filelist)
+            print(f"filelist updated ({len(filelist)}):")
+            print("  " + ("\n  ".join(f"Ch.{i+1} > {os.path.basename(file)}" for i, file in enumerate(filelist))))
             print("inpoints updated:")
             reset_inpoints()
             # start first video
@@ -532,7 +531,7 @@ def main():
         # If no files found, show white noise or blank screen
         if not filelist:
             if tv_animations:
-                print("No files available - show white noise")
+                print("No files - show white noise - wait for USB")
                 show_white_noise()
             else:
                 print("No files available - show blank screen")
