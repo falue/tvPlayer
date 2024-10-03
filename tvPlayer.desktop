@@ -1,5 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=tvPlayer
-Exec=python3 ./tvPlayer.py
-X-LXDE-Startup=true

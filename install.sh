@@ -28,6 +28,7 @@ mkdir -p "$AUTOSTART_DIR"
 
 # Create the .desktop file for autostart
 DESKTOP_FILE="$AUTOSTART_DIR/tvPlayer.desktop"
+DESKTOP_PATH="$USER_HOME/Desktop/tvPlayer.desktop"  # Define the path to the desktop
 
 echo "Creating autostart file..."
 cat > "$DESKTOP_FILE" << EOL
@@ -39,6 +40,14 @@ X-LXDE-Startup=true
 EOL
 
 echo "Autostart file created at $DESKTOP_FILE"
+
+# Copy the .desktop file to the desktop
+cp "$DESKTOP_FILE" "$DESKTOP_PATH"
+
+# Make the desktop file executable
+chmod +x "$DESKTOP_PATH"
+
+echo "Desktop shortcut created at $DESKTOP_PATH"
 
 # Disable the "removable medium is inserted" pop-up in PCManFM
 PCMANFM_CONF="$USER_HOME/.config/pcmanfm/LXDE-pi/pcmanfm.conf"
