@@ -68,8 +68,6 @@ Manually tested:
 ## SSH stuff
 scp ./tvPlayer/* dp@192.168.1.209:~/Desktop/tvPlayer
 
-ssh dp@192.168.1.209 'python ~/Desktop/tvPlayer/tvPlayer.py'
-
 ssh dp@192.168.1.209 'DISPLAY=:0 python ~/Desktop/tvPlayer/tvPlayer.py'
 
 ```

@@ -2,22 +2,30 @@ import os
 import sys
 import pygame
 import subprocess
+import threading
 import json
 from time import sleep
 from natsort import natsorted
+import random
 
 """ 
 TODO
+- first video is somehow white noise not 1.mp4?
+- test again with yuv iamge and transparency?
 - tv_animations:
     - tv_animations: show number of channels top right
-    - tv_white_noise_on_channel_change: white noise in between channel switching
+- 4:3 video gets stretched to 16:9 when video fitting?
+- can images be an instrument? without autoslide?
 - plus/minus for volume animation / real volume control? scene 45 "turns the volume down"
-- reduce brightness manually incremental by pressing alt+number, eg. alt+4 means 40% etc
 - has sound on hdmi?
 - if tv animation swap channel - show_white_noise() then sleep(1) then next video swap?
 - enable/disable "TV animations" by pressing "t"
 - white nmoise always stretch to screen; reset befiore another file plays
 - switch_video_fitting is same for all files. should be a per-video-setting
+- if tv_animations false and USB plugged out, works with black screen? or last frame visible?
+- embedded subtitles in mkvs get auto displayed and are not disableable
+- REFACTOR
+- CLEAN UP
  """
 
 # Customizing
@@ -26,6 +34,8 @@ tv_white_noise_on_channel_change = True  # white noise in between channel switch
 tv_channel_offset = 0  # display higher channel nr than actually available
 
 # Leave me be
+window_width = 0
+window_height = 0
 tv_channel = 0
 # playing = False
 filelist = []
@@ -36,8 +46,10 @@ current_fitting_index = 0  # Start with 'contain'
 is_black_screen = False
 current_file = ""
 brightness = 0  # 0 means 100% brightness
+active_overlays = {}  # Dictionary to store active overlay threads
 
 # Initialize pygame for keyboard input and fullscreen handling
+# TODO: pygame: make function, put in main loop
 pygame.init()
 screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
 pygame.display.set_caption('tvPlayer')
@@ -46,6 +58,44 @@ pygame.mouse.set_visible(False)  # Hide the mouse cursor
 # Get the window ID to pass to mpv
 window_info = pygame.display.get_wm_info()
 window_id = window_info['window']  # Get the window ID for embedding mpv
+
+def player_init():
+    global mpv_process, window_id
+
+    ipc_socket_path = '/tmp/mpv_socket'
+    print("Starting mpv process in idle mode for the first time.")
+    
+    # Command to start mpv in idle mode (no file needed, stays ready for commands)
+    command = [
+        # 'mpv', '--idle', '--fs', '--quiet',
+        'mpv', '--idle', '--loop-file', '--fs', '--quiet',
+        '--no-input-terminal', '--input-ipc-server=' + ipc_socket_path, '--wid=' + str(window_id)
+    ]
+
+    """
+    command = [
+        'mpv', '--loop-file', '--start=' + str(inpoint), '--fs', '--quiet',
+        '--no-input-terminal', '--input-ipc-server=' + ipc_socket_path, '--wid=' + str(window_id), file
+    ] """
+    
+    # Execute the command and store the process
+    mpv_process = subprocess.Popen(command)
+
+def system_init():
+    global filelist, inpoints, window_width, window_height
+    print("get usb root")
+    detect_usb_root()
+    print("get filelist")
+    update_files_from_usb()
+    reset_inpoints()
+    print("initial filelist:")
+    print(filelist)
+    print("Screen size:")
+    get_window_size()
+    print(f'{window_width} x {window_height}')
+
+    print("start video initially ")
+    go_to_channel(0)
 
 def detect_usb_root():
     global usb_root, script_dir
@@ -69,7 +119,11 @@ def update_files_from_usb():
             if os.path.isdir(device_path):
                 try:
                     for file in os.listdir(device_path):
-                        if file.endswith(('.mp4', '.mkv', '.avi', '.mxf', '.mov', '.MP4', '.MKV', '.AVI', '.MXF', '.MOV')) and not file.startswith('.'):
+                        allowed_fileendings = (
+                            '.mp4', '.mkv', '.avi', '.mxf', '.mov',
+                            '.jpg', '.png', '.gif', '.pdf', '.heic', '.heif', '.tiff', '.webp', '.bmp'
+                        )
+                        if file.lower().endswith(allowed_fileendings) and not file.startswith('.'):
                             filelist.append(os.path.join(device_path, file))
                             # inpoints.append(0)  # Initialize inpoints to 0 for each file
                 except PermissionError:
@@ -81,12 +135,16 @@ def update_files_from_usb():
                     filelist = []
                     continue
         # Sort list naturally - 1.mp4, 2.mp4, 11.mp4 instead of 1.mp4, 11.mp4, 2.mp4
-        # filelist = natsorted(filelist)  # case sensitive
         filelist = natsorted(filelist, key=lambda x: x.lower())  # case insensitive
 
 def reset_inpoints():
     global inpoints
     inpoints = [0] * len(filelist)  # Create a list of zeros with the same length as filelist
+
+def get_window_size():
+    global screen, window_width, window_height
+    window_size = screen.get_size()
+    window_width, window_height = int(window_size[0]), int(window_size[1])
 
 def show_white_noise():  # (duration)
     global current_file
@@ -113,7 +171,6 @@ def switch_video_brightness(value):
     if brightness >0:
         brightness = 0
     set_brightness(brightness)
-
 
 def toggle_black_screen():
     global is_black_screen
@@ -217,11 +274,13 @@ def go_to_channel(number):
     if tv_animations:
         if tv_white_noise_on_channel_change:
             print("show_white_noise in between")
-            #show_white_noise(200)
+            show_white_noise()
+            sleep(0.1)
         else:
             print("show show_blank_screen in between")
             # FIXME: if had video files playing and USB is removed, video keeps playing if short enough
-        show_channel_number(tv_channel + tv_channel_offset)
+            # sleep(0.2)
+        display_image(tv_channel + tv_channel_offset, 1, window_width-210, 20, 210,150, 2.0)
 
     play_file(filelist[number], inpoints[number])
 
@@ -230,11 +289,13 @@ def play_file(file, inpoint=0.0):
     
     ipc_socket_path = '/tmp/mpv_socket'  # Same as the one used in the subprocess command
 
-    if mpv_process is not None and os.path.exists(ipc_socket_path):
+    #if mpv_process is not None and os.path.exists(ipc_socket_path):
+    if os.path.exists(ipc_socket_path):
         print(f"Swapping to new file: {file} at {inpoint} seconds.")
         # Use loadfile command to replace the video source without stopping mpv
         command = f'echo \'{{"command": ["loadfile", "{file}", "replace", "start={inpoint}"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
         subprocess.call(command, shell=True)
+        """
     else:
         print("Starting mpv process for the first time.")
         # Command to play video in fullscreen using mpv
@@ -244,7 +305,7 @@ def play_file(file, inpoint=0.0):
         ]
         
         # Execute the command and store the process
-        mpv_process = subprocess.Popen(command)
+        mpv_process = subprocess.Popen(command) """
 
     current_file = file
     play()  # if paused, resume anyways FIXME: makes file stutter if playing already
@@ -257,9 +318,8 @@ def play():
         command = 'echo \'{"command": ["set_property", "pause", false]}\' | socat - UNIX-CONNECT:' + ipc_socket_path + ' > /dev/null 2>&1'
         subprocess.call(command, shell=True)
         print("Video playing.")
-    elif is_paused is False:
-        print("Video is already playing.")
-
+    # elif is_paused is False:
+    #     print("Video is already playing.")
 
 def pause():
     ipc_socket_path = '/tmp/mpv_socket'
@@ -278,18 +338,6 @@ def toggle_play():
         subprocess.call(command, shell=True)
     else:
         print("mpv IPC socket not found.")
-
-""" def stop_video():
-    global mpv_process
-    ipc_socket_path = '/tmp/mpv_socket'  # Same as the one used in the subprocess command
-
-    if mpv_process is not None and os.path.exists(ipc_socket_path):
-        print("Stopping video and making screen black...")
-        # Send a loadfile null command to stop playback and clear the screen
-        command = 'echo \'{"command": ["loadfile", "null", "replace"]}\' | socat - UNIX-CONNECT:' + ipc_socket_path + ' > /dev/null 2>&1'
-        subprocess.call(command, shell=True)
-    else:
-        print("mpv IPC socket not found or mpv process not running.") """
 
 def toggle_fullscreen():
     pygame.display.toggle_fullscreen()
@@ -325,6 +373,7 @@ def clear_inpoints(channel):
     print(inpoints)
 
 def get_mpv_property(property_name):
+    # run "mpv --list-properties" on raspi to see list of properties
     ipc_socket_path = '/tmp/mpv_socket'
     if os.path.exists(ipc_socket_path):
         # Construct the command to get the property from mpv
@@ -349,7 +398,7 @@ def get_current_video_position():
 
 
 def switch_video_fitting():
-    global current_fitting_index
+    global current_fitting_index, window_height
     # Update fitting mode index
     current_fitting_index = (current_fitting_index + 1) % len(fitting_modes)
     new_mode = fitting_modes[current_fitting_index]
@@ -368,7 +417,7 @@ def switch_video_fitting():
             
             # Get current video height and window height
             video_height = get_mpv_property("height")
-            window_height = get_mpv_property("osd-dimensions/h")
+            # window_height = get_mpv_property("osd-dimensions/h")
             # FIXME: Trial and error value 0.91. Mathematically correct would be 1.0
             #        But somehow I get letterboxes with 1.0
             zoom_factor = window_height / video_height - 0.91
@@ -382,29 +431,40 @@ def switch_video_fitting():
         print("mpv IPC socket not found.")
 
 
-def show_channel_number(number):
-    # FIXME: draws behind video.
-    # TODO: use mpvs logo setting to be used instead?
-    # Load the PNG image from the channel_numbers directory
-    image_path = os.path.join(script_dir, 'assets', 'channel_numbers', f'{number}.png')
+def display_image(number, overlay_id, x, y, width, height, display_duration=2.0):
+    global active_overlays
+    image_path = os.path.join(script_dir, 'assets', 'channel_numbers', f'{number}.bgra')
+
+    # Ensure the file exists
+    if not os.path.exists(image_path):
+        print(f"Image file not found: {image_path}")
+        return
+
+    stride = width * 4  # BGRA has 4 bytes per pixel
+    ipc_socket_path = '/tmp/mpv_socket'
+
+    # Overlay-add command
+    command = f'echo \'{{"command": ["overlay-add", {overlay_id}, {x}, {y}, "{image_path}", 0, "bgra", {width}, {height}, {stride}]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
+    subprocess.call(command, shell=True)
+
+    # Cancel any existing overlay removal thread for this overlay_id
+    if overlay_id in active_overlays:
+        active_overlays[overlay_id].cancel()
+
+    # Function to remove overlay after the duration
+    def remove_overlay():
+        sleep(display_duration)
+        remove_command = f'echo \'{{"command": ["overlay-remove", {overlay_id}]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
+        subprocess.call(remove_command, shell=True)
+        print(f"Removed overlay ID {overlay_id}")
     
-    # Load the image as a surface
-    channel_image = pygame.image.load(image_path)
+    # Start a new thread to remove the overlay and store it
+    thread = threading.Timer(display_duration, remove_overlay)
+    thread.start()
+    active_overlays[overlay_id] = thread
 
-    # Get the screen's width and height
-    screen_width, screen_height = screen.get_size()
+    print(f"Displaying image: {image_path} (@ID:{overlay_id}) at x={x} y={y} for {display_duration} seconds")
 
-    # Calculate the position for the top-right corner
-    image_rect = channel_image.get_rect()
-    top_right_position = (screen_width - image_rect.width, 0)  # Top-right corner position
-
-    # Blit the image onto the screen at the top-right position
-    screen.blit(channel_image, top_right_position)
-
-    # Update the part of the screen where the image was blitted
-    pygame.display.update(pygame.Rect(top_right_position, (image_rect.width, image_rect.height)))
-
-    print(f"Showing channel number image: {image_path}")
 
 def update_inpoints():
     global inpoints
@@ -425,34 +485,14 @@ def shutdown():
 
 def main():
     print("--------------------------------------------------------------------------------")
-    print("--------------------------------------------------------------------------------")
-    print("--------------------------------------------------------------------------------")
-    print("--------------------------------------------------------------------------------")
-    print("--------------------------------------------------------------------------------")
-    print("--------------------------------------------------------------------------------")
-    print("--------------------------------------------------------------------------------")
-    print("start!")
-
-    print("get usb root")
-    detect_usb_root()
-    print("get filelist")
-    update_files_from_usb()
-    reset_inpoints()
-    print("initial filelist:")
-    print(filelist)
-    print("initial inpoints:")
-    print(inpoints)
-
-    print("start video initially ")
-    go_to_channel(0)
+    player_init()
+    system_init()
 
     while True:
-        #print("----")
-        #print("keypresses")
+        get_window_size()
         check_keypresses()
 
         # Update file list if USB is inserted or removed
-        #print("copy filelist")
         old_filelist = filelist.copy()
         update_files_from_usb()
 
@@ -464,7 +504,6 @@ def main():
             print(filelist)
             print("inpoints updated:")
             reset_inpoints()
-            print(inpoints)
             # start first video
             go_to_channel(0)
 
@@ -472,18 +511,10 @@ def main():
         if not filelist:
             if tv_animations:
                 print("No files available - show white noise")
-                # if not playing:
-                # todo: if USB teared oput, this is still true i guess?
                 show_white_noise()
             else:
                 print("No files available - show blank screen")
 
-        # Automatically play video when filelist is populated
-        """ if filelist and not playing:
-            print("start video")
-            go_to_channel(0) """
-
-        #print("update pygame")
         pygame.display.update()
         sleep(0.1)
 
