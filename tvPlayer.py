@@ -10,23 +10,16 @@ import random
 
 """ 
 TODO
-- first video is somehow white noise not 1.mp4?
-- test again with yuv iamge and transparency?
-- tv_animations:
-    - tv_animations: show number of channels top right
-- 4:3 video gets stretched to 16:9 when video fitting?
-- first video sometimes (?) black?
-- can images be an instrument? without autoslide?
-- plus/minus for volume animation / real volume control? scene 45 "turns the volume down"
-- has sound on hdmi?
-- if tv animation swap channel - show_white_noise() then sleep(1) then next video swap?
-- enable/disable "TV animations" by pressing "t"
-- white nmoise always stretch to screen; reset befiore another file plays
-- switch_video_fitting is same for all files. should be a per-video-setting
-- if tv_animations false and USB plugged out, works with black screen? or last frame visible?
-- embedded subtitles in mkvs get auto displayed and are not disableable
+- shift+[q] closes only the program
+- test install rpi3
+- test has sound on hdmi? TEST ON TV IN WORKSHOP -> nope
+- test install rpi4
+- double click startt file works?
 - REFACTOR
 - CLEAN UP
+- clean README
+- upload zip to telefabi.ch
+- install on all raspis
  """
 
 # Customizing
@@ -338,7 +331,6 @@ def play_file(file, inpoint=0.0):
 
     current_file = file
     play()  # if paused, resume anyways FIXME: makes file stutter if playing already
-    print(f"Play file: {file}")
 
 def play():
     global ipc_socket_path

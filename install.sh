@@ -50,6 +50,7 @@ chmod +x "$DESKTOP_PATH"
 echo "Desktop shortcut created at $DESKTOP_PATH"
 
 # Disable the "removable medium is inserted" pop-up in PCManFM
+# FIXME: DOES NOT WORK. DOES NOT DISABLE THE THING.
 PCMANFM_CONF="$USER_HOME/.config/pcmanfm/LXDE-pi/pcmanfm.conf"
 echo "PCManFM Config Path: $PCMANFM_CONF"
 
@@ -71,7 +72,6 @@ mount_open=0
 autorun=0
 EOL
 fi
-
 echo "Disabled 'removable medium is inserted' pop-up in PCManFM."
 
 echo "Installation complete. The script will now run on startup!"
