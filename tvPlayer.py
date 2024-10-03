@@ -78,6 +78,9 @@ def player_init():
     # Execute the command and store the process
     mpv_process = subprocess.Popen(command)
 
+    print("Wait for the socket to be created before proceeding..")
+    sleep(3)
+
 def system_init():
     global filelist, inpoints, window_width, window_height
     print("get usb root")
