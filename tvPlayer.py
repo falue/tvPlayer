@@ -45,38 +45,34 @@ fitting_modes = ['contain', 'stretch', 'cover']  # List of fitting modes
 current_fitting_index = 0  # Start with 'contain'
 is_black_screen = False
 current_file = ""
+ipc_socket_path = '/tmp/mpv_socket'
 brightness = 0  # 0 means 100% brightness
 active_overlays = {}  # Dictionary to store active overlay threads
 
-# Initialize pygame for keyboard input and fullscreen handling
-# TODO: pygame: make function, put in main loop
-pygame.init()
-screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
-pygame.display.set_caption('tvPlayer')
-pygame.mouse.set_visible(False)  # Hide the mouse cursor
 
-# Get the window ID to pass to mpv
-window_info = pygame.display.get_wm_info()
-window_id = window_info['window']  # Get the window ID for embedding mpv
+
+def pygame_init():
+    global screen, window_id, ipc_socket_path
+    # Initialize pygame for keyboard input and fullscreen handling
+    pygame.init()
+    screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+    pygame.display.set_caption('tvPlayer')
+    pygame.mouse.set_visible(False)  # Hide the mouse cursor
+
+    # Get the window ID to pass to mpv
+    window_info = pygame.display.get_wm_info()
+    window_id = window_info['window']  # Get the window ID for embedding mpv
+
 
 def player_init():
-    global mpv_process, window_id
-
-    ipc_socket_path = '/tmp/mpv_socket'
+    global mpv_process, window_id, ipc_socket_path
     print("Starting mpv process in idle mode for the first time.")
     
     # Command to start mpv in idle mode (no file needed, stays ready for commands)
     command = [
-        # 'mpv', '--idle', '--fs', '--quiet',
         'mpv', '--idle', '--loop-file', '--fs', '--quiet',
         '--no-input-terminal', '--input-ipc-server=' + ipc_socket_path, '--wid=' + str(window_id)
     ]
-
-    """
-    command = [
-        'mpv', '--loop-file', '--start=' + str(inpoint), '--fs', '--quiet',
-        '--no-input-terminal', '--input-ipc-server=' + ipc_socket_path, '--wid=' + str(window_id), file
-    ] """
     
     # Execute the command and store the process
     mpv_process = subprocess.Popen(command)
@@ -154,8 +150,7 @@ def show_white_noise():  # (duration)
         play_file(white_noise_path)
 
 def set_brightness(value):
-    ipc_socket_path = '/tmp/mpv_socket'
-
+    global ipc_socket_path
     if os.path.exists(ipc_socket_path):
         command = f'echo \'{{"command": ["set_property", "brightness", {value}]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
         subprocess.call(command, shell=True)
@@ -285,36 +280,21 @@ def go_to_channel(number):
     play_file(filelist[number], inpoints[number])
 
 def play_file(file, inpoint=0.0):
-    global mpv_process, current_file
-    
-    ipc_socket_path = '/tmp/mpv_socket'  # Same as the one used in the subprocess command
-
-    #if mpv_process is not None and os.path.exists(ipc_socket_path):
+    global mpv_process, current_file, ipc_socket_path
     if os.path.exists(ipc_socket_path):
         print(f"Swapping to new file: {file} at {inpoint} seconds.")
         # Use loadfile command to replace the video source without stopping mpv
         command = f'echo \'{{"command": ["loadfile", "{file}", "replace", "start={inpoint}"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
         subprocess.call(command, shell=True)
-        """
-    else:
-        print("Starting mpv process for the first time.")
-        # Command to play video in fullscreen using mpv
-        command = [
-            'mpv', '--loop-file', '--start=' + str(inpoint), '--fs', '--quiet',
-            '--no-input-terminal', '--input-ipc-server=' + ipc_socket_path, '--wid=' + str(window_id), file
-        ]
-        
-        # Execute the command and store the process
-        mpv_process = subprocess.Popen(command) """
 
     current_file = file
     play()  # if paused, resume anyways FIXME: makes file stutter if playing already
     print(f"Play file: {file}")
 
 def play():
+    global ipc_socket_path
     is_paused = get_mpv_property("pause")
     if is_paused is not None and is_paused:
-        ipc_socket_path = '/tmp/mpv_socket'
         command = 'echo \'{"command": ["set_property", "pause", false]}\' | socat - UNIX-CONNECT:' + ipc_socket_path + ' > /dev/null 2>&1'
         subprocess.call(command, shell=True)
         print("Video playing.")
@@ -322,7 +302,7 @@ def play():
     #     print("Video is already playing.")
 
 def pause():
-    ipc_socket_path = '/tmp/mpv_socket'
+    global ipc_socket_path
     if os.path.exists(ipc_socket_path):
         command = 'echo \'{"command": ["set_property", "pause", true]}\' | socat - UNIX-CONNECT:' + ipc_socket_path + ' > /dev/null 2>&1'
         subprocess.call(command, shell=True)
@@ -331,7 +311,7 @@ def pause():
         print("mpv IPC socket not found.")
 
 def toggle_play():
-    ipc_socket_path = '/tmp/mpv_socket'  # Same as the one used in the subprocess command
+    global ipc_socket_path
     if os.path.exists(ipc_socket_path):
         # Send the pause command to the running mpv instance via IPC
         command = 'echo \'{"command": ["cycle", "pause"]}\' | socat - UNIX-CONNECT:' + ipc_socket_path + ' > /dev/null 2>&1'
@@ -343,7 +323,7 @@ def toggle_fullscreen():
     pygame.display.toggle_fullscreen()
 
 def seek(seconds):
-    ipc_socket_path = '/tmp/mpv_socket'  # Same as the one used in the subprocess command
+    global ipc_socket_path
     if os.path.exists(ipc_socket_path):
         # Create the command to send a seek command to the running mpv instance via IPC
         if seconds < .2 and seconds > 0:
@@ -373,8 +353,8 @@ def clear_inpoints(channel):
     print(inpoints)
 
 def get_mpv_property(property_name):
+    global ipc_socket_path
     # run "mpv --list-properties" on raspi to see list of properties
-    ipc_socket_path = '/tmp/mpv_socket'
     if os.path.exists(ipc_socket_path):
         # Construct the command to get the property from mpv
         command = f'echo \'{{"command": ["get_property", "{property_name}"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path}'
@@ -398,12 +378,11 @@ def get_current_video_position():
 
 
 def switch_video_fitting():
-    global current_fitting_index, window_height
+    global current_fitting_index, window_height, ipc_socket_path
     # Update fitting mode index
     current_fitting_index = (current_fitting_index + 1) % len(fitting_modes)
     new_mode = fitting_modes[current_fitting_index]
 
-    ipc_socket_path = '/tmp/mpv_socket'
     if os.path.exists(ipc_socket_path):
         if new_mode == 'contain':
             keepaspect = "yes"
@@ -432,7 +411,7 @@ def switch_video_fitting():
 
 
 def display_image(number, overlay_id, x, y, width, height, display_duration=2.0):
-    global active_overlays
+    global active_overlays, ipc_socket_path
     image_path = os.path.join(script_dir, 'assets', 'channel_numbers', f'{number}.bgra')
 
     # Ensure the file exists
@@ -440,10 +419,8 @@ def display_image(number, overlay_id, x, y, width, height, display_duration=2.0)
         print(f"Image file not found: {image_path}")
         return
 
-    stride = width * 4  # BGRA has 4 bytes per pixel
-    ipc_socket_path = '/tmp/mpv_socket'
-
     # Overlay-add command
+    stride = width * 4  # BGRA has 4 bytes per pixel
     command = f'echo \'{{"command": ["overlay-add", {overlay_id}, {x}, {y}, "{image_path}", 0, "bgra", {width}, {height}, {stride}]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
     subprocess.call(command, shell=True)
 
@@ -485,6 +462,7 @@ def shutdown():
 
 def main():
     print("--------------------------------------------------------------------------------")
+    pygame_init()
     player_init()
     system_init()
 
