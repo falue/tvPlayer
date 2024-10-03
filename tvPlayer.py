@@ -142,7 +142,7 @@ def set_brightness(value):
     else:
         print("mpv IPC socket not found.")
 
-def switch_video_brightness(value):
+def adjust_video_brightness(value):
     global brightness
     brightness += value
     if brightness < -100:
@@ -163,7 +163,7 @@ def set_volume(value):
     else:
         print("mpv IPC socket not found.")
 
-def switch_volume(value):
+def adjust_volume(value):
     global volume
     volume += value
     if volume < 0:
@@ -228,7 +228,7 @@ def check_keypresses():
                 toggle_black_screen()
             elif event.key == pygame.K_c:
                 print("keypress [c]")
-                switch_video_fitting()
+                cycle_video_fitting()
             elif event.key == pygame.K_i and pygame.key.get_mods() & pygame.KMOD_SHIFT:
                 print("keypress [SHIFT] + [i]")
                 clear_inpoints(tv_channel)
@@ -237,10 +237,10 @@ def check_keypresses():
                 set_inpoints(tv_channel)
             elif event.key == pygame.K_PERIOD:
                 print("keypress [.] More brightness")
-                switch_video_brightness(5)
+                adjust_video_brightness(5)
             elif event.key == pygame.K_COMMA:
                 print("keypress [,] Less brightness")
-                switch_video_brightness(-5)
+                adjust_video_brightness(-5)
             elif event.key == pygame.K_a:
                 print("keypress [a]")
                 toggle_tv_animations()
@@ -249,10 +249,10 @@ def check_keypresses():
                 toggle_white_noise_on_channel_change()
             elif event.key == pygame.K_MINUS or (event.key == pygame.K_SLASH and pygame.key.get_mods() & pygame.KMOD_SHIFT) or pygame.key.name(event.key) == "[-]":
                 print("keypress [-] Less volume")
-                switch_volume(-10)
+                adjust_volume(-10)
             elif event.key == pygame.K_PLUS or (event.key == pygame.K_1 and pygame.key.get_mods() & pygame.KMOD_SHIFT) or pygame.key.name(event.key) == "[+]":
                 print("keypress [+] More volume")
-                switch_volume(10)
+                adjust_volume(10)
             elif pygame.K_0 <= event.key <= pygame.K_9:
                 print("keypress [number] "+ pygame.key.name(event.key))
                 go_to_channel(event.key - pygame.K_0 - 1)  # -1 because pressing 1 should play file on key 0 not file key nr 1
@@ -408,7 +408,7 @@ def toggle_white_noise_on_channel_change():
     status_animations = "" if tv_animations else " (but animations are OFF so not showing breaks)"
     print(f"Pauses between channel change is {status}{status_animations}")
 
-def switch_video_fitting():
+def cycle_video_fitting():
     global current_fitting_index, window_height, ipc_socket_path
     # Update fitting mode index
     current_fitting_index = (current_fitting_index + 1) % len(fitting_modes)
