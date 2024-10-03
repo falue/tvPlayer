@@ -2,7 +2,7 @@ from PIL import Image
 import os
 
 # Folder containing the PNG files
-input_folder = "./volume_bars"
+input_folder = "./channel_numbers"
 output_folder = input_folder
 
 # Iterate over all PNG files in the folder

@@ -2,7 +2,7 @@ from PIL import Image, ImageDraw, ImageFont
 import os
 
 # Customitzing
-biggest_channel = 12                # Includes channel 00
+biggest_channel = 100                # Includes channel 00
 image_width = 210                   # Image size
 image_height = 150                  # Image size
 font_size = 150                     # Set the size of the font
