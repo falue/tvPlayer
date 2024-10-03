@@ -265,6 +265,9 @@ def check_keypresses():
             elif event.key == pygame.K_COMMA:
                 print("Less brightness")
                 switch_video_brightness(-5)
+            elif event.key == pygame.K_t:
+                print("keypress [t]")
+                toggle_tv_animations()
             elif event.key == pygame.K_MINUS or (event.key == pygame.K_SLASH and pygame.key.get_mods() & pygame.KMOD_SHIFT) or pygame.key.name(event.key) == "[-]":
                 print("Less volume")
                 switch_volume(-10)
@@ -412,6 +415,11 @@ def get_current_video_position():
         return time_pos
     return 0
 
+def toggle_tv_animations():
+    global tv_animations
+    tv_animations = not tv_animations
+    status = "ON" if tv_animations else "OFF"
+    print(f"TV animations are {status}")
 
 def switch_video_fitting():
     global current_fitting_index, window_height, ipc_socket_path

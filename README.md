@@ -58,6 +58,7 @@ Manually tested:
 | c               | video fitting (contain, stretch or cover)              |      |
 | i               | set inpoint (where the file starts to play)            |      |
 | I (i and SHIFT) | clear inpoint on this video                            |      |
+| t               | toggle tv-animations (white noise, channel number, vol bars)            |      |
 | ,               | reduce video brightness by 5%                          |      |
 | .               | increase video brightness by 5%                        |      |
 | +               | reduce volume by 10%                                   |      |
@@ -72,6 +73,7 @@ scp ./tvPlayer/* dp@192.168.1.209:~/Desktop/tvPlayer
 
 ssh dp@192.168.1.209 'DISPLAY=:0 python ~/Desktop/tvPlayer/tvPlayer.py'
 
+### Copy folder to raspi via ssh & run script on raspi with script and output THERE but log HERE
 ```
 scp -r ./tvPlayer/* dp@192.168.1.209:~/Desktop/tvPlayer && ssh dp@192.168.1.209 'DISPLAY=:0 python -u ~/Desktop/tvPlayer/tvPlayer.py'
 ```
