@@ -59,15 +59,16 @@ Filetypes for images: `.png`, `.gif`, `.tiff`, `.bmp`
 | DOWN            | prev channel (next file)                               |      |
 | LEFT            | jump -5 seconds                                        |      |
 | RIGHT           | jump 5 seconds                                         |      |
-| LEFT and SHIFT  | pause and one frame backwards                          |      |
-| RIGHT and SHIFT | pause and one frame forwards                           |      |
+| SHIFT and LEFT  | pause and one frame backwards                          |      |
+| SHIFT and RIGHT | pause and one frame forwards                           |      |
 | p *or* space    | toggle play / pause                                    |      |
 | ESC             | toggle fullscreen                                      |      |
 | q               | shutdown raspberry pi                                  |      |
+| SHIFT and q     | exit program                                           |      |
 | b               | toggle black screen                                    |      |
 | c               | video fitting (contain, stretch or cover)              |      |
 | i               | set inpoint (where the file starts to play)            |      |
-| I (i and SHIFT) | clear inpoint on this video                            |      |
+| I (SHIFT and i) | clear inpoint on this video                            |      |
 | a               | toggle tv-animations (*pause in between channel changes*, *channel number*, *vol bars*) |      |
 | w               | if tv-animations: toggle color of pause in between channel changes: *white noise* or *black*  |      |
 | ,               | reduce video brightness by 5%                          |      |
