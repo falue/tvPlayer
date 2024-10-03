@@ -6,7 +6,7 @@ image_width = 1600                   # Image size
 image_height = 150                  # Image size
 font_size = 150                     # Set the size of the font
 FONTCOLOR = (75, 255, 0, 255)       # Text color with full opacity (RGB with Alpha)
-BGCOLOR = (255, 255, 255, 0)        # Background color (transparent)
+BGCOLOR = (0, 0, 0, 0)        # Background color (transparent)
 custom_texts = [
     "----------       0",
     "|---------    10",
