@@ -264,9 +264,12 @@ def check_keypresses():
             elif event.key == pygame.K_COMMA:
                 print("keypress [,] Less brightness")
                 switch_video_brightness(-5)
-            elif event.key == pygame.K_t:
-                print("keypress [t]")
+            elif event.key == pygame.K_a:
+                print("keypress [a]")
                 toggle_tv_animations()
+            elif event.key == pygame.K_w:
+                print("keypress [w]")
+                toggle_white_noise_on_channel_change()
             elif event.key == pygame.K_MINUS or (event.key == pygame.K_SLASH and pygame.key.get_mods() & pygame.KMOD_SHIFT) or pygame.key.name(event.key) == "[-]":
                 print("keypress [-] Less volume")
                 switch_volume(-10)
@@ -310,12 +313,17 @@ def go_to_channel(number):
             sleep(0.1)
         else:
             print("show show_blank_screen in between")
-            # FIXME: if had video files playing and USB is removed, video keeps playing if short enough
-            # sleep(0.2)
+            toggle_black_screen()
+            sleep(.2)
+            #toggle_black_screen()
         image_path = os.path.join(script_dir, 'assets', 'channel_numbers', f'{tv_channel + tv_channel_offset}.bgra')
         display_image(image_path, 1, window_width-210, 20, 210,150, 2.0)
 
     play_file(filelist[number], inpoints[number])
+
+    if tv_animations and not tv_white_noise_on_channel_change:
+        # restore black screen
+        toggle_black_screen()
 
 def play_file(file, inpoint=0.0):
     global mpv_process, current_file, ipc_socket_path
@@ -415,10 +423,18 @@ def get_current_video_position():
     return 0
 
 def toggle_tv_animations():
-    global tv_animations
+    global tv_animations, tv_white_noise_on_channel_change
     tv_animations = not tv_animations
     status = "ON" if tv_animations else "OFF"
-    print(f"TV animations are {status}")
+    status_animations = "white noise" if tv_white_noise_on_channel_change else "black"
+    print(f"TV animations are {status} with breaks showing {status_animations}")
+    
+def toggle_white_noise_on_channel_change():
+    global tv_white_noise_on_channel_change, tv_animations
+    tv_white_noise_on_channel_change = not tv_white_noise_on_channel_change
+    status = "white noise" if tv_white_noise_on_channel_change else "black"
+    status_animations = "" if tv_animations else " (but animations are OFF so not showing breaks)"
+    print(f"Pauses between channel change is {status}{status_animations}")
 
 def switch_video_fitting():
     global current_fitting_index, window_height, ipc_socket_path

@@ -58,7 +58,8 @@ Manually tested:
 | c               | video fitting (contain, stretch or cover)              |      |
 | i               | set inpoint (where the file starts to play)            |      |
 | I (i and SHIFT) | clear inpoint on this video                            |      |
-| t               | toggle tv-animations (white noise, channel number, vol bars)            |      |
+| a               | toggle tv-animations (*pause in between channel changes*, *channel number*, *vol bars*) |      |
+| w               | if tv-animations: toggle color of pause in between channel changes: *white noise* or *black*  |      |
 | ,               | reduce video brightness by 5%                          |      |
 | .               | increase video brightness by 5%                        |      |
 | +               | reduce volume by 10%                                   |      |
