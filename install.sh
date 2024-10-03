@@ -13,20 +13,33 @@ echo "Installing Python libraries..."
 pip install -r requirements.txt
 
 # Get the full path of the script to be executed
+USER_HOME=$(getent passwd $SUDO_USER | cut -d: -f6)
+echo "USER_HOME:"
+echo "$USER_HOME"
+
 SCRIPT_PATH="$(realpath $0)"
 SCRIPT_DIR="$(dirname $SCRIPT_PATH)"
 SCRIPT_NAME="tvPlayer.py"
 FULL_SCRIPT_PATH="$SCRIPT_DIR/$SCRIPT_NAME"
 
+echo "FULL_SCRIPT_PATH:"
+echo "$FULL_SCRIPT_PATH"
+
 # Make the Python script executable
 chmod +x "$FULL_SCRIPT_PATH"
 
 # Create the autostart directory if it doesn't exist
-AUTOSTART_DIR="$HOME/.config/autostart"
+AUTOSTART_DIR="$USER_HOME/.config/autostart"
+echo "AUTOSTART_DIR:"
+echo "$AUTOSTART_DIR"
+
 mkdir -p "$AUTOSTART_DIR"
 
 # Create the .desktop file for autostart
 DESKTOP_FILE="$AUTOSTART_DIR/tvPlayer.desktop"
+
+echo "DESKTOP_FILE:"
+echo "$DESKTOP_FILE"
 
 echo "Creating autostart file..."
 cat > "$DESKTOP_FILE" << EOL
