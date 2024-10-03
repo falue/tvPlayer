@@ -41,13 +41,15 @@ EOL
 echo "Autostart file created at $DESKTOP_FILE"
 
 # Disable the "removable medium is inserted" pop-up in PCManFM
-PCMANFM_CONF="$USER_HOME/.config/pcmanfm/LXDE/pcmanfm.conf"
+PCMANFM_CONF="$USER_HOME/.config/pcmanfm/LXDE-pi/pcmanfm.conf"
+echo "PCManFM Config Path: $PCMANFM_CONF"
+
 if [ -f "$PCMANFM_CONF" ]; then
     # Modify the existing config file
     sed -i '/\[volume\]/,/\[/{s/mount_open=1/mount_open=0/}' "$PCMANFM_CONF"
 else
     # Create the config file if it doesn't exist
-    mkdir -p "$USER_HOME/.config/pcmanfm/LXDE"
+    mkdir -p "$USER_HOME/.config/pcmanfm/LXDE-pi"
     cat > "$PCMANFM_CONF" << EOL
 [volume]
 mount_open=0
