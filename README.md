@@ -1,27 +1,31 @@
 # tvPlayer as digital props for film and TV
-WIP.
+Fill a USB stick with video (or *image!*) files; plug it in; have a fake TV.
+Channel number is shown when switching them, white noise is shown when nothing is available and the volume bar is there for you when you expect it.
+
+Control it with a wireless keyboard and your actress ort actor can press what they want, you'll be sure they find their program as *per the script*.
+
+This is basically a media player.
+You can turn off the fancy effects. Power it and it will play the first image or video on the USB stick.
+Disable the effects, have some arrow keys, now you have an interactive slideshow.
+
+***WIP.***
+
 
 ## things to do to get this up and running
-1. run the install `sudo bash install.sh` script to:
+1. Clone this repo `git clone https://github.com/falue/tvPlayer`
+2. run the install script `sudo bash install.sh` to:
     - apt-get update
-    - install dependencies
-    - run `python3 tvPlayer.py` on autostart
-    - disable window "removable medium is inserted" [BUG!]
+    - install dependencies (Packages: *mpv*, *socat*; Python: *pygame*, *natsort*)
+    - auto-run `python3 tvPlayer.py` on autostart
+    - ~~disable window "removable medium is inserted"~~ [BUG!]
     - create a desktop shortcut to the program
-```
-bash install.sh
-```
-
-2. disable (move/remove) autostart file for Eddy-G (if available) from folder `~/.config/autostart`
-
-#### old notes
-2. ~~on the desktop, open any folder, go to `edit` > `preferences` > `volume management`~~
-3. ~~something something LXDE autostart script `nano ~/.config/lxsession/LXDE-pi/autostart`~~
-3. ~~install script takes care of autostart and creates a file here: `~/.config/autostart`~~
-
+3. Disable (move/remove) **autostart file for Eddy-G** (if available) from folder `~/.config/autostart`
+4. Set **audio output** to HDMI (right click on audio in toolbar,c hoose HDMI)
+5. disable pop up window "**removable medium is inserted**": Open any folder > `Edit` > `Preferences` > `Volume Management` > uncheck `Show availabler options for removable media when they are inserted`
+6. Insert USB.
 
 ## MPV player: Playable media
-The media player [MPV](https://mpv.io/) ([doc wiki](https://github.com/mpv-player/mpv/wiki)) can play pretty much everything -
+The media player [MPV](https://mpv.io/) ([doc wiki](https://github.com/mpv-player/mpv/wiki)) used here can play pretty much everything -
 *however*, filename-endings are fixed to work with `.mp4`, `.mkv`, `.avi`, `.mxf` and `.mov` (case insensitive).
 
 it uses ffmpeg to decode, so the [list of playable media](https://ffmpeg.org/general.html#Supported-File-Formats_002c-Codecs-or-Features) is huge.
@@ -29,10 +33,10 @@ According to the mpv.io website:
 > File Formats: mpv supports a wide variety of media formats, including popular video files (e.g., MP4, MKV), audio codecs (e.g., AAC, MP3), and subtitles.
 
 Some cherry picked examples:
-- Containers: MP4, MKV, AVI, WebM, OGG, FLV, and more.
-- Video Codecs: H.264, HEVC, VP8, VP9, AV1, MPEG-4, MPEG-2, and others.
-- Audio Codecs: AAC, MP3, Vorbis, FLAC, Opus, AC3, and DTS.
-Subtitle Formats: SRT, ASS, SSA, VTT, and embedded subtitle tracks in containers like MKV.
+> - Containers: MP4, MKV, AVI, WebM, OGG, FLV, and more.
+> - Video Codecs: H.264, HEVC, VP8, VP9, AV1, MPEG-4, MPEG-2, and others.
+> - Audio Codecs: AAC, MP3, Vorbis, FLAC, Opus, AC3, and DTS.
+> Subtitle Formats: SRT, ASS, SSA, VTT, and embedded subtitle tracks in containers like MKV.
 
 Manually tested:
 - [x] `.mp4` MPEG-4 AAC, H264
@@ -43,7 +47,7 @@ Manually tested:
 - [x] `.mov` H264
 - [x] `.mkv` "4k UHD" h264 yuv420p works (but stuttering on raspberry pi4 @8gb) 
 
-## Also works with images
+## Also works with *images*!
 Filetypes for images: `.png`, `.gif`, `.tiff`, `.bmp`
 > *NOTICE:* Does ***not*** work with `.jpg`!
 
@@ -73,14 +77,3 @@ Filetypes for images: `.png`, `.gif`, `.tiff`, `.bmp`
 | number          | go to channel nr                                       |      |
 | else            | ignored                                                |      |
 
-
-
-## SSH stuff
-scp ./tvPlayer/* dp@192.168.1.209:~/Desktop/tvPlayer
-
-ssh dp@192.168.1.209 'DISPLAY=:0 python ~/Desktop/tvPlayer/tvPlayer.py'
-
-### Copy folder to raspi via ssh & run script on raspi with script and output THERE but log HERE
-```
-scp -r ./tvPlayer/* dp@192.168.1.209:~/Desktop/tvPlayer && ssh dp@192.168.1.209 'DISPLAY=:0 python -u ~/Desktop/tvPlayer/tvPlayer.py'
-```
