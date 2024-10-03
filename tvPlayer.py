@@ -15,6 +15,7 @@ TODO
 - tv_animations:
     - tv_animations: show number of channels top right
 - 4:3 video gets stretched to 16:9 when video fitting?
+- first video sometimes (?) black?
 - can images be an instrument? without autoslide?
 - plus/minus for volume animation / real volume control? scene 45 "turns the volume down"
 - has sound on hdmi?
@@ -31,7 +32,7 @@ TODO
 # Customizing
 tv_animations = True  # show number of channels top right
 tv_white_noise_on_channel_change = True  # white noise in between channel switching
-tv_channel_offset = 0  # display higher channel nr than actually available
+tv_channel_offset = 1  # display higher channel nr than actually available
 
 # Leave me be
 window_width = 0
@@ -47,8 +48,8 @@ is_black_screen = False
 current_file = ""
 ipc_socket_path = '/tmp/mpv_socket'
 brightness = 0  # 0 means 100% brightness
+volume = 100  # 100 means max loudness
 active_overlays = {}  # Dictionary to store active overlay threads
-
 
 
 def pygame_init():
@@ -167,6 +168,24 @@ def switch_video_brightness(value):
         brightness = 0
     set_brightness(brightness)
 
+def set_volume(value):
+    global ipc_socket_path
+    if os.path.exists(ipc_socket_path):
+        command = f'echo \'{{"command": ["set_property", "volume", {value}]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
+        subprocess.call(command, shell=True)
+        print(f"Set volume to {value}")
+    else:
+        print("mpv IPC socket not found.")
+
+def switch_volume(value):
+    global volume
+    volume += value
+    if volume < 0:
+        volume = 0
+    if volume > 100:
+        volume = 100
+    set_volume(volume)
+
 def toggle_black_screen():
     global is_black_screen
     if is_black_screen:
@@ -236,6 +255,12 @@ def check_keypresses():
             elif event.key == pygame.K_COMMA:
                 print("Less brightness")
                 switch_video_brightness(-5)
+            elif event.key == pygame.K_MINUS or (event.key == pygame.K_SLASH and pygame.key.get_mods() & pygame.KMOD_SHIFT) or pygame.key.name(event.key) == "[-]":
+                print("Less volume")
+                switch_volume(-10)
+            elif event.key == pygame.K_PLUS or (event.key == pygame.K_1 and pygame.key.get_mods() & pygame.KMOD_SHIFT) or pygame.key.name(event.key) == "[+]":
+                print("More volume")
+                switch_volume(10)
             elif pygame.K_0 <= event.key <= pygame.K_9:
                 print("keypress number "+ pygame.key.name(event.key))
                 go_to_channel(event.key - pygame.K_0 - 1)  # -1 because pressing 1 should play file on key 0 not file key nr 1

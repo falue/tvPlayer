@@ -60,6 +60,8 @@ Manually tested:
 | I (i and SHIFT) | clear inpoint on this video                            |      |
 | ,               | reduce video brightness by 5%                          |      |
 | .               | increase video brightness by 5%                        |      |
+| +               | reduce volume by 10%                                   |      |
+| -               | increase volume by 10%                                 |      |
 | number          | go to channel nr                                       |      |
 | else            | ignored                                                |      |
 
