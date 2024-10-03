@@ -54,8 +54,14 @@ PCMANFM_CONF="$USER_HOME/.config/pcmanfm/LXDE-pi/pcmanfm.conf"
 echo "PCManFM Config Path: $PCMANFM_CONF"
 
 if [ -f "$PCMANFM_CONF" ]; then
-    # Modify the existing config file
-    sed -i '/\[volume\]/,/\[/{s/mount_open=1/mount_open=0/}' "$PCMANFM_CONF"
+    # Check if the mount_open line exists
+    if grep -q "mount_open=" "$PCMANFM_CONF"; then
+        # Modify the existing line
+        sed -i '/\[volume\]/,/\[/{s/mount_open=1/mount_open=0/}' "$PCMANFM_CONF"
+    else
+        # Add the mount_open line if it doesn't exist
+        sed -i '/\[volume\]/a mount_open=0' "$PCMANFM_CONF"
+    fi
 else
     # Create the config file if it doesn't exist
     mkdir -p "$USER_HOME/.config/pcmanfm/LXDE-pi"
