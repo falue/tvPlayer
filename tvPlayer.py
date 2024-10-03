@@ -8,20 +8,6 @@ from time import sleep
 from natsort import natsorted
 import random
 
-""" 
-TODO
-- shift+[q] closes only the program
-- test install rpi3
-- test has sound on hdmi? TEST ON TV IN WORKSHOP -> nope
-- test install rpi4
-- double click startt file works?
-- REFACTOR
-- CLEAN UP
-- clean README
-- upload zip to telefabi.ch
-- install on all raspis
- """
-
 # Customizing
 tv_animations = True  # show number of channels top right
 tv_white_noise_on_channel_change = True  # white noise in between channel switching
@@ -31,7 +17,6 @@ tv_channel_offset = 1  # display higher channel nr than actually available
 window_width = 0
 window_height = 0
 tv_channel = 0
-# playing = False
 filelist = []
 inpoints = []
 mpv_process = None  # Global variable to track the running mpv process
@@ -67,7 +52,6 @@ def player_init():
         'mpv', '--idle', '--loop-file', '--fs', '--quiet',
         '--no-input-terminal', '--input-ipc-server=' + ipc_socket_path, '--wid=' + str(window_id)
     ]
-    
     # Execute the command and store the process
     mpv_process = subprocess.Popen(command)
 
@@ -198,8 +182,6 @@ def toggle_black_screen():
         # Set brightness to -100 to black out the screen
         set_brightness(-100)
         pause()
-    
-    # Toggle the state
     is_black_screen = not is_black_screen
 
 def check_keypresses():
@@ -246,7 +228,6 @@ def check_keypresses():
                 toggle_black_screen()
             elif event.key == pygame.K_c:
                 print("keypress [c]")
-                # FIXME:
                 switch_video_fitting()
             elif event.key == pygame.K_i and pygame.key.get_mods() & pygame.KMOD_SHIFT:
                 print("keypress [SHIFT] + [i]")
@@ -311,7 +292,6 @@ def go_to_channel(number):
             print("show show_blank_screen in between")
             toggle_black_screen()
             sleep(.2)
-            #toggle_black_screen()
         image_path = os.path.join(script_dir, 'assets', 'channel_numbers', f'{tv_channel + tv_channel_offset}.bgra')
         display_image(image_path, 1, window_width-210, 20, 210,150, 2.0)
 
@@ -330,7 +310,7 @@ def play_file(file, inpoint=0.0):
         subprocess.call(command, shell=True)
 
     current_file = file
-    play()  # if paused, resume anyways FIXME: makes file stutter if playing already
+    play()  # if paused, resume anyways
 
 def play():
     global ipc_socket_path
@@ -339,8 +319,6 @@ def play():
         command = 'echo \'{"command": ["set_property", "pause", false]}\' | socat - UNIX-CONNECT:' + ipc_socket_path + ' > /dev/null 2>&1'
         subprocess.call(command, shell=True)
         print("Video playing.")
-    # elif is_paused is False:
-    #     print("Video is already playing.")
 
 def pause():
     global ipc_socket_path
@@ -409,7 +387,6 @@ def get_mpv_property(property_name):
     else:
         print("mpv IPC socket not found.")
         return None
-
 
 def get_current_video_position():
     time_pos = get_mpv_property("time-pos")
