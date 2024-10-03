@@ -242,6 +242,9 @@ def check_keypresses():
             elif event.key == pygame.K_ESCAPE:
                 print("keypress [ESC]")
                 toggle_fullscreen()
+            elif event.key == pygame.K_q and pygame.key.get_mods() & pygame.KMOD_SHIFT:
+                print("keypress [SHIFT] + [q]")
+                close_program()
             elif event.key == pygame.K_q:
                 print("keypress [q]")
                 shutdown()
@@ -505,6 +508,12 @@ def display_image(image_path, overlay_id, x, y, width, height, display_duration=
 def update_inpoints():
     global inpoints
     inpoints = [0] * len(filelist)
+
+def close_program():
+    print("Close the program..")
+    print("..goodbye!")
+    pygame.quit()  # Closes the Pygame window
+    sys.exit()     # Exits the Python program
 
 def shutdown():
     try:

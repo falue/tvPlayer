@@ -2,10 +2,12 @@
 WIP.
 
 ## things to do to get this up and running
-1. run the install script to:
+1. run the install `sudo bash install.sh` script to:
+    - apt-get update
     - install dependencies
-    - run `python tvPlayer.py` on autostart
-    - disable window "removable medium is inserted"
+    - run `python3 tvPlayer.py` on autostart
+    - disable window "removable medium is inserted" [BUG!]
+    - create a desktop shortcut to the program
 ```
 bash install.sh
 ```
