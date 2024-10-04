@@ -184,7 +184,7 @@ def toggle_black_screen():
         pause()
     is_black_screen = not is_black_screen
 
-def cycle_green_screen():
+def cycle_green_screen(direction):
     global current_green_index, current_file
     max_green_templates = 19
 
@@ -192,9 +192,11 @@ def cycle_green_screen():
     # if coming from another channel show the green thats was selected lastly
     green_path = os.path.join(script_dir, 'assets', 'greenscreen', f'{current_green_index+1}.png')
     if current_file == green_path:
-        current_green_index += 1
+        current_green_index += direction
+        if current_green_index < 0:
+            current_green_index = max_green_templates
         if current_green_index > max_green_templates:
-            current_green_index = 1
+            current_green_index = 0
         # Change path to new file
         green_path = os.path.join(script_dir, 'assets', 'greenscreen', f'{current_green_index+1}.png')
     play_file(green_path)
@@ -241,9 +243,12 @@ def check_keypresses():
             elif event.key == pygame.K_b:
                 print("keypress [b]")
                 toggle_black_screen()
+            elif event.key == pygame.K_g and pygame.key.get_mods() & pygame.KMOD_SHIFT:
+                print("keypress [SHIFT][ + g]")
+                cycle_green_screen(-1)
             elif event.key == pygame.K_g:
                 print("keypress [g]")
-                cycle_green_screen()
+                cycle_green_screen(1)
             elif event.key == pygame.K_c:
                 print("keypress [c]")
                 cycle_video_fitting()
