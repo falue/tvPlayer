@@ -76,6 +76,17 @@ The alphabetically first file (case insensitive, numbers before letters) is the 
 
 If you want to change the order, rename the files approprietly.
 
+## Channel number and volume bar styling
+If you want to change the appearance of the channel numbers or the volume bar, you have to update the `.bgra` files in `/channel_numbers` and `/volume_bars`.
+
+You can edit the pngs and convert them to `.bgra` files. Change the variable `input_folder` in it first, and then run bash script `python3 png_to_bgra.py` to convert the files.
+
+> *Note*: For simplicity, keep the image sizes the same as they are hard coded. Otherwise you have make changes to the script (change the parameters of both `display_image(...)` instances)
+
+### Transparency
+Complete black pixels will become transparent.
+If you want "black" to show up, use `rgb(1,1,1)`.
+
 # Keyboard controls
 
 | Keypress        | Action                                                 | Note |
