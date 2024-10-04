@@ -41,6 +41,7 @@ Combine it with a [HDMI-to-RCA](https://www.amazon.de/QGECEN-Cinch-Adapter-Konve
 
 > [*] The `autostart.py` script asks if you want to close all other autostarting windows and after a 12s timeout, it starts the main script `tvPlayer.py`. This is because other windows can overlap the tvPlayer and hinder the fullscreen mode. So without a keyboard and doing anything, the player goes to fullscreen on startup.
 
+# File handling
 ## MPV player: Playable media
 The media player [MPV](https://mpv.io/) ([doc wiki](https://github.com/mpv-player/mpv/wiki)) used here can play pretty much everything -
 *however*, filename-endings are fixed to work with `.mp4`, `.mkv`, `.avi`, `.mxf` and `.mov` (case insensitive).
@@ -68,7 +69,14 @@ Manually tested:
 Filetypes for images: `.png`, `.gif`, `.tiff`, `.bmp`
 > *NOTICE:* Does ***not*** work with `.jpg`!
 
-## Keyboard controls
+## File and TV channel order
+The order of the files on the USB device lead the order of the TV channels.
+
+The alphabetically first file (case insensitive, numbers before letters) is the first channel, etc.
+
+If you want to change the order, rename the files approprietly.
+
+# Keyboard controls
 
 | Keypress        | Action                                                 | Note |
 | --------------- | ------------------------------------------------------ | ---- |
