@@ -72,6 +72,7 @@ Filetypes for images: `.png`, `.gif`, `.tiff`, `.bmp`
 | --------------- | ------------------------------------------------------ | ---- |
 | UP              | next channel (next file)                               |      |
 | DOWN            | prev channel (next file)                               |      |
+| [number]        | go to channel nr                                       |      |
 | LEFT            | jump -5 seconds                                        |      |
 | RIGHT           | jump 5 seconds                                         |      |
 | SHIFT and LEFT  | pause and one frame backwards                          |      |
@@ -79,9 +80,10 @@ Filetypes for images: `.png`, `.gif`, `.tiff`, `.bmp`
 | p *or* space    | toggle play / pause                                    |      |
 | ESC             | toggle fullscreen                                      |      |
 | q               | shutdown raspberry pi                                  |      |
-| SHIFT and q     | exit program                                           |      |
+| Q (SHIFT and q) | exit program                                           |      |
 | b               | toggle black screen                                    |      |
-| g               | cycle through green screens                            |      |
+| g               | cycle through green screens →                          |      |
+| G (SHIFT and g) | cycle through green screens ←                          |      |
 | c               | video fitting (contain, stretch or cover)              |      |
 | i               | set inpoint (where the file starts to play)            |      |
 | I (SHIFT and i) | clear inpoint on this video                            |      |
@@ -91,6 +93,3 @@ Filetypes for images: `.png`, `.gif`, `.tiff`, `.bmp`
 | .               | increase video brightness by 5%                        |      |
 | +               | reduce volume by 10%                                   |      |
 | -               | increase volume by 10%                                 |      |
-| number          | go to channel nr                                       |      |
-| else            | ignored                                                |      |
-
