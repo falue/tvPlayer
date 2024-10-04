@@ -521,6 +521,7 @@ def main():
 
     while True:
         get_window_size()
+        pygame.display.set_caption()  ## force focus on pygame for mpv steals keypresses
         check_keypresses()
 
         # Update file list if USB is inserted or removed
