@@ -144,11 +144,8 @@ def set_brightness(value):
 
 def adjust_video_brightness(value):
     global brightness
-    brightness += value
-    if brightness < -100:
-        brightness = -100
-    if brightness >0:
-        brightness = 0
+    # Clamp brightness between -100 and 0
+    brightness = max(-100, min(0, brightness + value))
     set_brightness(brightness)
 
 def set_volume(value):
@@ -165,11 +162,8 @@ def set_volume(value):
 
 def adjust_volume(value):
     global volume
-    volume += value
-    if volume < 0:
-        volume = 0
-    if volume > 100:
-        volume = 100
+    # Clamp volume between 0 and 100
+    volume = max(0, min(100, volume + value))
     set_volume(volume)
 
 def toggle_black_screen():
@@ -187,16 +181,12 @@ def toggle_black_screen():
 def cycle_green_screen(direction):
     global current_green_index, current_file
     max_green_templates = 19
-
     # Only increase green index when already showing green
     # if coming from another channel show the green thats was selected lastly
     green_path = os.path.join(script_dir, 'assets', 'greenscreen', f'{current_green_index+1}.png')
     if current_file == green_path:
-        current_green_index += direction
-        if current_green_index < 0:
-            current_green_index = max_green_templates
-        if current_green_index > max_green_templates:
-            current_green_index = 0
+        # Wrap around index
+        current_green_index = (current_green_index + direction) % (max_green_templates + 1)
         # Change path to new file
         green_path = os.path.join(script_dir, 'assets', 'greenscreen', f'{current_green_index+1}.png')
     play_file(green_path)
@@ -299,11 +289,8 @@ def go_to_channel(number):
     if(len(filelist) == 0):
         return
 
-    if number >= len(filelist):
-        number = 0
-    if number < 0:
-        number = len(filelist) - 1
-
+    # Wrap around channel
+    number %= len(filelist)
     tv_channel = number
 
     if tv_animations:
