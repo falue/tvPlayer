@@ -42,6 +42,9 @@ def pygame_init():
     window_info = pygame.display.get_wm_info()
     window_id = window_info['window']  # Get the window ID for embedding mpv
 
+    pygame.event.set_grab(True)  # Capture all input events, otherwise on
+                                 # peppermintOs they are captured by mpv player
+
 
 def player_init():
     global mpv_process, window_id, ipc_socket_path
