@@ -19,6 +19,8 @@ Control it with a wireless keyboard and your actress ort actor can press what th
 - Change the brightness of the video to match exposure times of the camera.
 - If everythings lost, theres a [green screen](assets/greenscreen/) button
 
+![screencapture.gif](assets/screencapture.gif)
+
 # Hardware
 Tested successfully on Raspberry 4 (Debian bullseye).
 
