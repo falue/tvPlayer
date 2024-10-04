@@ -266,9 +266,12 @@ def check_keypresses():
             elif event.key == pygame.K_PLUS or (event.key == pygame.K_1 and pygame.key.get_mods() & pygame.KMOD_SHIFT) or pygame.key.name(event.key) == "[+]":
                 print("keypress [+] More volume")
                 adjust_volume(10)
-            elif pygame.K_0 <= event.key <= pygame.K_9:
-                print("keypress [number] "+ pygame.key.name(event.key))
+            if pygame.K_0 <= event.key <= pygame.K_9:
+                print(f"keypress [number] {pygame.key.name(event.key)}")
                 go_to_channel(event.key - pygame.K_0 - 1)  # -1 because pressing 1 should play file on key 0 not file key nr 1
+            if pygame.K_KP0 <= event.key <= pygame.K_KP9:
+                print(f"keypress [number@numpad] {event.key}")
+                go_to_channel(event.key - pygame.K_KP0 - 1)  # -1 because pressing 1 should play file on key 0 not file key nr 1
             else:
                 print("other key: "+ pygame.key.name(event.key))
 
