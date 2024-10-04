@@ -30,14 +30,16 @@ Combine it with a [HDMI-to-RCA](https://www.amazon.de/QGECEN-Cinch-Adapter-Konve
 1. Clone this repo `git clone https://github.com/falue/tvPlayer`
 2. run the install script `sudo bash install.sh` to:
     - apt-get update
-    - install dependencies (Packages: *mpv*, *socat*; Python: *pygame*, *natsort*)
-    - auto-run `python3 tvPlayer.py` on autostart
+    - install dependencies (Packages: *mpv*, *socat*, *wmctrl*; Python: *pygame*, *natsort*)
+    - auto-run `python3 autostart.py` on autostart[*]
     - ~~disable window "removable medium is inserted"~~ [BUG!]
     - create a desktop shortcut to the program
 3. Disable (move/remove) **autostart file for Eddy-G** (if available) from folder `~/.config/autostart`
-4. Set **audio output** to HDMI (right click on audio in toolbar,c hoose HDMI)
-5. disable pop up window "**removable medium is inserted**": Open any folder > `Edit` > `Preferences` > `Volume Management` > uncheck `Show availabler options for removable media when they are inserted`
+4. Set **audio output** to HDMI (right click on audio in toolbar, choose HDMI)
+5. disable pop up window "**removable medium is inserted**": Open any folder > `Edit` > `Preferences` > `Volume Management` > uncheck `Show available options for removable media when they are inserted`
 6. Insert USB, start watching TV.
+
+> [*] The `autostart.py` script asks if you want to close all other autostarting windows and after a 12s timeout, it starts the main script `tvPlayer.py`. This is because other windows can overlap the tvPlayer and hinder the fullscreen mode. So without a keyboard and doing anything, the player goes to fullscreen on startup.
 
 ## MPV player: Playable media
 The media player [MPV](https://mpv.io/) ([doc wiki](https://github.com/mpv-player/mpv/wiki)) used here can play pretty much everything -
