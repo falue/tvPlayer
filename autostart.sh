@@ -24,14 +24,45 @@ close_all_visible_windows() {
     done
 }
 
-# Display a Zenity dialog with a countdown and options
-zenity --question --timeout=12 --width=450 --title="Start tvPlayer?" --text="Do you want to close all applications and start tvPlayer? \nAutostart in 12 seconds.." --ok-label="Start tvPlayer, close everything else" --cancel-label="Ignore"
+# Display a Zenity dialog
+WINDOW_WIDTH=450  # Width of the Zenity dialog
+zenity --question \
+    --timeout=12 \
+    --width=$WINDOW_WIDTH \
+    --title="Dialog tvPlayer-autostart" \
+    --text="Do you want to close all applications and start tvPlayer? \nAutostart in 12 seconds.." \
+    --ok-label="Start tvPlayer, close everything else" \
+    --cancel-label="Ignore" &
 
-# Get the exit status of Zenity dialog
+# Give Zenity some time to start
+sleep .5  # increase the sleep duration if necessary
+
+# Get the Zenity window ID by matching the class "zenity.Zenity"
+# ZENITY_WINDOW_ID=$(wmctrl -lx | grep "Dialog tvPlayer-autostart" | awk '{print $1}')
+ZENITY_WINDOW_ID=$(wmctrl -lx | grep "zenity.Zenity" | awk '{print $1}')
+
+# Check if the Zenity window ID was found
+if [ -n "$ZENITY_WINDOW_ID" ]; then
+    # Get screen resolution using xrandr
+    SCREEN_WIDTH=$(xrandr | grep '*' | awk '{print $1}' | cut -d'x' -f1)
+    
+    if [ -n "$SCREEN_WIDTH" ]; then
+        # Calculate the X coordinate to center the window horizontally
+        X_POS=$(( (SCREEN_WIDTH - WINDOW_WIDTH) / 2 ))
+        
+        # Move the Zenity window to center horizontally and 75px from the top
+        wmctrl -i -r "$ZENITY_WINDOW_ID" -e 0,$X_POS,75,-1,-1
+        echo "Zenity window moved to $X_POS, 75."
+    else
+        echo "Error: Screen width not found. Zenity window will not be moved."
+    fi
+else
+    echo "Zenity window ID not found. Skipping window move."
+fi
+
+# Wait for Zenity to finish and get the exit status
+wait $!
 response=$?
-
-# Path to the .desktop file
-desktop_file="/home/pi/Desktop/tvPlayer.desktop"
 
 # Response handling:
 if [ "$response" -eq 0 ] || [ "$response" -eq 5 ]; then
@@ -48,6 +79,5 @@ if [ "$response" -eq 0 ] || [ "$response" -eq 5 ]; then
     python3 "$script_dir/tvPlayer.py" &
 
 else
-    # Cancel clicked, do nothing
     echo "Cancel clicked, doing nothing."
 fi
