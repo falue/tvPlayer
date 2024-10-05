@@ -36,10 +36,9 @@ Combine it with a [HDMI-to-RCA](https://www.amazon.de/QGECEN-Cinch-Adapter-Konve
     - auto-run `python3 autostart.py` on autostart[*]
     - ~~disable window "removable medium is inserted"~~ [BUG!]
     - create a desktop shortcut to the program
-3. Disable (move/remove) **autostart file for Eddy-G** (if available) from folder `~/.config/autostart`
-4. Set **audio output** to HDMI (right click on audio in toolbar, choose HDMI)
-5. disable pop up window "**removable medium is inserted**": Open any folder > `Edit` > `Preferences` > `Volume Management` > uncheck `Show available options for removable media when they are inserted`
-6. Insert USB, start watching TV.
+3. Set **audio output** to HDMI (right click on audio in toolbar, choose HDMI)
+4. disable pop up window "**removable medium is inserted**": Open any folder > `Edit` > `Preferences` > `Volume Management` > uncheck `Show available options for removable media when they are inserted`
+5. Insert USB, start watching TV.
 
 > [*] The `autostart.py` script asks if you want to close all other autostarting windows and after a 12s timeout, it starts the main script `tvPlayer.py`. This is because other windows can overlap the tvPlayer and hinder the fullscreen mode. So without a keyboard and doing anything, the player goes to fullscreen on startup.
 
