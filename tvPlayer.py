@@ -129,7 +129,7 @@ def get_window_size():
 def show_white_noise():  # (duration)
     global current_file
     # Launch mpv to play the video if  not already playing
-    white_noise_path = os.path.join(script_dir, 'assets', 'white_noise.mp4')
+    white_noise_path = os.path.join(script_dir, 'assets', 'white_noise', 'white_noise.mp4')
     if not current_file == white_noise_path:
         play_file(white_noise_path)
 
