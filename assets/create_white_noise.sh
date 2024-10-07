@@ -1,64 +1,103 @@
 #!/bin/bash
 
 # Variables
-WIDTH=300
-HEIGHT=168
+WIDTH=300  # Frame width
+HEIGHT=168  # Frame height
 DURATION=5
 FRAMES=$((DURATION * 25))  # Assuming 25 frames per second
-PIXELS=$((WIDTH * HEIGHT))  # Number of pixels per frame
-BYTES_PER_CALL=16000        # Maximum number of bytes per API call
-CHUNKS=$((PIXELS * 1))      # Total bytes per frame (1 byte per pixel for grayscale)
-API_URL="https://www.random.org/cgi-bin/randbyte?nbytes="
-TEMP_DIR="white_noise/_temp"  # Updated to use white_noise/_temp directory
-DELAY=2  # Delay between API calls in seconds
+PIXELS=$((WIDTH * HEIGHT))  # Number of pixels per frame (1 byte per pixel)
+BYTES_PER_FRAME=$PIXELS     # Each frame will use exactly one pixel per byte
+RANDOM_DATA_FILES=(./white_noise/data/2024-09-01.bin ./white_noise/data/2024-09-02.bin ./white_noise/data/2024-09-03.bin ./white_noise/data/2024-09-04.bin ./white_noise/2024-09-05.bin ./white_noise/2024-09-06.bin)
+TEMP_DIR="white_noise/_temp"  # Directory to store temp frames
+TOTAL_BYTES_EXTRACTED=0       # Track total number of bytes extracted
 
 # Create the white_noise/_temp directory if it doesn't exist
 mkdir -p $TEMP_DIR
 
-# Function to fetch random data in chunks from random.org
-fetch_random_bytes() {
-    local required_bytes=$1
-    local output_file=$2
+# Function to get file size in a cross-platform way
+get_file_size() {
+    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        stat --format="%s" "$1"  # Linux stat
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+        stat -f"%z" "$1"  # macOS stat
+    else
+        echo "Unsupported OS."
+        exit 1
+    fi
+}
 
-    > $output_file  # Create or empty the file
+# Function to extract random bytes from the list of files
+extract_random_bytes() {
+    local output_file=$1
+    local bytes_needed=$2
+    local bytes_extracted=0
 
-    # Fetch bytes in chunks of 16,000 until the required bytes are collected
-    while [ $required_bytes -gt 0 ]; do
-        local bytes_to_fetch=$((required_bytes > BYTES_PER_CALL ? BYTES_PER_CALL : required_bytes))
-        echo "Fetching $bytes_to_fetch bytes..."
+    > "$output_file"  # Create or empty the file
 
-        RESPONSE=$(curl -s "${API_URL}${bytes_to_fetch}&format=h")
-        
-        if [[ $RESPONSE == *"quota"* ]]; then
-            echo "API quota for today exhausted. Exiting..."
-            exit 1  # Stop the script if the daily quota is exhausted
-        elif [ -n "$RESPONSE" ]; then
-            echo "$RESPONSE" | xxd -r -p >> $output_file
-        else
-            echo "Failed to fetch random bytes. Retrying in $DELAY seconds..."
-            sleep $DELAY
+    for data_file in "${RANDOM_DATA_FILES[@]}"; do
+        if [[ ! -f "$data_file" ]]; then
+            echo "Random data file not found: $data_file"
+            continue
         fi
 
-        required_bytes=$((required_bytes - bytes_to_fetch))
-        sleep $DELAY  # Add delay between requests to avoid hitting speed limits
+        # Get the size of the current file
+        available_bytes=$(get_file_size "$data_file")
+        bytes_to_read=$((bytes_needed - bytes_extracted))
+
+        # If the current file has enough bytes, read from it
+        if (( available_bytes > TOTAL_BYTES_EXTRACTED )); then
+            available_from_file=$((available_bytes - TOTAL_BYTES_EXTRACTED))
+            if (( available_from_file >= bytes_to_read )); then
+                dd if="$data_file" of="$output_file" bs=1 skip=$TOTAL_BYTES_EXTRACTED count=$bytes_to_read status=none
+                TOTAL_BYTES_EXTRACTED=$((TOTAL_BYTES_EXTRACTED + bytes_to_read))
+                return  # All needed bytes have been extracted
+            else
+                dd if="$data_file" of="$output_file" bs=1 skip=$TOTAL_BYTES_EXTRACTED count=$available_from_file status=none
+                bytes_extracted=$((bytes_extracted + available_from_file))
+                TOTAL_BYTES_EXTRACTED=0  # Reset counter for the next file
+            fi
+        fi
     done
+
+    if (( bytes_extracted < bytes_needed )); then
+        echo "Not enough data available in the provided files."
+        exit 1
+    fi
 }
 
 # Generate each frame
 for ((i = 0; i < $FRAMES; i++)); do
     echo "Generating frame $((i + 1))..."
-    
-    # Fetch random bytes and store them in a raw file
-    fetch_random_bytes $CHUNKS $TEMP_DIR/frame_$i.raw
+
+    # Extract the random bytes for the current frame
+    extract_random_bytes "$TEMP_DIR/$(printf "%03d" $i).raw" $BYTES_PER_FRAME
 
     # Convert raw data into PNG (grayscale)
-    ffmpeg -f rawvideo -pixel_format gray -video_size ${WIDTH}x${HEIGHT} -i $TEMP_DIR/frame_$i.raw $TEMP_DIR/frame_$i.png
+    ffmpeg -f rawvideo -pixel_format gray -video_size ${WIDTH}x${HEIGHT} -i $TEMP_DIR/$(printf "%03d" $i).raw $TEMP_DIR/$(printf "%03d" $i).png
 done
 
-# Use ffmpeg to stitch PNG images into a video
-ffmpeg -framerate 25 -i "$TEMP_DIR/frame_%d.png" -c:v libx264 -pix_fmt yuv420p noise.mp4
+# Check if all PNG files are present and readable before stitching them into a video
+FRAME_LIST=""
+for ((i = 0; i < $FRAMES; i++)); do
+    FILE="$TEMP_DIR/$(printf "%03d" $i).png"
+    if [[ -f "$FILE" && -r "$FILE" ]]; then
+        FRAME_LIST+="$FILE|"
+    else
+        echo "Skipping missing or unreadable file: $FILE"
+    fi
+done
+
+# Remove the last '|' from the list of frames
+FRAME_LIST=${FRAME_LIST%|}
+
+# Use ffmpeg to stitch PNG images into a video, skipping missing frames
+if [[ -n "$FRAME_LIST" ]]; then
+    ffmpeg -y -i "concat:$FRAME_LIST" -c:v libx264 -pix_fmt yuv420p white_noise/noise.mp4
+else
+    echo "No frames were found to create a video."
+fi
 
 # Clean up: delete the temporary directory and its contents
-rm -rf $TEMP_DIR
+# rm -rf $TEMP_DIR
 
 echo "White noise video created as noise.mp4 and temporary files cleaned up."
