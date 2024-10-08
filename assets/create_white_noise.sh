@@ -7,7 +7,20 @@ DURATION=5  # Duration in seconds
 FRAMES=$((DURATION * 25))  # Assuming 25 frames per second
 PIXELS=$((WIDTH * HEIGHT))  # Number of pixels per frame (1 byte per pixel)
 BYTES_PER_FRAME=$PIXELS     # Each frame will use exactly one pixel per byte
-RANDOM_DATA_FILES=(./white_noise/data/2024-09-01.bin ./white_noise/data/2024-09-02.bin ./white_noise/data/2024-09-03.bin ./white_noise/data/2024-09-04.bin ./white_noise/2024-09-05.bin ./white_noise/2024-09-06.bin)
+RANDOM_DATA_FILES=(
+    ./white_noise/data/2024-09-01.bin
+    ./white_noise/data/2024-09-02.bin
+    ./white_noise/data/2024-09-03.bin
+    ./white_noise/data/2024-09-04.bin
+    ./white_noise/data/2024-09-05.bin
+    ./white_noise/data/2024-09-06.bin
+    ./white_noise/data/2024-09-07.bin
+    ./white_noise/data/2024-09-08.bin
+    ./white_noise/data/2024-09-09.bin
+    ./white_noise/data/2024-09-10.bin
+    ./white_noise/data/2024-09-11.bin
+    ./white_noise/data/2024-09-12.bin
+)
 TEMP_DIR="white_noise/_temp"  # Directory to store temp frames
 TOTAL_BYTES_EXTRACTED=0       # Track total number of bytes extracted
 AUDIO_FILE="$TEMP_DIR/white_noise_audio.wav"  # Path for generated white noise audio
