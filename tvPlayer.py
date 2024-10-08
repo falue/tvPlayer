@@ -156,7 +156,7 @@ def set_volume(value):
         print(f"Set volume to {value}")
         if tv_animations:
             image_path = os.path.join(script_dir, 'assets', 'volume_bars', f'volume_{value}.bgra')
-            display_image(image_path, 2, int(window_width/2-800),window_height-175, 1600,150, 1.0)
+            display_image(image_path, 2, int(window_width/2-800),window_height-225, 1600,150, 1.0)
     else:
         print("mpv IPC socket not found.")
 
@@ -306,7 +306,7 @@ def go_to_channel(number):
             toggle_black_screen()
             sleep(.2)
         image_path = os.path.join(script_dir, 'assets', 'channel_numbers', f'{tv_channel + tv_channel_offset}.bgra')
-        display_image(image_path, 1, window_width-210, 20, 210,150, 2.0)
+        display_image(image_path, 1, window_width-315,50, 210,150, 2.0)
 
     play_file(filelist[number], inpoints[number])
 
