@@ -1,15 +1,16 @@
 #!/bin/bash
 
 # Variables
-WIDTH=300  # Frame width
-HEIGHT=168  # Frame height
-DURATION=5
+WIDTH=400  # Frame width
+HEIGHT=300  # Frame height
+DURATION=5  # Duration in seconds
 FRAMES=$((DURATION * 25))  # Assuming 25 frames per second
 PIXELS=$((WIDTH * HEIGHT))  # Number of pixels per frame (1 byte per pixel)
 BYTES_PER_FRAME=$PIXELS     # Each frame will use exactly one pixel per byte
 RANDOM_DATA_FILES=(./white_noise/data/2024-09-01.bin ./white_noise/data/2024-09-02.bin ./white_noise/data/2024-09-03.bin ./white_noise/data/2024-09-04.bin ./white_noise/2024-09-05.bin ./white_noise/2024-09-06.bin)
 TEMP_DIR="white_noise/_temp"  # Directory to store temp frames
 TOTAL_BYTES_EXTRACTED=0       # Track total number of bytes extracted
+AUDIO_FILE="$TEMP_DIR/white_noise_audio.wav"  # Path for generated white noise audio
 
 # Create the white_noise/_temp directory if it doesn't exist
 mkdir -p $TEMP_DIR
@@ -90,14 +91,17 @@ done
 # Remove the last '|' from the list of frames
 FRAME_LIST=${FRAME_LIST%|}
 
-# Use ffmpeg to stitch PNG images into a video, skipping missing frames
+# Generate white noise audio
+ffmpeg -y -filter_complex "anoisesrc=color=white:r=44100:duration=$DURATION,pan=stereo|c0=c0|c1=c0" -c:a pcm_s16le $AUDIO_FILE
+
+# Use ffmpeg to stitch PNG images into a video, skipping missing frames and adding audio
 if [[ -n "$FRAME_LIST" ]]; then
-    ffmpeg -y -i "concat:$FRAME_LIST" -c:v libx264 -pix_fmt yuv420p white_noise/noise.mp4
+    ffmpeg -y -i "concat:$FRAME_LIST" -i "$AUDIO_FILE" -c:v libx264 -pix_fmt yuv420p -c:a aac -shortest white_noise/white_noise.mp4
 else
     echo "No frames were found to create a video."
 fi
 
 # Clean up: delete the temporary directory and its contents
-# rm -rf $TEMP_DIR
+rm -rf $TEMP_DIR
 
-echo "White noise video created as noise.mp4 and temporary files cleaned up."
+echo "White noise video with audio created as white_noise.mp4 and temporary files cleaned up."
