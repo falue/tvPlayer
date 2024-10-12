@@ -97,9 +97,9 @@ If you want "black" to show up, use `rgb(1,1,1)`.
 
 | Keypress        | Action                                   | Note |
 | --------------- | ---------------------------------------- | ---- |
-| LEFT            | prev channel                             | aka "next file" on USB drive |
-| RIGHT           | next channel                             | aka "next file" on USB drive |
-| [number]        | go to channel nr                         |      |
+| LEFT            | prev channel                             | aka "previous file" on USB drive (alphabetically) |
+| RIGHT           | next channel                             | aka "next file" on USB drive (alphabetically) |
+| [number]        | go to channel nr [number]                |      |
 | UP              | jump +5 seconds                          |      |
 | SHIFT+UP        | pause and jump one frame forwards        |      |
 | DOWN            | jump -5 seconds                          |      |
@@ -107,15 +107,15 @@ If you want "black" to show up, use `rgb(1,1,1)`.
 | p *or* space    | toggle play / pause                      |      |
 | ESC             | toggle fullscreen                        |      |
 | q               | shutdown raspberry pi                    |      |
-| Q (SHIFT+q  )   | exit program                             |      |
-| b               | toggle black screen                      | Also pauses video when entering black screen, plays the video when exiting black screen      |
-| g               | cycle through green screens →            | Available [chroma screens](assets/greenscreen/):<br>Green, Blue, Black, Grey, White<br>Each with 3 different tracking marker arrangements and one blank one.      |
-| G (SHIFT+g  )   | cycle through green screens ←           |      |
+| Q (SHIFT+q)     | exit program                             |      |
+| b               | toggle black screen                      | Also pauses the current video when entering black screen, resumes video when exiting black screen      |
+| g               | cycle through green screens →            | Available [chroma screens](assets/greenscreen/):<br>Green, Blue, Black, Grey, White<br>Each with 3 different tracking marker arrangements and one without.      |
+| G (SHIFT+g)     | cycle through green screens ←           |      |
 | c               | video fitting                           | "Contain", "stretch" or "cover"     |
 | i               | set inpoint                             | Set where the file starts to play when chaning channels     |
-| I (SHIFT+i  )   | clear inpoint on this video             |      |
-| a               | toggle tv-animations | *pause in between channel changes*, *channel number*, *vol bars*      |
-| w               | show white noise | if tv-animations: toggle color of pause in between channel changes: *white noise* or *black*  |
+| I (SHIFT+i)     | clear inpoint on this video             |      |
+| a               | toggle tv-animations | Animations: show *channel number*, show *pause in between channel changes*, show *vol bars*      |
+| w               | toggle white noise | if tv-animations: *pause in between channel changes* is **white** noise or **black**  |
 | ,               | reduce video brightness by 5%           |      |
 | .               | increase video brightness by 5%         |      |
 | +               | reduce volume by 10%                    |      |
