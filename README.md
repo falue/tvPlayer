@@ -70,6 +70,9 @@ Manually tested:
 Filetypes for images: `.png`, `.gif`, `.tiff`, `.bmp`
 > *NOTICE:* Does ***not*** work with `.jpg`!
 
+## USB drive format
+Works with `EXFAT`. Not tested any other.
+
 ## File and TV channel order
 The order of the files on the USB device lead the order of the TV channels.
 
@@ -92,23 +95,23 @@ If you want "black" to show up, use `rgb(1,1,1)`.
 
 | Keypress        | Action                                                 | Note |
 | --------------- | ------------------------------------------------------ | ---- |
-| UP              | next channel (next file)                               |      |
-| DOWN            | prev channel (next file)                               |      |
+| LEFT            | prev channel (next file)                               |      |
+| RIGHT           | next channel (next file)                               |      |
 | [number]        | go to channel nr                                       |      |
-| LEFT            | jump -5 seconds                                        |      |
-| RIGHT           | jump 5 seconds                                         |      |
-| SHIFT and LEFT  | pause and one frame backwards                          |      |
-| SHIFT and RIGHT | pause and one frame forwards                           |      |
+| DOWN            | jump -5 seconds                                        |      |
+| SHIFT+DOWN      | pause and jump one frame backwards                     |      |
+| UP              | jump 5 seconds                                         |      |
+| SHIFT+UP        | pause and jump one frame forwards                      |      |
 | p *or* space    | toggle play / pause                                    |      |
 | ESC             | toggle fullscreen                                      |      |
 | q               | shutdown raspberry pi                                  |      |
-| Q (SHIFT and q) | exit program                                           |      |
+| Q (SHIFT+q  )   | exit program                                           |      |
 | b               | toggle black screen                                    |      |
 | g               | cycle through green screens →                          |      |
-| G (SHIFT and g) | cycle through green screens ←                          |      |
+| G (SHIFT+g  )   | cycle through green screens ←                          |      |
 | c               | video fitting (contain, stretch or cover)              |      |
 | i               | set inpoint (where the file starts to play)            |      |
-| I (SHIFT and i) | clear inpoint on this video                            |      |
+| I (SHIFT+i  )   | clear inpoint on this video                            |      |
 | a               | toggle tv-animations (*pause in between channel changes*, *channel number*, *vol bars*) |      |
 | w               | if tv-animations: toggle color of pause in between channel changes: *white noise* or *black*  |      |
 | ,               | reduce video brightness by 5%                          |      |

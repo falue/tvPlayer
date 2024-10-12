@@ -200,24 +200,24 @@ def check_keypresses():
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_UP:
                 print("keypress [UP]")
-                next_channel()
+                seek(5)
             elif event.key == pygame.K_DOWN:
                 print("keypress [DOWN]")
-                prev_channel()
-            elif event.key == pygame.K_RIGHT and pygame.key.get_mods() & pygame.KMOD_SHIFT:
-                print("keypress [SHIFT] + [RIGHT]")
+                seek(-5)
+            elif event.key == pygame.K_UP and pygame.key.get_mods() & pygame.KMOD_SHIFT:
+                print("keypress [SHIFT] + [UP]")
                 pause()
                 seek(.04)  # smaller than 0.2s: frame-by-frame
-            elif event.key == pygame.K_RIGHT:
-                print("keypress [RIGHT]")
-                seek(5)
-            elif event.key == pygame.K_LEFT and pygame.key.get_mods() & pygame.KMOD_SHIFT:
-                print("keypress [SHIFT] + [LEFT]")
+            elif event.key == pygame.K_DOWN and pygame.key.get_mods() & pygame.KMOD_SHIFT:
+                print("keypress [SHIFT] + [DOWN]")
                 pause()
                 seek(-.04)  # smaller than 0.2s: frame-by-frame
+            elif event.key == pygame.K_RIGHT:
+                print("keypress [RIGHT]")
+                next_channel()
             elif event.key == pygame.K_LEFT:
                 print("keypress [LEFT]")
-                seek(-5)
+                prev_channel()
             elif event.key == pygame.K_SPACE or event.key == pygame.K_p:
                 print("keypress [p]")
                 toggle_play()
