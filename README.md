@@ -70,6 +70,8 @@ Manually tested:
 Filetypes for images: `.png`, `.gif`, `.tiff`, `.bmp`
 > *NOTICE:* Does ***not*** work with `.jpg`!
 
+> *NOTICE:* `.png` does ***not*** work with color mode: "indexed colors"!
+
 ## USB drive format
 Works with `EXFAT`. Not tested any other.
 
@@ -93,28 +95,28 @@ If you want "black" to show up, use `rgb(1,1,1)`.
 
 # Keyboard controls
 
-| Keypress        | Action                                                 | Note |
-| --------------- | ------------------------------------------------------ | ---- |
-| LEFT            | prev channel (next file)                               |      |
-| RIGHT           | next channel (next file)                               |      |
-| [number]        | go to channel nr                                       |      |
-| DOWN            | jump -5 seconds                                        |      |
-| SHIFT+DOWN      | pause and jump one frame backwards                     |      |
-| UP              | jump 5 seconds                                         |      |
-| SHIFT+UP        | pause and jump one frame forwards                      |      |
-| p *or* space    | toggle play / pause                                    |      |
-| ESC             | toggle fullscreen                                      |      |
-| q               | shutdown raspberry pi                                  |      |
-| Q (SHIFT+q  )   | exit program                                           |      |
-| b               | toggle black screen                                    |      |
-| g               | cycle through green screens →                          |      |
-| G (SHIFT+g  )   | cycle through green screens ←                          |      |
-| c               | video fitting (contain, stretch or cover)              |      |
-| i               | set inpoint (where the file starts to play)            |      |
-| I (SHIFT+i  )   | clear inpoint on this video                            |      |
-| a               | toggle tv-animations (*pause in between channel changes*, *channel number*, *vol bars*) |      |
-| w               | if tv-animations: toggle color of pause in between channel changes: *white noise* or *black*  |      |
-| ,               | reduce video brightness by 5%                          |      |
-| .               | increase video brightness by 5%                        |      |
-| +               | reduce volume by 10%                                   |      |
-| -               | increase volume by 10%                                 |      |
+| Keypress        | Action                                   | Note |
+| --------------- | ---------------------------------------- | ---- |
+| LEFT            | prev channel                             | aka "next file" on USB drive |
+| RIGHT           | next channel                             | aka "next file" on USB drive |
+| [number]        | go to channel nr                         |      |
+| UP              | jump +5 seconds                          |      |
+| SHIFT+UP        | pause and jump one frame forwards        |      |
+| DOWN            | jump -5 seconds                          |      |
+| SHIFT+DOWN      | pause and jump one frame backwards       |      |
+| p *or* space    | toggle play / pause                      |      |
+| ESC             | toggle fullscreen                        |      |
+| q               | shutdown raspberry pi                    |      |
+| Q (SHIFT+q  )   | exit program                             |      |
+| b               | toggle black screen                      | Also pauses video when entering black screen, plays the video when exiting black screen      |
+| g               | cycle through green screens →            | Available [chroma screens](assets/greenscreen/):<br>Green, Blue, Black, Grey, White<br>Each with 3 different tracking marker arrangements and one blank one.      |
+| G (SHIFT+g  )   | cycle through green screens ←           |      |
+| c               | video fitting                           | "Contain", "stretch" or "cover"     |
+| i               | set inpoint                             | Set where the file starts to play when chaning channels     |
+| I (SHIFT+i  )   | clear inpoint on this video             |      |
+| a               | toggle tv-animations | *pause in between channel changes*, *channel number*, *vol bars*      |
+| w               | show white noise | if tv-animations: toggle color of pause in between channel changes: *white noise* or *black*  |
+| ,               | reduce video brightness by 5%           |      |
+| .               | increase video brightness by 5%         |      |
+| +               | reduce volume by 10%                    |      |
+| -               | increase volume by 10%                  |      |
