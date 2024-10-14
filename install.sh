@@ -43,7 +43,7 @@ cat > "$DESKTOP_SHORTCUT_FILE" << EOL
 [Desktop Entry]
 Type=Application
 Name=tvPlayer
-Exec=python3 $EXCEC_PATH_MAIN
+Exec=sudo python3 $EXCEC_PATH_MAIN
 Icon=$FULL_ICON_PATH
 X-LXDE-Startup=true
 EOL
@@ -63,7 +63,7 @@ cat > "$AUTOSTART_FILE_PATH" << EOL
 [Desktop Entry]
 Type=Application
 Name=tvPlayer-startdialog
-Exec=bash $EXEC_AUTOSTART_PATH
+Exec=sudo bash $EXEC_AUTOSTART_PATH
 Icon=$FULL_ICON_PATH
 X-LXDE-Startup=true
 EOL
