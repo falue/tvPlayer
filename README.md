@@ -73,7 +73,10 @@ Filetypes for images: `.png`, `.gif`, `.tiff`, `.bmp`
 > *NOTICE:* `.png` does ***not*** work with color mode: "indexed colors"!
 
 ## USB drive format
-Works with `EXFAT`. Not tested any other.
+Works with `FAT32`.
+`EXFAT` has worked before and does now, but you have to run the thing with sudo all the way.
+
+Not tested any other.
 
 ## File and TV channel order
 The order of the files on the USB device lead the order of the TV channels.
