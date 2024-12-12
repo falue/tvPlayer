@@ -19,9 +19,9 @@ window_height = 0
 tv_channel = 0
 filelist = []
 inpoints = []
+video_fittings = []
 mpv_process = None  # Global variable to track the running mpv process
 fitting_modes = ['contain', 'stretch', 'cover']  # List of fitting modes
-current_fitting_index = 0  # Start with 'contain'
 is_black_screen = False
 current_file = ""
 ipc_socket_path = '/tmp/mpv_socket'
@@ -64,7 +64,7 @@ def system_init():
     detect_usb_root()
     print("Get filelist")
     update_files_from_usb()
-    reset_inpoints()
+    reset_inpoints_video_fitting()
     print(f"Initial filelist ({len(filelist)}):")
     print("  " + ("\n  ".join(f"Ch.{i+1} > {os.path.basename(file)}" for i, file in enumerate(filelist))))
     get_window_size()
@@ -86,7 +86,7 @@ def detect_usb_root():
     print(f"script_dir detected: {script_dir}")
 
 def update_files_from_usb():
-    global filelist #, inpoints
+    global filelist, video_fittings #, inpoints
     filelist = []  # Resets always
 
     if os.path.exists(usb_root):
@@ -105,21 +105,25 @@ def update_files_from_usb():
                     # Skip this device if it's no longer accessible
                     print(f"Permission denied while accessing: {device_path}. Ignoring this device.")
                     filelist = []
+                    video_fittings = []
                     continue
                 except FileNotFoundError:
                     print(f"Device {device_path} was removed. Ignoring this device.")
                     filelist = []
+                    video_fittings = []
                     continue
                 except Exception as e:
                     print(f"Another error occurred: {e}. Ignoring this device.")
                     filelist = []
+                    video_fittings = []
                     continue
         # Sort list naturally - 1.mp4, 2.mp4, 11.mp4 instead of 1.mp4, 11.mp4, 2.mp4
         filelist = natsorted(filelist, key=lambda x: x.lower())  # case insensitive
 
-def reset_inpoints():
-    global inpoints
+def reset_inpoints_video_fitting():
+    global inpoints, video_fittings
     inpoints = [0] * len(filelist)  # Create a list of zeros with the same length as filelist
+    video_fittings = [0] * len(filelist)  # Create a list of zeros with the same length as filelist
 
 def get_window_size():
     global screen, window_width, window_height
@@ -241,7 +245,7 @@ def check_keypresses():
                 cycle_green_screen(1)
             elif event.key == pygame.K_c:
                 print("keypress [c]")
-                cycle_video_fitting()
+                set_video_fitting()
             elif event.key == pygame.K_i and pygame.key.get_mods() & pygame.KMOD_SHIFT:
                 print("keypress [SHIFT] + [i]")
                 clear_inpoints(tv_channel)
@@ -308,6 +312,7 @@ def go_to_channel(number):
         image_path = os.path.join(script_dir, 'assets', 'channel_numbers', f'{tv_channel + tv_channel_offset}.bgra')
         display_image(image_path, 1, window_width-315,50, 210,150, 2.0)
 
+    set_video_fitting(video_fittings[tv_channel])  # Set fit for this channel
     play_file(filelist[number], inpoints[number])
 
     if tv_animations and not tv_white_noise_on_channel_change:
@@ -421,11 +426,17 @@ def toggle_white_noise_on_channel_change():
     status_animations = "" if tv_animations else " (but animations are OFF so not showing breaks)"
     print(f"Pauses between channel change is {status}{status_animations}")
 
-def cycle_video_fitting():
-    global current_fitting_index, window_height, ipc_socket_path
-    # Update fitting mode index
-    current_fitting_index = (current_fitting_index + 1) % len(fitting_modes)
-    new_mode = fitting_modes[current_fitting_index]
+# List of fitting modes
+def set_video_fitting(fitting_index=None):
+    global tv_channel, window_height, ipc_socket_path
+
+    if fitting_index is None:  # If no fitting_index is specified, cycle through the modes
+        print((video_fittings[tv_channel] + 1) % len(fitting_modes))
+        video_fittings[tv_channel] = (video_fittings[tv_channel] + 1) % len(fitting_modes)
+        new_mode = fitting_modes[video_fittings[tv_channel]]
+    else:  # Set mode explicitly
+        video_fittings[tv_channel] = fitting_index
+        new_mode = fitting_modes[fitting_index]
 
     if os.path.exists(ipc_socket_path):
         if new_mode == 'contain':
@@ -437,19 +448,20 @@ def cycle_video_fitting():
         elif new_mode == 'cover':
             # Cover mode: calculate zoom based on video height and window height
             keepaspect = "yes"
-            
+            video_height = get_mpv_property("height")
             # Get current video height and window height
             video_height = get_mpv_property("height")
+            zoom_factor = window_height / video_height - 0.91
             # window_height = get_mpv_property("osd-dimensions/h")
             # FIXME: Trial and error value 0.91. Mathematically correct would be 1.0
             #        But somehow I get letterboxes with 1.0
-            zoom_factor = window_height / video_height - 0.91
 
-        zoom_command = f'echo \'{{"command": ["set_property", "video-zoom", "{zoom_factor}"]}}\' | socat - UNIX-CONNECT:' + ipc_socket_path + ' > /dev/null 2>&1'
-        command = f'echo \'{{"command": ["set_property", "keepaspect", "{keepaspect}"]}}\' | socat - UNIX-CONNECT:' + ipc_socket_path + ' > /dev/null 2>&1'
+        zoom_command = f'echo \'{{"command": ["set_property", "video-zoom", "{zoom_factor}"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
+        aspect_command = f'echo \'{{"command": ["set_property", "keepaspect", "{keepaspect}"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
+        
         subprocess.call(zoom_command, shell=True)
-        subprocess.call(command, shell=True)
-        print(f"Toggled video fitting mode: {new_mode} with zoom {zoom_factor}")
+        subprocess.call(aspect_command, shell=True)
+        print(f"Video fitting set to: {new_mode} with zoom {zoom_factor}")
     else:
         print("mpv IPC socket not found.")
 
@@ -530,8 +542,8 @@ def main():
             update_inpoints()
             print(f"filelist updated ({len(filelist)}):")
             print("  " + ("\n  ".join(f"Ch.{i+1} > {os.path.basename(file)}" for i, file in enumerate(filelist))))
-            print("inpoints updated:")
-            reset_inpoints()
+            print("inpoints and video fitting reset:")
+            reset_inpoints_video_fitting()
             # start first video
             go_to_channel(0)
 
