@@ -153,7 +153,7 @@ def set_brightness(value):
 
 def adjust_video_brightness(value):
     global brightness
-    # Clamp brightness between -100 and 0
+    # Clamp brightness between -100 (full transparent) and 0 (full visible)
     brightness = max(-100, min(0, brightness + value))
     set_brightness(brightness)
 
