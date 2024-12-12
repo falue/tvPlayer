@@ -9,8 +9,10 @@ from natsort import natsorted
 import random
 
 # Customizing
-tv_animations = True  # show number of channels top right
-tv_white_noise_on_channel_change = True  # white noise in between channel switching
+show_tv_gui = True  # show number of channels top right and volume bar
+show_whitenoise_channel_change = True  # white noise in between channel switching
+white_noise_duration = 0.1  # duration which shows white noise when changing channels, in seconds
+gui_display_duration = 2.0  # Duration of the gui numbers stays alive, minus the white_noise_duration, in seconds
 tv_channel_offset = 1  # display higher channel nr than actually available
 
 # Leave me be
@@ -165,7 +167,7 @@ def set_volume(value):
         command = f'echo \'{{"command": ["set_property", "volume", {value}]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
         subprocess.call(command, shell=True)
         print(f"Set volume to {value}")
-        if tv_animations:
+        if show_tv_gui:
             image_path = os.path.join(script_dir, 'assets', 'volume_bars', f'volume_{value}.bgra')
             display_image(image_path, 2, int(window_width/2-800),window_height-225, 1600,150, 1.0)
     else:
@@ -267,7 +269,7 @@ def check_keypresses():
                 adjust_video_brightness(-5)
             elif event.key == pygame.K_a:
                 print("keypress [a]")
-                toggle_tv_animations()
+                toggle_show_tv_gui()
             elif event.key == pygame.K_w and pygame.key.get_mods() & pygame.KMOD_SHIFT:
                 print("keypress [SHIFT] + [w]")
                 cycle_white_noise()
@@ -310,13 +312,14 @@ def go_to_channel(number):
     number %= len(filelist)
     tv_channel = number
 
-    if tv_animations:
-        if tv_white_noise_on_channel_change:
-            print("show_white_noise in between")
-            show_white_noise()
-            sleep(0.1)
+    if show_tv_gui:
         image_path = os.path.join(script_dir, 'assets', 'channel_numbers', f'{tv_channel + tv_channel_offset}.bgra')
-        display_image(image_path, 1, window_width-315,50, 210,150, 2.0)
+        display_image(image_path, 1, window_width-315,50, 210,150, gui_display_duration)
+
+    if show_whitenoise_channel_change:
+        print("show_white_noise in between")
+        show_white_noise()
+        sleep(white_noise_duration)
 
     set_video_fitting(video_fittings[tv_channel])  # Set fit for this channel
     play_file(filelist[number], inpoints[number])
@@ -414,22 +417,19 @@ def get_current_video_position():
         return time_pos
     return 0
 
-def toggle_tv_animations():
-    global tv_animations, tv_white_noise_on_channel_change
-    tv_animations = not tv_animations
-    status = "ON" if tv_animations else "OFF"
-    status_animations = "white noise" if tv_white_noise_on_channel_change else "black"
-    print(f"TV animations are {status} with breaks showing {status_animations}")
+def toggle_show_tv_gui():
+    global show_tv_gui
+    show_tv_gui = not show_tv_gui
+    print(f"TV animations are {show_tv_gui}")
     
 def toggle_white_noise_on_channel_change():
-    global tv_white_noise_on_channel_change, tv_animations
-    tv_white_noise_on_channel_change = not tv_white_noise_on_channel_change
-    status = "white noise" if tv_white_noise_on_channel_change else "black"
-    status_animations = "" if tv_animations else " (but animations are OFF so not showing breaks)"
-    print(f"Pauses between channel change is {status}{status_animations}")
+    global show_whitenoise_channel_change
+    show_whitenoise_channel_change = not show_whitenoise_channel_change
+    print(f"White noise between channel change is {show_whitenoise_channel_change}")
 
 def cycle_white_noise():
-    global white_noise_index
+    global white_noise_index, show_whitenoise_channel_change
+    show_whitenoise_channel_change = True
     white_noise_index += 1
     if white_noise_index > len(white_noise_files)-1:
         white_noise_index = 0
@@ -551,7 +551,7 @@ def main():
 
         # If no files found, show white noise or blank screen
         if not filelist:
-            if tv_animations:
+            if show_tv_gui:
                 print("No files - show white noise - wait for USB")
                 show_white_noise()
             else:
