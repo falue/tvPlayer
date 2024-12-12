@@ -135,6 +135,11 @@ def show_white_noise():  # (duration)
     # Launch mpv to play the video if  not already playing
     white_noise_path = os.path.join(script_dir, 'assets', 'white_noise', 'white_noise.mp4')
     if not current_file == white_noise_path:
+        # Set white noise to always stretch
+        zoom_command = f'echo \'{{"command": ["set_property", "video-zoom", "0"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
+        aspect_command = f'echo \'{{"command": ["set_property", "keepaspect", "no"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
+        subprocess.call(zoom_command, shell=True)
+        subprocess.call(aspect_command, shell=True)
         play_file(white_noise_path)
 
 def set_brightness(value):
