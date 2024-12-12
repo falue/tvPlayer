@@ -315,19 +315,11 @@ def go_to_channel(number):
             print("show_white_noise in between")
             show_white_noise()
             sleep(0.1)
-        else:
-            print("show show_blank_screen in between")
-            toggle_black_screen()
-            sleep(.2)
         image_path = os.path.join(script_dir, 'assets', 'channel_numbers', f'{tv_channel + tv_channel_offset}.bgra')
         display_image(image_path, 1, window_width-315,50, 210,150, 2.0)
 
     set_video_fitting(video_fittings[tv_channel])  # Set fit for this channel
     play_file(filelist[number], inpoints[number])
-
-    if tv_animations and not tv_white_noise_on_channel_change:
-        # restore black screen
-        toggle_black_screen()
 
 def play_file(file, inpoint=0.0):
     global mpv_process, current_file, ipc_socket_path
