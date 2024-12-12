@@ -119,6 +119,7 @@ If you want "black" to show up, use `rgb(1,1,1)`.
 | I (SHIFT+i)     | clear inpoint on this video             |      |
 | a               | toggle tv-animations | Animations: show *channel number*, show *pause in between channel changes*, show *vol bars*      |
 | w               | toggle white noise | if tv-animations: *pause in between channel changes* is **white** noise or **black**  |
+| W (SHIFT+w)     | cycle through white noise styles        |      |
 | ,               | reduce video brightness by 5%           |      |
 | .               | increase video brightness by 5%         |      |
 | +               | reduce volume by 10%                    |      |

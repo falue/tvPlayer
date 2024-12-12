@@ -23,6 +23,8 @@ video_fittings = []
 mpv_process = None  # Global variable to track the running mpv process
 fitting_modes = ['contain', 'stretch', 'cover']  # List of fitting modes
 is_black_screen = False
+white_noise_files = ["white_noise_1.mp4","white_noise_2.mp4","white_noise_3.mp4","white_noise_4.mp4",]
+white_noise_index = 0
 current_file = ""
 ipc_socket_path = '/tmp/mpv_socket'
 brightness = 0  # 0 means 100% brightness
@@ -133,7 +135,7 @@ def get_window_size():
 def show_white_noise():  # (duration)
     global current_file
     # Launch mpv to play the video if  not already playing
-    white_noise_path = os.path.join(script_dir, 'assets', 'white_noise', 'white_noise.mp4')
+    white_noise_path = os.path.join(script_dir, 'assets', 'white_noise', white_noise_files[white_noise_index])
     if not current_file == white_noise_path:
         # Set white noise to always stretch
         zoom_command = f'echo \'{{"command": ["set_property", "video-zoom", "0"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
@@ -266,6 +268,9 @@ def check_keypresses():
             elif event.key == pygame.K_a:
                 print("keypress [a]")
                 toggle_tv_animations()
+            elif event.key == pygame.K_w and pygame.key.get_mods() & pygame.KMOD_SHIFT:
+                print("keypress [SHIFT] + [w]")
+                cycle_white_noise()
             elif event.key == pygame.K_w:
                 print("keypress [w]")
                 toggle_white_noise_on_channel_change()
@@ -430,6 +435,14 @@ def toggle_white_noise_on_channel_change():
     status = "white noise" if tv_white_noise_on_channel_change else "black"
     status_animations = "" if tv_animations else " (but animations are OFF so not showing breaks)"
     print(f"Pauses between channel change is {status}{status_animations}")
+
+def cycle_white_noise():
+    global white_noise_index
+    white_noise_index += 1
+    if white_noise_index > len(white_noise_files)-1:
+        white_noise_index = 0
+    print("white_noise_index>", white_noise_index)
+    show_white_noise()
 
 # List of fitting modes
 def set_video_fitting(fitting_index=None):
