@@ -451,27 +451,19 @@ def set_video_fitting(fitting_index=None):
     if os.path.exists(ipc_socket_path):
         if new_mode == 'contain':
             keepaspect = "yes"
-            zoom_factor = 0
+            panscan = 0  # Default, no cropping (black bars remain to preserve aspect ratio).
         elif new_mode == 'stretch':
             keepaspect = "no"
-            zoom_factor = 0
+            panscan = 0  # Default, no cropping (black bars remain to preserve aspect ratio).
         elif new_mode == 'cover':
-            # Cover mode: calculate zoom based on video height and window height
             keepaspect = "yes"
-            video_height = get_mpv_property("height")
-            # Get current video height and window height
-            video_height = get_mpv_property("height")
-            zoom_factor = window_height / video_height - 0.91
-            # window_height = get_mpv_property("osd-dimensions/h")
-            # FIXME: Trial and error value 0.91. Mathematically correct would be 1.0
-            #        But somehow I get letterboxes with 1.0
-
-        zoom_command = f'echo \'{{"command": ["set_property", "video-zoom", "{zoom_factor}"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
+            panscan = 1  # Crops enough to completely fill the screen (removes all black bars).
+            
+        panscan_command = f'echo \'{{"command": ["set_property", "panscan", "{panscan}"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
+        subprocess.call(panscan_command, shell=True)
         aspect_command = f'echo \'{{"command": ["set_property", "keepaspect", "{keepaspect}"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
-        
-        subprocess.call(zoom_command, shell=True)
         subprocess.call(aspect_command, shell=True)
-        print(f"Video fitting set to: {new_mode} with zoom {zoom_factor}")
+        print(f"Video fitting set to: {new_mode} with pan-scan {panscan}")
     else:
         print("mpv IPC socket not found.")
 
