@@ -111,15 +111,15 @@ If you want "black" to show up, use `rgb(1,1,1)`.
 | ESC             | toggle fullscreen                        |      |
 | q               | shutdown raspberry pi                    |      |
 | Q (SHIFT+q)     | exit program                             |      |
-| b               | toggle black screen                      | Also pauses the current video when entering black screen, resumes video when exiting black screen      |
-| g               | cycle through green screens →            | Available [chroma screens](assets/greenscreen/):<br>Green, Blue, Black, Grey, White<br>Each with 3 different tracking marker arrangements and one without.      |
+| b               | toggle black screen on or off            | Also pauses the current video when entering black screen, resumes video when exiting black screen      |
+| g               | cycle through green screens →            | Available [chroma screens](assets/greenscreen/):<br>Green, Blue, Black, Grey, White<br>Each with 3 different tracking marker arrangements and one without. |
 | G (SHIFT+g)     | cycle through green screens ←           |      |
-| c               | video fitting                           | "Contain", "stretch" or "cover"     |
-| i               | set inpoint                             | Set where the file starts to play when chaning channels     |
+| c               | video fitting                           | "Contain", "stretch" or "cover" |
+| i               | set inpoint                             | Set where this video starts to play when chaning channels |
 | I (SHIFT+i)     | clear inpoint on this video             |      |
-| a               | toggle tv-animations | Animations: show *channel number*, show *pause in between channel changes*, show *vol bars*      |
-| w               | toggle white noise | if tv-animations: *pause in between channel changes* is **white** noise or **black**  |
-| W (SHIFT+w)     | cycle through white noise styles        |      |
+| a               | toggle tv GUI on or off                 | Show green channel numbers and volume bar |
+| w               | toggle white noise on or off between channel changes |      |
+| W (SHIFT+w)     | cycle through 4 different white noise effects | Also activates white noise between channel change and shows current white noise selection |
 | ,               | reduce video brightness by 5%           |      |
 | .               | increase video brightness by 5%         |      |
 | +               | reduce volume by 10%                    |      |
