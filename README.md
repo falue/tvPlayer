@@ -121,6 +121,9 @@ If you want "black" to show up, use `rgb(1,1,1)`.
 | a               | toggle tv GUI on or off                 | Show green channel numbers and volume bar |
 | w               | toggle white noise on or off between channel changes |      |
 | W (SHIFT+w)     | cycle through 4 different white noise effects | Also activates white noise between channel change and shows current white noise selection |
+| j               | decrease playback speed                 | Min. 0.01&times; |
+| k               | normalize playback speed                |      |
+| l               | increase playback speed                 | Up to 3&times; |
 | ,               | reduce video brightness by 5%           |      |
 | .               | increase video brightness by 5%         |      |
 | +               | reduce volume by 10%                    |      |

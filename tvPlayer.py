@@ -22,6 +22,7 @@ tv_channel = 0
 filelist = []
 inpoints = []
 video_fittings = []
+video_speeds = []
 mpv_process = None  # Global variable to track the running mpv process
 fitting_modes = ['contain', 'stretch', 'cover']  # List of fitting modes
 is_black_screen = False
@@ -91,7 +92,7 @@ def detect_usb_root():
     print(f"script_dir detected: {script_dir}")
 
 def update_files_from_usb():
-    global filelist, video_fittings, has_av_channel, tv_channel_offset, tv_channel
+    global filelist, video_fittings, video_speeds, has_av_channel, tv_channel_offset, tv_channel
     filelist = []  # Resets always
     av_channel_path = ''
 
@@ -116,18 +117,21 @@ def update_files_from_usb():
                     print(f"Permission denied while accessing: {device_path}. Ignoring this device.")
                     filelist = []
                     video_fittings = []
+                    video_speeds = []
                     has_av_channel = False
                     continue
                 except FileNotFoundError:
                     print(f"Device {device_path} was removed. Ignoring this device.")
                     filelist = []
                     video_fittings = []
+                    video_speeds = []
                     has_av_channel = False
                     continue
                 except Exception as e:
                     print(f"Another error occurred: {e}. Ignoring this device.")
                     filelist = []
                     video_fittings = []
+                    video_speeds = []
                     has_av_channel = False
                     continue
         # Sort list naturally - 1.mp4, 2.mp4, 11.mp4 instead of 1.mp4, 11.mp4, 2.mp4
@@ -139,9 +143,10 @@ def update_files_from_usb():
             has_av_channel = False  # This makes no sense but its needed to show white noise when no USB is inserted
 
 def reset_inpoints_video_fitting():
-    global inpoints, video_fittings
+    global inpoints, video_fittings, video_speeds
     inpoints = [0] * len(filelist)  # Create a list of zeros with the same length as filelist
     video_fittings = [0] * len(filelist)  # Create a list of zeros with the same length as filelist
+    video_speeds = [1.0] * len(filelist)  # Create a list of zeros with the same length as filelist
 
 def get_window_size():
     global screen, window_width, window_height
@@ -154,8 +159,10 @@ def show_white_noise():  # (duration)
     white_noise_path = os.path.join(script_dir, 'assets', 'white_noise', white_noise_files[white_noise_index])
     if not current_file == white_noise_path:
         # Set white noise to always stretch
+        speed_command = f'echo \'{{"command": ["set_property", "speed", "1.0"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
         zoom_command = f'echo \'{{"command": ["set_property", "video-zoom", "0"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
         aspect_command = f'echo \'{{"command": ["set_property", "keepaspect", "no"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
+        subprocess.call(speed_command, shell=True)
         subprocess.call(zoom_command, shell=True)
         subprocess.call(aspect_command, shell=True)
         play_file(white_noise_path)
@@ -174,6 +181,29 @@ def adjust_video_brightness(value):
     # Clamp brightness between -100 (full transparent) and 0 (full visible)
     brightness = max(-100, min(0, brightness + value))
     set_brightness(brightness)
+
+def adjust_video_speed(value):
+    global video_speeds
+    # Clamp speed
+    if value == 'reset':
+        video_speeds[tv_channel] = 1.0
+    else:
+        # Apply exponential scaling for fine control at low speeds and larger steps at high speeds
+        adjustment_factor = 2 ** value
+        video_speeds[tv_channel] *= adjustment_factor
+        # Clamp the speed between 0.05 and 3.0 (above 3.0 A/V desynchronization due to hardware limitations)
+        video_speeds[tv_channel] = max(0.01, min(3.0, video_speeds[tv_channel]))
+
+    set_playback_speed(video_speeds[tv_channel])
+
+def set_playback_speed(value):
+    global ipc_socket_path
+    if os.path.exists(ipc_socket_path):
+        command = f'echo \'{{"command": ["set_property", "speed", {value}]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
+        subprocess.call(command, shell=True)
+        print(f"Set playback speed to {value}")
+    else:
+        print("mpv IPC socket not found.")
 
 def set_volume(value):
     global ipc_socket_path
@@ -281,6 +311,15 @@ def check_keypresses():
             elif event.key == pygame.K_COMMA:
                 print("keypress [,] Less brightness")
                 adjust_video_brightness(-5)
+            elif event.key == pygame.K_j:
+                print("keypress [j] Playback speed slower")
+                adjust_video_speed(-.1)
+            elif event.key == pygame.K_k:
+                print("keypress [k] Playback speed reset")
+                adjust_video_speed("reset")
+            elif event.key == pygame.K_l:
+                print("keypress [l] Playback speed faster")
+                adjust_video_speed(+.1)
             elif event.key == pygame.K_a:
                 print("keypress [a]")
                 toggle_show_tv_gui()
@@ -347,6 +386,7 @@ def go_to_channel(number):
         sleep(white_noise_duration)
 
     set_video_fitting(video_fittings[tv_channel])  # Set fit for this channel
+    set_playback_speed(video_speeds[tv_channel])   # Set speed for this channel
     play_file(filelist[number], inpoints[number])
 
 def play_file(file, inpoint=0.0):
