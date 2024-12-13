@@ -78,12 +78,14 @@ Works with `FAT32`.
 
 Not tested any other.
 
-## File and TV channel order
+## Filenames, TV channel order and AV channel
 The order of the files on the USB device lead the order of the TV channels.
 
 The alphabetically first file (case insensitive, numbers before letters) is the first channel, etc.
 
 If you want to change the order, rename the files approprietly.
+
+> *TIP:* If any file name starts with `AV.`(mp4 or any other) its always the channel "zero" and the channel number is shown as **"AV"**.
 
 ## Channel number and volume bar styling
 If you want to change the appearance of the channel numbers or the volume bar, you have to update the `.bgra` files in `/channel_numbers` and `/volume_bars`.
