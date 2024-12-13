@@ -116,22 +116,27 @@ def update_files_from_usb():
                     print(f"Permission denied while accessing: {device_path}. Ignoring this device.")
                     filelist = []
                     video_fittings = []
+                    has_av_channel = False
                     continue
                 except FileNotFoundError:
                     print(f"Device {device_path} was removed. Ignoring this device.")
                     filelist = []
                     video_fittings = []
+                    has_av_channel = False
                     continue
                 except Exception as e:
                     print(f"Another error occurred: {e}. Ignoring this device.")
                     filelist = []
                     video_fittings = []
+                    has_av_channel = False
                     continue
         # Sort list naturally - 1.mp4, 2.mp4, 11.mp4 instead of 1.mp4, 11.mp4, 2.mp4
         filelist = natsorted(filelist, key=lambda x: x.lower())  # case insensitive
 
         if has_av_channel:
             filelist.append(av_channel_path)
+        else:
+            has_av_channel = False  # This makes no sense but its needed to show white noise when no USB is inserted
 
 def reset_inpoints_video_fitting():
     global inpoints, video_fittings
