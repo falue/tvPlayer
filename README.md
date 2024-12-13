@@ -67,10 +67,9 @@ Manually tested:
 - [x] `.mkv` "4k UHD" h264 yuv420p works (but stuttering on raspberry pi4 @8gb) 
 
 ## Also works with *images*!
-Filetypes for images: `.png`, `.gif`, `.tiff`, `.bmp`
-> *NOTICE:* Does ***not*** work with `.jpg`!
+Filetypes for images: `.jpg`, `.jpeg`, `.png`, `.gif`, `.tiff`, `.bmp`.
 
-> *NOTICE:* `.png` does ***not*** work with color mode: "indexed colors"!
+> *NOTICE:* `.png` does ***not*** work with color mode: "*indexed colors*"!
 
 ## USB drive format
 Works with `FAT32`.
