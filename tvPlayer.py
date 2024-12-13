@@ -4,7 +4,7 @@ import pygame
 import subprocess
 import threading
 import json
-from time import sleep
+import time
 from natsort import natsorted
 import random
 
@@ -62,7 +62,7 @@ def player_init():
     mpv_process = subprocess.Popen(command)
 
     print("Wait for the socket to be created before proceeding..")
-    sleep(3)
+    time.sleep(3)
 
 def system_init():
     global filelist, inpoints, window_width, window_height
@@ -383,7 +383,7 @@ def go_to_channel(number):
     if show_whitenoise_channel_change:
         print("show_white_noise in between")
         show_white_noise()
-        sleep(white_noise_duration)
+        time.sleep(white_noise_duration)
 
     set_video_fitting(video_fittings[tv_channel])  # Set fit for this channel
     set_playback_speed(video_speeds[tv_channel])   # Set speed for this channel
@@ -553,7 +553,7 @@ def display_image(image_path, overlay_id, x, y, width, height, display_duration=
 
     # Function to remove overlay after the duration
     def remove_overlay():
-        sleep(display_duration)
+        time.sleep(display_duration)
         remove_command = f'echo \'{{"command": ["overlay-remove", {overlay_id}]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
         subprocess.call(remove_command, shell=True)
         print(f"Removed overlay ID {overlay_id}")
@@ -623,7 +623,7 @@ def main():
                 print("No files available - show blank screen")
 
         pygame.display.update()
-        sleep(0.1)
+        time.sleep(0.1)
 
 if __name__ == '__main__':
     main()
