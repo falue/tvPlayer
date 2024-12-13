@@ -28,6 +28,7 @@ is_black_screen = False
 white_noise_files = ["white_noise_1.mp4","white_noise_2.mp4","white_noise_3.mp4","white_noise_4.mp4",]
 white_noise_index = 0
 current_file = ""
+has_av_channel = False
 ipc_socket_path = '/tmp/mpv_socket'
 brightness = 0  # 0 means 100% brightness
 volume = 100  # 100 means max loudness
@@ -90,8 +91,9 @@ def detect_usb_root():
     print(f"script_dir detected: {script_dir}")
 
 def update_files_from_usb():
-    global filelist, video_fittings #, inpoints
+    global filelist, video_fittings, has_av_channel, tv_channel_offset, tv_channel
     filelist = []  # Resets always
+    av_channel_path = ''
 
     if os.path.exists(usb_root):
         for device in os.listdir(usb_root):
@@ -104,7 +106,11 @@ def update_files_from_usb():
                             '.png', '.gif', '.tiff', '.bmp'
                         )
                         if file.lower().endswith(allowed_fileendings) and not file.startswith('.'):
-                            filelist.append(os.path.join(device_path, file))
+                            if file.lower().startswith("av."):
+                                has_av_channel = True
+                                av_channel_path = os.path.join(device_path, file)
+                            else:
+                                filelist.append(os.path.join(device_path, file))
                 except PermissionError:
                     # Skip this device if it's no longer accessible
                     print(f"Permission denied while accessing: {device_path}. Ignoring this device.")
@@ -123,6 +129,9 @@ def update_files_from_usb():
                     continue
         # Sort list naturally - 1.mp4, 2.mp4, 11.mp4 instead of 1.mp4, 11.mp4, 2.mp4
         filelist = natsorted(filelist, key=lambda x: x.lower())  # case insensitive
+
+        if has_av_channel:
+            filelist.append(av_channel_path)
 
 def reset_inpoints_video_fitting():
     global inpoints, video_fittings
@@ -321,7 +330,10 @@ def go_to_channel(number):
     tv_channel = number
 
     if show_tv_gui:
-        image_path = os.path.join(script_dir, 'assets', 'channel_numbers', f'{tv_channel + tv_channel_offset}.bgra')
+        channel_to_display = tv_channel + tv_channel_offset
+        if has_av_channel and tv_channel == len(filelist)-1:
+            channel_to_display = "av"
+        image_path = os.path.join(script_dir, 'assets', 'channel_numbers', f'{channel_to_display}.bgra')
         display_image(image_path, 1, window_width-315,50, 210,150, gui_display_duration)
 
     if show_whitenoise_channel_change:
