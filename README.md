@@ -113,8 +113,9 @@ If you want "black" to show up, use `rgb(1,1,1)`.
 | q               | shutdown raspberry pi                    |      |
 | Q (SHIFT+q)     | exit program                             |      |
 | b               | toggle black screen on or off            | Also pauses the current video when entering black screen, resumes video when exiting black screen      |
-| g               | cycle through green screens →            | Available [chroma screens](assets/greenscreen/):<br>Green, Blue, Black, Grey, White<br>Each with 3 different tracking marker arrangements and one without. |
-| G (SHIFT+g)     | cycle through green screens ←           |      |
+| g               | toggle green screen                      | Available [chroma screens](assets/greenscreen/):<br>Green, Blue, Black, Grey, White<br>Each with 3 different tracking marker arrangements and one without. |
+| G (SHIFT+g)     | cycle through green screens →           |      |
+| CTRL + g        | cycle through green screens ←           |      |
 | c               | video fitting                           | "Contain", "stretch" or "cover" |
 | i               | set inpoint                             | Set where this video starts to play when chaning channels |
 | I (SHIFT+i)     | clear inpoint on this video             |      |

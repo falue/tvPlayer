@@ -273,10 +273,15 @@ def cycle_green_screen(direction):
     # if coming from another channel show the green thats was selected lastly
     green_path = os.path.join(script_dir, 'assets', 'greenscreen', f'{current_green_index+1}.png')
     if current_file == green_path:
-        # Wrap around index
-        current_green_index = (current_green_index + direction) % (max_green_templates + 1)
-        # Change path to new file
-        green_path = os.path.join(script_dir, 'assets', 'greenscreen', f'{current_green_index+1}.png')
+        if direction != 0:
+            # Switch to next/prev green img
+            current_green_index = (current_green_index + direction) % (max_green_templates + 1)
+            green_path = os.path.join(script_dir, 'assets', 'greenscreen', f'{current_green_index+1}.png')
+        else:
+            # Play last video file from inpoint
+            play_file(filelist[tv_channel], inpoints[tv_channel])
+            return
+    # Show green screen
     play_file(green_path)
 
 def check_keypresses():
@@ -339,11 +344,14 @@ def check_keypresses():
                 print("keypress [y] pan down")
                 pan(1, "y")
             elif event.key == pygame.K_g and pygame.key.get_mods() & pygame.KMOD_SHIFT:
-                print("keypress [SHIFT]+[g]")
+                print("keypress [SHIFT]+[g] Cycle green screen index+")
+                cycle_green_screen(1)
+            elif event.key == pygame.K_g and pygame.key.get_mods() & pygame.KMOD_CTRL:
+                print("keypress [CTRL]+[g] Cycle green screen index-")
                 cycle_green_screen(-1)
             elif event.key == pygame.K_g:
-                print("keypress [g] Cycle green screen index")
-                cycle_green_screen(1)
+                print("keypress [g] Toggle green screen")
+                cycle_green_screen(0)
             elif event.key == pygame.K_c:
                 print("keypress [c] Set video fitting")
                 set_video_fitting()
