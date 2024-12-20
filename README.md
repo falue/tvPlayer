@@ -45,7 +45,7 @@ Combine it with a [HDMI-to-RCA](https://www.amazon.de/QGECEN-Cinch-Adapter-Konve
 # File handling
 ## MPV player: Playable media
 The media player [MPV](https://mpv.io/) ([doc wiki](https://github.com/mpv-player/mpv/wiki)) used here can play pretty much everything -
-*however*, filename-endings are fixed to work with `.mp4`, `.mkv`, `.avi`, `.mxf` and `.mov` (case insensitive).
+*however*, filename-endings are fixed to work with `.mp4`, `.mkv`, `.avi`, `.mxf`, `.m4v` and `.mov` (case insensitive).
 
 It uses ffmpeg to decode, so the [list of playable media](https://ffmpeg.org/general.html#Supported-File-Formats_002c-Codecs-or-Features) is huge.
 According to the mpv.io website:
