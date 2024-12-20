@@ -124,6 +124,11 @@ If you want "black" to show up, use `rgb(1,1,1)`.
 | j               | decrease playback speed                 | Min. 0.01&times; |
 | k               | normalize playback speed                |      |
 | l               | increase playback speed                 | Up to 3&times; |
+| x               | pan video to the right                  |      |
+| X (SHIFT+x)     | pan video to the left                   |      |
+| y               | pan video downwards                     |      |
+| Y (SHIFT+y)     | pan video upwards                       |      |
+| CTRL + X        | reset pan                               |      |
 | ,               | reduce video brightness by 5%           |      |
 | .               | increase video brightness by 5%         |      |
 | +               | reduce volume by 10%                    |      |

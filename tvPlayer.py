@@ -29,6 +29,7 @@ is_black_screen = False
 white_noise_files = ["white_noise_1.mp4","white_noise_2.mp4","white_noise_3.mp4","white_noise_4.mp4",]
 white_noise_index = 0
 current_file = ""
+pan_offsets = {'x': 0.0, 'y': 0.0, 'x-real': 0, 'y-real': 0}  # Global variables to track the pan offsets
 has_av_channel = False
 ipc_socket_path = '/tmp/mpv_socket'
 brightness = 0  # 0 means 100% brightness
@@ -205,6 +206,36 @@ def set_playback_speed(value):
     else:
         print("mpv IPC socket not found.")
 
+def pan(offset, axis):
+    global pan_offsets, ipc_socket_path
+
+    # Update the pan offset for the specified axis
+    if offset == "reset":
+        pan_offsets[axis] = 0.0
+    else:
+        # video-pan-x = 0.0: No shift.
+        # video-pan-x = 0.5: Shifts the video horizontally by half the displayed video width to the right.
+        # video-pan-y = -0.25: Shifts the video vertically by one-quarter of the displayed video height upwards.
+        pan_offsets[axis] += offset*0.0025
+
+    # Set pixel value for image re-positionning
+    if axis == "x":
+        video_width = get_mpv_property("width")
+        scaling_factor = get_mpv_property("osd-dimensions/w") / video_width
+        real_x = pan_offsets[axis] * video_width * scaling_factor
+        pan_offsets[f"{axis}-real"] = int(real_x)
+    else:
+        video_height = get_mpv_property("height")
+        scaling_factor = get_mpv_property("osd-dimensions/h") / video_height
+        real_y = pan_offsets[axis] * video_height * scaling_factor
+        pan_offsets[f"{axis}-real"] = int(real_y)
+
+    # Send the pan command to MPV
+    pan_property = f"video-pan-{axis}"
+    command = f'echo \'{{"command": ["set_property", "{pan_property}", {pan_offsets[axis]}]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
+    subprocess.call(command, shell=True)
+    print(f"Panned video {axis} to {pan_offsets[axis]:.3f}")
+
 def set_volume(value):
     global ipc_socket_path
     if os.path.exists(ipc_socket_path):
@@ -290,6 +321,22 @@ def check_keypresses():
             elif event.key == pygame.K_b:
                 print("keypress [b]")
                 toggle_black_screen()
+            elif (event.key == pygame.K_x or event.key == pygame.K_y) and pygame.key.get_mods() & pygame.KMOD_CTRL:
+                print("keypress [CTRL]+[x] or [CTRL]+[y] reset pan")
+                pan("reset", "x")
+                pan("reset", "y")
+            elif event.key == pygame.K_x and pygame.key.get_mods() & pygame.KMOD_SHIFT:
+                print("keypress [SHIFT]+[x] pan left")
+                pan(-1, "x")
+            elif event.key == pygame.K_x:
+                print("keypress [x] pan right")
+                pan(1, "x")
+            elif event.key == pygame.K_y and pygame.key.get_mods() & pygame.KMOD_SHIFT:
+                print("keypress [SHIFT]+[y] pan up")
+                pan(-1, "y")
+            elif event.key == pygame.K_y:
+                print("keypress [y] pan down")
+                pan(1, "y")
             elif event.key == pygame.K_g and pygame.key.get_mods() & pygame.KMOD_SHIFT:
                 print("keypress [SHIFT][ + g]")
                 cycle_green_screen(-1)
@@ -541,6 +588,10 @@ def display_image(image_path, overlay_id, x, y, width, height, display_duration=
     if not os.path.exists(image_path):
         print(f"Image file not found: {image_path}")
         return
+    
+    # Correction for panned video
+    x += pan_offsets["x-real"]
+    y += pan_offsets["y-real"]
 
     # Overlay-add command
     stride = width * 4  # BGRA has 4 bytes per pixel
