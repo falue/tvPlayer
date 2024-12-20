@@ -37,6 +37,90 @@ volume = 100  # 100 means max loudness
 active_overlays = {}  # Dictionary to store active overlay threads
 current_green_index = 0
 
+file_settings = {}
+SETTINGS_FILE = "settings.json"
+
+def load_settings():
+    """
+    Load settings from a JSON file and apply them to globals.
+    For file-dependent settings, only load settings for the files in the given filelist.
+    """
+    global white_noise_index, pan_offsets, brightness, volume, current_green_index, show_tv_gui
+    global file_settings, inpoints, video_fittings, video_speeds, tv_channel, show_whitenoise_channel_change
+
+    if not os.path.exists(os.path.join(script_dir, SETTINGS_FILE)):
+        print(f"Settings file {SETTINGS_FILE} not found. Using defaults.")
+        return
+
+    with open(os.path.join(script_dir, SETTINGS_FILE), "r") as f:
+        data = json.load(f)
+
+    # Load general settings
+    general_settings = data.get("general_settings", {})
+    white_noise_index = general_settings.get("white_noise_index", white_noise_index)
+    pan_offsets = general_settings.get("pan_offsets", pan_offsets)
+    brightness = general_settings.get("brightness", brightness)
+    volume = general_settings.get("volume", volume)
+    current_green_index = general_settings.get("current_green_index", current_green_index)
+    tv_channel = general_settings.get("tv_channel", tv_channel)
+    show_tv_gui = general_settings.get("show_tv_gui", show_tv_gui)
+    show_whitenoise_channel_change = general_settings.get("show_whitenoise_channel_change", show_whitenoise_channel_change)
+
+    # Load filelist-dependent settings
+    file_settings = data.get("file_dependent_settings", {})
+    inpoints.clear()
+    video_fittings.clear()
+    video_speeds.clear()
+
+    for filename in filelist:
+        base_filename = os.path.basename(filename)
+        settings = file_settings.get(base_filename, {})
+        inpoints.append(settings.get("inpoints", 0))
+        video_fittings.append(settings.get("video_fittings", 0))
+        video_speeds.append(settings.get("video_speeds", 1.0))
+
+    print("Settings loaded.")
+
+def save_settings():
+    """
+    Save the current settings to a JSON file, preserving settings for files not currently in the filelist.
+    """
+    global filelist, file_settings
+
+    # Load existing settings from file, if any
+    if os.path.exists(os.path.join(script_dir, SETTINGS_FILE)):
+        with open(os.path.join(script_dir, SETTINGS_FILE), "r") as f:
+            data = json.load(f)
+    else:
+        data = {"general_settings": {}, "file_dependent_settings": {}}
+
+    # Update general settings
+    data["general_settings"].update({
+        "white_noise_index": white_noise_index,
+        "pan_offsets": pan_offsets,
+        "brightness": brightness,
+        "volume": volume,
+        "tv_channel": tv_channel,
+        "current_green_index": current_green_index,
+        "show_tv_gui": show_tv_gui,
+        "show_whitenoise_channel_change": show_whitenoise_channel_change,
+    })
+
+    # Add new files or update old ones to file_dependent_settings
+    for i, file in enumerate(filelist):
+        filename = os.path.basename(file)
+        data["file_dependent_settings"][filename] = {
+            "inpoints": inpoints[i],
+            "video_fittings": video_fittings[i],
+            "video_speeds": video_speeds[i],
+        }
+
+    # Save updated settings back to the file
+    with open(os.path.join(script_dir, SETTINGS_FILE), "w") as f:
+        json.dump(data, f, indent=4)
+
+    print(f"Settings saved to {SETTINGS_FILE}.")
+
 def pygame_init():
     global screen, window_id, ipc_socket_path
     # Initialize pygame for keyboard input and fullscreen handling
@@ -77,8 +161,26 @@ def system_init():
     get_window_size()
     print(f"Screen size: {window_width} x {window_height}")
 
-    print("Show first channel / first file")
-    go_to_channel(0)
+    load_settings()
+
+    print("Show first channel / first file or the one that was saved")
+    go_to_channel(tv_channel)
+
+    print("Wait for osd-dimensions")
+    while get_mpv_property("osd-dimensions/w") == None:
+        time.sleep(0.25)
+
+    print("Wait for video width")
+    while get_mpv_property("width") == None:
+        time.sleep(0.25)
+    
+    # Set from load_settings()
+    print(get_mpv_property("osd-dimensions/w"))
+    print(get_mpv_property("width"))
+    pan(pan_offsets["x"], "x")
+    pan(pan_offsets["y"], "y")
+    set_brightness(brightness)
+    set_volume(volume)
 
 def detect_usb_root():
     global usb_root, script_dir
@@ -400,7 +502,8 @@ def check_keypresses():
             else:
                 print("other key: "+ pygame.key.name(event.key))
 
-
+            # Save on any keypress
+            save_settings()
 
 def prev_channel():
     global tv_channel
@@ -671,6 +774,7 @@ def main():
             print("  " + ("\n  ".join(f"Ch.{i+1} > {os.path.basename(file)}" for i, file in enumerate(filelist))))
             print("inpoints and video fitting reset:")
             reset_inpoints_video_fitting()
+            load_settings()
             # start first video
             go_to_channel(0)
 
