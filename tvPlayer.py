@@ -283,43 +283,44 @@ def check_keypresses():
     global tv_channel
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
+            print("Window closed - trigger pygame to quit")
             pygame.quit()
             sys.exit()  # Exit the program when the window is closed
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_UP:
-                print("keypress [UP]")
+                print("keypress [UP] seek +5s")
                 seek(5)
             elif event.key == pygame.K_DOWN:
-                print("keypress [DOWN]")
+                print("keypress [DOWN] seek -5s")
                 seek(-5)
             elif event.key == pygame.K_UP and pygame.key.get_mods() & pygame.KMOD_SHIFT:
-                print("keypress [SHIFT] + [UP]")
+                print("keypress [SHIFT]+[UP] seek +0.04s")
                 pause()
                 seek(.04)  # smaller than 0.2s: frame-by-frame
             elif event.key == pygame.K_DOWN and pygame.key.get_mods() & pygame.KMOD_SHIFT:
-                print("keypress [SHIFT] + [DOWN]")
+                print("keypress [SHIFT]+[DOWN] seek -0.04s")
                 pause()
                 seek(-.04)  # smaller than 0.2s: frame-by-frame
             elif event.key == pygame.K_RIGHT:
-                print("keypress [RIGHT]")
+                print("keypress [RIGHT] next channel")
                 next_channel()
             elif event.key == pygame.K_LEFT:
-                print("keypress [LEFT]")
+                print("keypress [LEFT] prev channel")
                 prev_channel()
             elif event.key == pygame.K_SPACE or event.key == pygame.K_p:
-                print("keypress [p]")
+                print("keypress [p] toggle play")
                 toggle_play()
             elif event.key == pygame.K_ESCAPE:
-                print("keypress [ESC]")
+                print("keypress [ESC] toggle fullscreen")
                 toggle_fullscreen()
             elif event.key == pygame.K_q and pygame.key.get_mods() & pygame.KMOD_SHIFT:
-                print("keypress [SHIFT] + [q]")
+                print("keypress [SHIFT]+[q] close program")
                 close_program()
             elif event.key == pygame.K_q:
-                print("keypress [q]")
+                print("keypress [q] shutdwon computer")
                 shutdown()
             elif event.key == pygame.K_b:
-                print("keypress [b]")
+                print("keypress [b] toggle black screen")
                 toggle_black_screen()
             elif (event.key == pygame.K_x or event.key == pygame.K_y) and pygame.key.get_mods() & pygame.KMOD_CTRL:
                 print("keypress [CTRL]+[x] or [CTRL]+[y] reset pan")
@@ -338,19 +339,19 @@ def check_keypresses():
                 print("keypress [y] pan down")
                 pan(1, "y")
             elif event.key == pygame.K_g and pygame.key.get_mods() & pygame.KMOD_SHIFT:
-                print("keypress [SHIFT][ + g]")
+                print("keypress [SHIFT]+[g]")
                 cycle_green_screen(-1)
             elif event.key == pygame.K_g:
-                print("keypress [g]")
+                print("keypress [g] Cycle green screen index")
                 cycle_green_screen(1)
             elif event.key == pygame.K_c:
-                print("keypress [c]")
+                print("keypress [c] Set video fitting")
                 set_video_fitting()
             elif event.key == pygame.K_i and pygame.key.get_mods() & pygame.KMOD_SHIFT:
-                print("keypress [SHIFT] + [i]")
+                print("keypress [SHIFT]+[i] Clear inpionts")
                 clear_inpoints(tv_channel)
             elif event.key == pygame.K_i:
-                print("keypress [i]")
+                print("keypress [i] set inpoint")
                 set_inpoints(tv_channel)
             elif event.key == pygame.K_PERIOD:
                 print("keypress [.] More brightness")
@@ -368,13 +369,13 @@ def check_keypresses():
                 print("keypress [l] Playback speed faster")
                 adjust_video_speed(+.1)
             elif event.key == pygame.K_a:
-                print("keypress [a]")
+                print("keypress [a] toggle TV GUI")
                 toggle_show_tv_gui()
             elif event.key == pygame.K_w and pygame.key.get_mods() & pygame.KMOD_SHIFT:
-                print("keypress [SHIFT] + [w]")
+                print("keypress [SHIFT]+[w] cycle white noise index")
                 cycle_white_noise()
             elif event.key == pygame.K_w:
-                print("keypress [w]")
+                print("keypress [w] toggle white noise on channel change")
                 toggle_white_noise_on_channel_change()
             elif event.key == pygame.K_MINUS or (event.key == pygame.K_SLASH and pygame.key.get_mods() & pygame.KMOD_SHIFT) or pygame.key.name(event.key) == "[-]":
                 print("keypress [-] Less volume")
@@ -383,10 +384,10 @@ def check_keypresses():
                 print("keypress [+] More volume")
                 adjust_volume(10)
             elif pygame.K_0 <= event.key <= pygame.K_9:
-                print(f"keypress [number] {pygame.key.name(event.key)}")
+                print(f"keypress [number] {pygame.key.name(event.key)} go to channel")
                 go_to_channel(event.key - pygame.K_0 - 1)  # -1 because pressing 1 should play file on key 0 not file key nr 1
             elif pygame.K_KP0 <= event.key <= pygame.K_KP9:
-                print(f"keypress [number@numpad] {event.key}")
+                print(f"keypress [number@numpad] {event.key} go to channel")
                 go_to_channel(event.key - pygame.K_KP0 - 1)  # -1 because pressing 1 should play file on key 0 not file key nr 1
             else:
                 print("other key: "+ pygame.key.name(event.key))
