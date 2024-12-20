@@ -389,18 +389,17 @@ def cycle_green_screen(direction):
 def check_keypresses():
     global tv_channel
     for event in pygame.event.get():
+        """ if event.type == pygame.ACTIVEEVENT:
+            if event.gain == 0:  # Focus lost
+                print("Focus lost. Should we attempt to regain focus...?")
+                #pygame.display.set_mode((0, 0), pygame.FULLSCREEN)  # Regain focus """
+
         if event.type == pygame.QUIT:
             print("Window closed - trigger pygame to quit")
             pygame.quit()
             sys.exit()  # Exit the program when the window is closed
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_UP:
-                print("keypress [UP] seek +5s")
-                seek(5)
-            elif event.key == pygame.K_DOWN:
-                print("keypress [DOWN] seek -5s")
-                seek(-5)
-            elif event.key == pygame.K_UP and pygame.key.get_mods() & pygame.KMOD_SHIFT:
+            if event.key == pygame.K_UP and pygame.key.get_mods() & pygame.KMOD_SHIFT:
                 print("keypress [SHIFT]+[UP] seek +0.04s")
                 pause()
                 seek(.04)  # smaller than 0.2s: frame-by-frame
