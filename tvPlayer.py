@@ -408,6 +408,12 @@ def check_keypresses():
                 print("keypress [SHIFT]+[DOWN] seek -0.04s")
                 pause()
                 seek(-.04)  # smaller than 0.2s: frame-by-frame
+            elif event.key == pygame.K_UP:
+                print("keypress [UP] seek +5s")
+                seek(5)
+            elif event.key == pygame.K_DOWN:
+                print("keypress [DOWN] seek -5s")
+                seek(-5)
             elif event.key == pygame.K_RIGHT:
                 print("keypress [RIGHT] next channel")
                 next_channel()
