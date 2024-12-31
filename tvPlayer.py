@@ -389,6 +389,7 @@ def cycle_green_screen(direction):
 def check_keypresses():
     global tv_channel
     for event in pygame.event.get():
+        save_after_input = True
         """ if event.type == pygame.ACTIVEEVENT:
             if event.gain == 0:  # Focus lost
                 print("Focus lost. Should we attempt to regain focus...?")
@@ -500,9 +501,11 @@ def check_keypresses():
                 go_to_channel(event.key - pygame.K_KP0 - 1)  # -1 because pressing 1 should play file on key 0 not file key nr 1
             else:
                 print("other key: "+ pygame.key.name(event.key))
+                save_after_input = False
 
-            # Save on any keypress
-            save_settings()
+            # Save on any valid keypress
+            if save_after_input:
+                save_settings()
 
 def prev_channel():
     global tv_channel
