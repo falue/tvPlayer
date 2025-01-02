@@ -178,8 +178,6 @@ def system_init():
         time.sleep(0.25)
     
     # Set from load_settings()
-    print(get_mpv_property("osd-dimensions/w"))
-    print(get_mpv_property("width"))
     pan(pan_offsets["x"], "x")
     pan(pan_offsets["y"], "y")
     set_brightness(brightness)
