@@ -36,6 +36,7 @@ brightness = 0  # 0 means 100% brightness
 volume = 100  # 100 means max loudness
 active_overlays = {}  # Dictionary to store active overlay threads
 current_green_index = 0
+zoom_level = 0.0
 
 file_settings = {}
 SETTINGS_FILE = "settings.json"
@@ -45,7 +46,7 @@ def load_settings():
     Load settings from a JSON file and apply them to globals.
     For file-dependent settings, only load settings for the files in the given filelist.
     """
-    global white_noise_index, pan_offsets, brightness, volume, current_green_index, show_tv_gui
+    global white_noise_index, pan_offsets, brightness, volume, current_green_index, show_tv_gui, zoom_level
     global file_settings, inpoints, video_fittings, video_speeds, tv_channel, show_whitenoise_channel_change
 
     if not os.path.exists(os.path.join(script_dir, SETTINGS_FILE)):
@@ -65,6 +66,7 @@ def load_settings():
     tv_channel = general_settings.get("tv_channel", tv_channel)
     show_tv_gui = general_settings.get("show_tv_gui", show_tv_gui)
     show_whitenoise_channel_change = general_settings.get("show_whitenoise_channel_change", show_whitenoise_channel_change)
+    zoom_level = general_settings.get("zoom_level", zoom_level)
 
     # Load filelist-dependent settings
     file_settings = data.get("file_dependent_settings", {})
@@ -104,6 +106,7 @@ def save_settings():
         "current_green_index": current_green_index,
         "show_tv_gui": show_tv_gui,
         "show_whitenoise_channel_change": show_whitenoise_channel_change,
+        "zoom_level": zoom_level,
     })
 
     # Add new files or update old ones to file_dependent_settings
@@ -181,6 +184,7 @@ def system_init():
     pan(pan_offsets["y"], "y")
     set_brightness(brightness)
     set_volume(volume)
+    zoom(zoom_level, True)
 
 def detect_usb_root():
     global usb_root, script_dir
@@ -263,12 +267,28 @@ def show_white_noise():  # (duration)
     if not current_file == white_noise_path:
         # Set white noise to always stretch
         speed_command = f'echo \'{{"command": ["set_property", "speed", "1.0"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
-        zoom_command = f'echo \'{{"command": ["set_property", "video-zoom", "0"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
+        zoom_command = f'echo \'{{"command": ["set_property", "video-zoom", "{zoom_level}"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
         aspect_command = f'echo \'{{"command": ["set_property", "keepaspect", "no"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
         subprocess.call(speed_command, shell=True)
         subprocess.call(zoom_command, shell=True)
         subprocess.call(aspect_command, shell=True)
         play_file(white_noise_path)
+
+def zoom(value, absolute=False):
+    global zoom_level, window_width, window_height
+
+    if absolute:
+        zoom_level = value
+    else:
+        # Clamp zoom_level between -1.0 (very small) and 2.0 (very big)
+        increment = value * (1 + abs(zoom_level))
+        zoom_level = max(-3.0, min(3.0, zoom_level + increment))
+    scale_factor = 2 ** zoom_level
+    print(f"Set zoom to {zoom_level}, scale_factor: ", scale_factor)
+    window_width = int(window_width * scale_factor)   # Scale window size for use of relative positioning with iamges etc
+    window_height = int(window_height * scale_factor) # Scale window size for use of relative positioning with iamges etc
+    zoom_command = f'echo \'{{"command": ["set_property", "video-zoom", "{zoom_level}"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
+    subprocess.call(zoom_command, shell=True)
 
 def set_brightness(value):
     global ipc_socket_path
@@ -464,13 +484,22 @@ def check_keypresses():
                 print("keypress [c] Set video fitting")
                 set_video_fitting()
             elif event.key == pygame.K_i and pygame.key.get_mods() & pygame.KMOD_SHIFT:
-                print("keypress [SHIFT]+[i] Clear inpionts")
+                print("keypress [SHIFT]+[i] Clear inpoints")
                 clear_inpoints(tv_channel)
             elif event.key == pygame.K_i:
                 print("keypress [i] set inpoint")
                 set_inpoints(tv_channel)
+            elif event.key == pygame.K_PERIOD and pygame.key.get_mods() & pygame.KMOD_SHIFT:
+                print("keypress [SHIFT]+[.] Zoom in")
+                zoom(0.01)
+            elif event.key == pygame.K_PERIOD and pygame.key.get_mods() & pygame.KMOD_CTRL:
+                print("keypress [CTRL]+[.] Zoom reset")
+                zoom(0, True)
             elif event.key == pygame.K_PERIOD:
-                print("keypress [.] More brightness")
+                print("keypress [SHIFT]+[.] Zoom out")
+                zoom(-0.01)
+            elif event.key == pygame.K_COMMA and pygame.key.get_mods() & pygame.KMOD_SHIFT:
+                print("keypress [SHIFT]+[,] More brightness")
                 adjust_video_brightness(5)
             elif event.key == pygame.K_COMMA:
                 print("keypress [,] Less brightness")
@@ -712,6 +741,22 @@ def display_image(image_path, overlay_id, x, y, width, height, display_duration=
     # Correction for panned video
     x += pan_offsets["x-real"]
     y += pan_offsets["y-real"]
+
+    # Correct for zoomed video
+    # Calculate original and scaled centers
+    if zoom_level != 0.0:
+        # ...zoom_level from -3.0 to +3.0
+        scale_factor = 2 ** zoom_level  # Zoom by mpv is logarithmic
+        center_x = window_width / 2
+        center_y = window_height / 2
+        scaled_center_x = center_x * scale_factor
+        scaled_center_y = center_y * scale_factor
+        # Calculate offsets to recenter
+        offset_x = scaled_center_x - center_x
+        offset_y = scaled_center_y - center_y
+        # Apply zoom and recenter
+        x = int((x * scale_factor) - offset_x)
+        y = int((y * scale_factor) - offset_y)
 
     # Overlay-add command
     stride = width * 4  # BGRA has 4 bytes per pixel

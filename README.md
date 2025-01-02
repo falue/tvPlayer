@@ -129,8 +129,11 @@ If you want "black" to show up, use `rgb(1,1,1)`.
 | X (SHIFT+x)     | pan video to the left                   |      |
 | y               | pan video downwards                     |      |
 | Y (SHIFT+y)     | pan video upwards                       |      |
-| CTRL + X        | reset pan                               |      |
+| CTRL + x (or CTRL + y) | reset pan                        |      |
+| .               | zoom out                                | Bug: Does not scale channel number, volume images properly |
+| SHIFT + .       | zoom in                                 | Bug: Does not scale channel number, volume images properly |
+| CTRL + .        | zoom reset                              |      |
 | ,               | reduce video brightness by 5%           |      |
-| .               | increase video brightness by 5%         |      |
+| SHIFT + ,       | increase video brightness by 5%         |      |
 | +               | reduce volume by 10%                    |      |
 | -               | increase volume by 10%                  |      |
