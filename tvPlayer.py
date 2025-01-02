@@ -797,5 +797,14 @@ def main():
         pygame.display.update()
         time.sleep(0.1)
 
+def restart_program():
+    print("Restarting program due to critical error...")
+    python = sys.executable
+    os.execl(python, python, *sys.argv)
+
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except Exception as e:
+        # If crash: Run the script again because I learnt nothing
+        restart_program()
