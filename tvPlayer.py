@@ -1,6 +1,6 @@
 import os
 import sys
-import pygame
+import pygame  # pygame 1.9.6
 import subprocess
 import threading
 import json
