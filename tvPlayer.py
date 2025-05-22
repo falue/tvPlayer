@@ -7,6 +7,7 @@ import json
 import time
 from natsort import natsorted
 import random
+import RPi.GPIO as GPIO
 
 # Customizing
 show_tv_gui = True  # show number of channels top right and volume bar
@@ -14,6 +15,14 @@ show_whitenoise_channel_change = True  # white noise in between channel switchin
 white_noise_duration = 0.1  # duration which shows white noise when changing channels, in seconds
 gui_display_duration = 2.0  # Duration of the gui numbers stays alive, minus the white_noise_duration, in seconds
 tv_channel_offset = 1  # display higher channel nr than actually available
+
+# GPIO Pin Definitions
+LED_PIN = 18  # Choose any free GPIO pin for LED
+
+# 2x 4-button-foil-keypad and one additinal push btn
+# https://toptechboy.com/wp-content/uploads/2022/04/pinout-corrected.jpg
+# "Shorting pins 5 (GPIO3) and 6 (GND) when shutdown should boot the Pi." => https://dreamonward.com/2019/11/20/on-off-button/
+BUTTON_PINS = [4, 17, 27, 22, 5, 6, 13, 19, 3]  # Choose 8 free GPIO pins for buttons
 
 # Leave me be
 window_width = 0
@@ -124,6 +133,17 @@ def save_settings():
         json.dump(data, f, indent=4)
 
     print(f"Settings saved to {SETTINGS_FILE}.")
+
+def gpio_init():
+    # GPIO Setup
+    GPIO.setmode(GPIO.BCM)  # Use BCM pin numbering
+    GPIO.setup(LED_PIN, GPIO.OUT)  # LED as output
+    GPIO.setup(BUTTON_PINS, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # Buttons as input with pull-up resistors
+
+    # Turn LED ON when script starts
+    GPIO.output(LED_PIN, GPIO.HIGH)
+
+    print("GPIO Initialized: LED ON, Buttons Ready")
 
 def pygame_init():
     global screen, window_id, ipc_socket_path
@@ -549,6 +569,44 @@ def check_keypresses():
             if save_after_input:
                 save_settings()
 
+def check_buttons():
+    """
+    Check GPIO buttons and trigger respective actions.
+    """
+    global tv_channel
+
+    for i, pin in enumerate(BUTTON_PINS):
+        if GPIO.input(pin) == GPIO.LOW:  # Button Pressed (active low)
+            print(f"Button {i+1} Pressed!")
+            time.sleep(0.05)  # Short debounce delay
+
+            if i == 0:
+                prev_channel()
+            elif i == 1:
+                toggle_play()
+            elif i == 2:
+                next_channel()
+            elif i == 3:
+                set_video_fitting()
+            elif i == 4:
+                seek(-5)  # ?
+            elif i == 5:
+                seek(5)  # ?
+            elif i == 6:
+                toggle_black_screen()
+            elif i == 7:
+                # set_inpoints(tv_channel)  # ?
+                cycle_green_screen(0)
+            elif i == 8:
+                # Extra physical btn
+                shutdown()
+
+            # Debounce until button is released
+            while GPIO.input(pin) == GPIO.LOW:
+                print(f"Wait for user to release button {i+1}..")
+                time.sleep(0.05)
+
+
 def prev_channel():
     global tv_channel
     # if current file as an in-point and current_time is bigger than that, skip to input and
@@ -795,6 +853,9 @@ def update_inpoints():
 
 def close_program():
     print("Close the program..")
+    # GPIO.output(LED_PIN, GPIO.LOW)  # Turn off LED - maybe not so it glows until pi is shut down properly?
+    GPIO.output(LED_PIN, GPIO.LOW)  # Turn LED OFF before exit
+    GPIO.cleanup()  # Reset GPIO pins
     print("..goodbye!")
     pygame.quit()  # Closes the Pygame window
     sys.exit()     # Exits the Python program
@@ -817,9 +878,11 @@ def main():
     pygame_init()
     player_init()
     system_init()
+    gpio_init()
 
     while True:
         get_window_size()
+        check_buttons()
         check_keypresses()
 
         # Update file list if USB is inserted or removed
