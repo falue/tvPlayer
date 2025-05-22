@@ -23,6 +23,7 @@ filelist = []
 inpoints = []
 video_fittings = []
 video_speeds = []
+ignored_devices = []
 mpv_process = None  # Global variable to track the running mpv process
 fitting_modes = ['contain', 'stretch', 'cover']  # List of fitting modes
 is_black_screen = False
@@ -219,7 +220,9 @@ def update_files_from_usb():
                                 filelist.append(os.path.join(device_path, file))
                 except PermissionError:
                     # Skip this device if it's no longer accessible
-                    print(f"Permission denied while accessing: {device_path}. Ignoring this device.")
+                    if device_path not in ignored_devices:
+                        print(f"Permission denied while accessing: {device_path}. Ignoring this device.")
+                        ignored_devices.append(device_path)
                     filelist = []
                     video_fittings = []
                     video_speeds = []
