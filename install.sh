@@ -16,6 +16,11 @@ create_desktop=${create_desktop,,}  # Convert to lowercase
 read -p "Do you want to create an autostart file? (Y/n): " create_autostart
 create_autostart=${create_autostart,,}  # Convert to lowercase
 
+if [[ "$create_autostart" == "y" ]]; then
+    read -p "Autostart with a dialog or just start the script directly? (Y/n): " with_dialog
+    with_dialog=${with_dialog,,}  # Convert to lowercase
+fi
+
 read -p "Try to disable 'removable medium is inserted' pop-up? (Y/n): " disable_popup
 disable_popup=${disable_popup,,}  # Convert to lowercase
 
@@ -23,6 +28,7 @@ disable_popup=${disable_popup,,}  # Convert to lowercase
 run_update=${run_update:-y}
 create_desktop=${create_desktop:-y}
 create_autostart=${create_autostart:-y}
+with_dialog=${with_dialog:-y}
 disable_popup=${disable_popup:-y}
 
 # RUN APT-GET UPDATE IF USER AGREES
@@ -80,19 +86,26 @@ fi
 
 # CREATE AUTOSTART FILE IF USER AGREES
 if [[ "$create_autostart" == "y" ]]; then
-    ## CREATE FILE IN .config autostart
-    EXEC_AUTOSTART_PATH="$SCRIPT_LOCATION/autostart.sh"
-    # Create the autostart directory if it doesn't exist
     AUTOSTART_PATH="$USER_HOME/.config/autostart"
-    FULL_ICON_PATH="$SCRIPT_LOCATION/assets/icon_autostart.png"
+    if [[ "$with_dialog" == "y" ]]; then
+        AUTOSTART_SCRIPT_NAME="tvPlayer-startdialog"
+        EXEC_AUTOSTART_COMMAND="sudo bash $SCRIPT_LOCATION/autostart.sh"
+        FULL_ICON_PATH="$SCRIPT_LOCATION/assets/icon_autostart.png"
+        AUTOSTART_FILE_PATH="$AUTOSTART_PATH/tvPlayer-startdialog.desktop"
+    else
+        AUTOSTART_SCRIPT_NAME="tvPlayer"
+        EXEC_AUTOSTART_COMMAND="sudo python3 $SCRIPT_LOCATION/tvPlayer.py"
+        FULL_ICON_PATH="$SCRIPT_LOCATION/assets/icon.png"
+        AUTOSTART_FILE_PATH="$AUTOSTART_PATH/tvPlayer.desktop"
+    fi
+    # Create the autostart directory if it doesn't exist
     mkdir -p "$AUTOSTART_PATH"
-    # Create the .desktop file for autostart
-    AUTOSTART_FILE_PATH="$AUTOSTART_PATH/tvPlayer-startdialog.desktop"
+    # Create the .desktop file in autostart
     cat > "$AUTOSTART_FILE_PATH" << EOL
 [Desktop Entry]
 Type=Application
-Name=tvPlayer-startdialog
-Exec=sudo bash $EXEC_AUTOSTART_PATH
+Name=$AUTOSTART_SCRIPT_NAME
+Exec=$EXEC_AUTOSTART_COMMAND
 Icon=$FULL_ICON_PATH
 X-LXDE-Startup=true
 EOL
