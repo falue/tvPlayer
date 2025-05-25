@@ -59,7 +59,7 @@ fi
 USER_HOME=$(getent passwd $SUDO_USER | cut -d: -f6)
 SCRIPT_PATH="$(realpath $0)"
 SCRIPT_LOCATION="$(dirname $SCRIPT_PATH)"
-EXCEC_PATH_MAIN="$SCRIPT_LOCATION/tvPlayer.py"
+EXCEC_PATH_MAIN="$SCRIPT_LOCATION/autostart.sh"
 FULL_ICON_PATH="$SCRIPT_LOCATION/assets/icon.png"
 
 # Make the Python script executable
@@ -73,7 +73,7 @@ if [[ "$create_desktop" == "y" ]]; then
 [Desktop Entry]
 Type=Application
 Name=tvPlayer
-Exec=sudo python3 $EXCEC_PATH_MAIN
+Exec=sudo bash $EXCEC_PATH_MAIN
 Icon=$FULL_ICON_PATH
 X-LXDE-Startup=true
 EOL
