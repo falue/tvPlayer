@@ -1,6 +1,8 @@
 import os
 import sys
-import pygame  # pygame 1.9.6
+import pygame  # pygame 2.6.0 !
+import socket
+import re
 import subprocess
 import threading
 import json
@@ -15,6 +17,7 @@ show_whitenoise_channel_change = True  # white noise in between channel switchin
 white_noise_duration = 0.1  # duration which shows white noise when changing channels, in seconds
 gui_display_duration = 2.0  # Duration of the gui numbers stays alive, minus the white_noise_duration, in seconds
 tv_channel_offset = 1  # display higher channel nr than actually available
+stretch_to_all_monitors = False
 
 # GPIO Pin Definitions
 LED_PIN = 18  # Choose any free GPIO pin for LED
@@ -42,11 +45,16 @@ current_file = ""
 pan_offsets = {'x': 0.0, 'y': 0.0, 'x-real': 0, 'y-real': 0}  # Global variables to track the pan offsets
 has_av_channel = False
 ipc_socket_path = '/tmp/mpv_socket'
+ipc_socket_noise_overlay = '/tmp/mpv_noise_socket'
+noise_overlay_active = False
+noise_opacity = 1.0
+video_offset = 0
 brightness = 0  # 0 means 100% brightness
 volume = 100  # 100 means max loudness
 active_overlays = {}  # Dictionary to store active overlay threads
 current_green_index = 0
 zoom_level = 0.0
+active_monitor = 0
 
 file_settings = {}
 SETTINGS_FILE = "settings.json"
@@ -146,10 +154,17 @@ def gpio_init():
     print("GPIO Initialized: LED ON, Buttons Ready")
 
 def pygame_init():
-    global screen, window_id, ipc_socket_path
-    # Initialize pygame for keyboard input and fullscreen handling
+    global screen, active_monitor, window_id, ipc_socket_path
+    
     pygame.init()
-    screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+
+    active_monitor = get_active_monitor()
+    set_current_monitor()
+
+    # Initialize pygame for keyboard input and fullscreen handling
+    # screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+    #####====> this was cancelling the display=1 thing: screen = pygame.display.set_mode((window_width, window_height), pygame.FULLSCREEN)
+    get_window_size()
     pygame.display.set_caption('tvPlayer')
     pygame.mouse.set_visible(False)  # Hide the mouse cursor
 
@@ -161,42 +176,55 @@ def pygame_init():
 def player_init():
     global mpv_process, window_id, ipc_socket_path
     print("Starting mpv process in idle mode for the first time.")
+
+    # current_script_dir = os.path.dirname(os.path.abspath(__file__))  # pffff again?
+        #f'--input-conf={os.path.join(current_script_dir, "custom_input.conf")}',
+        #' --input-default-bindings=yes',
     
     # Command to start mpv in idle mode (no file needed, stays ready for commands)
     command = [
-        'mpv', '--idle', '--loop-file', '--fs', '--quiet',
+        'mpv', '--idle', '--loop-file', # '--fs', FULLSCREEN OPION IN DIRECT OPPOSITION TO THE PYGAME FULLSCREEN! TWO FULLSCREENS DONT WORK
+        '--quiet',
+        # '--ipc-permissions=0666',
         '--no-input-terminal', '--input-ipc-server=' + ipc_socket_path, '--wid=' + str(window_id)
     ]
     # Execute the command and store the process
     mpv_process = subprocess.Popen(command)
 
-    print("Wait for the socket to be created before proceeding..")
-    time.sleep(3)
+    # print("Wait for the socket to be created before proceeding..")
+    # time.sleep(3)
+    
+    # threading.Thread(target=listen_to_mpv_events, daemon=True).start()
 
 def system_init():
     global filelist, inpoints, window_width, window_height
-    print("Get usb root")
     detect_usb_root()
-    print("Get filelist")
     update_files_from_usb()
     reset_inpoints_video_fitting()
     print(f"Initial filelist ({len(filelist)}):")
     print("  " + ("\n  ".join(f"Ch.{i+1} > {os.path.basename(file)}" for i, file in enumerate(filelist))))
+    
     get_window_size()
-    print(f"Screen size: {window_width} x {window_height}")
-
     load_settings()
 
     print("Show first channel / first file or the one that was saved")
     go_to_channel(tv_channel)
 
-    print("Wait for osd-dimensions")
     while get_mpv_property("osd-dimensions/w") == None:
+        print("Wait for osd-dimensions..")
         time.sleep(0.25)
 
-    print("Wait for video width")
+    """ THIS WAS IMPORTANT BUT NOW DOES STALL
+    THIS WAS IMPORTANT BUT NOW DOES STALL
+    THIS WAS IMPORTANT BUT NOW DOES STALL
+    THIS WAS IMPORTANT BUT NOW DOES STALL
+    THIS WAS IMPORTANT BUT NOW DOES STALL
+    THIS WAS IMPORTANT BUT NOW DOES STALL on the new system
+    """ 
     while get_mpv_property("width") == None:
-        time.sleep(0.25)
+        # FIXME: THIS SOMEHOW STALLS THE PROGRAM
+        print("Wait for video width..")
+        time.sleep(0.75)
     
     # Set from load_settings()
     pan(pan_offsets["x"], "x")
@@ -280,8 +308,110 @@ def reset_inpoints_video_fitting():
 
 def get_window_size():
     global screen, window_width, window_height
-    window_size = screen.get_size()
+    # window_size = screen.get_size()
+    # print("window_size ", window_size)
+    ### maybe with 2.6.0 pygame.display.get_desktop_sizes() works?
+    print("pygame.display.get_desktop_sizes()", pygame.display.get_desktop_sizes())
+    window_size = screen.get_size()  ## OLD: this returns the combined w/h..
     window_width, window_height = int(window_size[0]), int(window_size[1])
+
+    """ 
+     when HDMI screen plugged in:
+        pygame.display.get_desktop_sizes() [(1920, 1080), (1280, 720)]
+        Window size: 1920 x 1080 ((1920, 1080))
+    only TV out:
+        pygame.display.get_desktop_sizes() [(1280, 720)]
+        Window size: 1280 x 720 ((1280, 720))
+    """
+
+    # ===> pygame.display.get_desktop_sizes()  New in pygame 2.0.0....
+
+    """ set_current_monitor()
+    #window_width, window_height = int(window_size[0]), int(window_size[1])
+    #get_display_resolutions()
+    # ATTENTION: int(window_size[0]) is BOTh the first and the second monitor "3840 x 1200"
+    window_width, window_height = get_fbset_resolution()
+    screen = pygame.display.set_mode((window_width, window_height), pygame.FULLSCREEN) """
+    print(f"Window size: {window_width} x {window_height} ({window_size})")
+
+def set_current_monitor():
+    global active_monitor, screen
+    print("Set current monitor.. wait for fucking monitors to calm the fuck down")
+    #active_monitor = get_active_monitor()  # this is now excecuted a second time?
+    pygame.display.quit()  # needed before calling display.set_mode(..)
+    time.sleep(5)  # wait for fucking monitors to calm the fuck down
+    pygame.display.init()  # needed before calling display.set_mode(..)
+
+    ############################################
+    ############################################
+    ## "Display indices change if unplugged." ##
+    ############################################
+    ############################################
+
+    print("pygame.display.get_desktop_sizes():", pygame.display.get_desktop_sizes())  # [(1280, 720)]
+    print("pygame.display.list_modes():", pygame.display.list_modes())  # [(1280, 720)]
+    print("pygame.display.get_active() 1:", pygame.display.get_active())
+
+    # this is correct, but depending on screen plug/unplug action of the user
+    # index o / 1 can be swotched. so how to get the correct index?
+    if active_monitor == "HDMI-A-1":
+        # os.environ["SDL_VIDEO_FULLSCREEN_HEAD"] = "0"  # Force HDMI0
+        print("Force HDMI0 ???")
+        # also, set focus anew
+        screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN, display=0)
+        # or use pygame.dingsda((0,0), ... display=X)
+    elif active_monitor == "HDMI-A-2":
+        # os.environ["SDL_VIDEO_FULLSCREEN_HEAD"] = "1"  # Force HDMI1
+        print("Force HDMI1 ???")
+        # was display=1 but when only one minotr active, the numbering changes and this is still one?? so ... not needed at all?
+        screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN, display=0)
+        print("Force HDMI1 --- worked!")
+        # also, set focus anew
+        # or use pygame.dingsda((0,0), ... display=X)
+    
+    print("pygame.display.get_active() 2:", pygame.display.get_active())
+
+
+def get_active_monitor():
+    result = subprocess.run(["modetest", "-c"], capture_output=True, text=True)
+    hdmi0_connected = "HDMI-A-1" in result.stdout and "\tconnected" in result.stdout.split("HDMI-A-1")[0].splitlines()[-1]
+    hdmi1_connected = "HDMI-A-2" in result.stdout and "\tconnected" in result.stdout.split("HDMI-A-2")[0].splitlines()[-1]
+
+    if hdmi0_connected:
+        # print("active: HDMI-A-1 => HDMI OUT => port 0 (preferred)")
+        return "HDMI-A-1"  # HDMI-A-1 (preferred)
+    
+    elif hdmi1_connected:
+        # print("active: HDMI-A-2 => RCA/TV OUT => port 1 (fallback)")
+        return "HDMI-A-2"  # HDMI-A-2 (fallback)
+
+    # print("No screen connected.")
+    return "HDMI-A-1"  # Default fallback
+
+"""
+def get_fbset_resolution():
+    result = subprocess.run(["fbset", "-s"], capture_output=True, text=True)
+    match = re.search(r"geometry (\d+) (\d+)", result.stdout)
+    if match:
+        return int(match.group(1)), int(match.group(2))
+    return None, None
+
+
+ def get_display_resolutions():
+    # Get total number of connected displays
+    num_displays = pygame.display.get_num_displays()
+    print(f"Number of Displays: {num_displays}")
+    #print(f"pygame.display: {pygame.display}")
+
+    # Get display info
+    info = pygame.display.Info()
+    #print(f"pygame.display.Info(): {info}")
+    print(f"Active Display Size: {info.current_w} x {info.current_h}")
+
+    result = subprocess.run(["modetest", "-c"], capture_output=True, text=True)
+    for line in result.stdout.split("\n"):
+        if "connected" in line:
+            print(line) """
 
 def show_white_noise():  # (duration)
     global current_file
@@ -394,6 +524,8 @@ def set_volume(value):
         subprocess.call(command, shell=True)
         print(f"Set volume to {value}")
         if show_tv_gui:
+            # zoom_variant = int((zoom_level+1)*10)*10
+            # image_path = os.path.join(script_dir, 'assets', 'volume_bars', str(zoom_variant), f'volume_{value}.bgra')
             image_path = os.path.join(script_dir, 'assets', 'volume_bars', f'volume_{value}.bgra')
             display_image(image_path, 2, int(window_width/2-800),window_height-225, 1600,150, 1.0)
     else:
@@ -469,6 +601,9 @@ def check_keypresses():
             elif event.key == pygame.K_LEFT:
                 print("keypress [LEFT] prev channel")
                 prev_channel()
+            elif event.key == pygame.K_e:
+                print("keypress [e] toggle noise overlay (non working)")
+                # toggle_noise_overlay()
             elif event.key == pygame.K_SPACE or event.key == pygame.K_p:
                 print("keypress [p] toggle play")
                 toggle_play()
@@ -648,6 +783,8 @@ def go_to_channel(number):
         channel_to_display = tv_channel + tv_channel_offset
         if has_av_channel and tv_channel == len(filelist)-1:
             channel_to_display = "av"
+        # zoom_variant = int((zoom_level+1)*10)*10
+        # image_path = os.path.join(script_dir, 'assets', 'channel_numbers', str(zoom_variant), f'{channel_to_display}.bgra')
         image_path = os.path.join(script_dir, 'assets', 'channel_numbers', f'{channel_to_display}.bgra')
         display_image(image_path, 1, window_width-315,50, 210,150, gui_display_duration)
 
@@ -861,6 +998,114 @@ def update_inpoints():
     global inpoints
     inpoints = [0] * len(filelist)
 
+"""
+def listen_to_mpv_events():
+    global ipc_socket_path, inpoints, tv_channel
+    print("IPC socket found. Starting event listener.")
+    try:
+        print("test -1")
+        with open(ipc_socket_path, 'r') as ipc_socket:
+            print("test 0")
+            while True:
+                print("test 1")
+                try:
+                    print("test 2")
+                    line = ipc_socket.readline().strip()
+                    if line:
+                        # Parse the JSON message from mpv
+                        event = json.loads(line)
+                        print("listen_to_mpv_events", event, event.get('event'))
+                        if event.get('event') == 'end-file':
+                            print("End of file detected. Resetting to inpoint.")
+                            # reset_to_inpoint()
+                except Exception as e:
+                    print(f"Error reading from IPC socket: {e}")
+                    break
+    except Exception as e:
+        print(f"Error opening IPC socket: {e}")
+
+def toggle_noise_overlay():
+    global noise_overlay_active
+    noise_overlay_active = not noise_overlay_active
+    if noise_overlay_active:
+        # Start the noise video as a secondary overlay
+        start_noise_overlay()
+    else:
+        # Stop the noise video overlay
+        stop_noise_overlay()
+
+def start_noise_overlay():
+    global ipc_socket_noise_overlay
+    white_noise_path = os.path.join(script_dir, 'assets', 'white_noise', 'white_noise_overlay.mp4')
+    subprocess.Popen([
+        "mpv", "--no-audio", "--fs", "--loop-file",
+        white_noise_path, "--alpha=yes", f"--input-ipc-server={ipc_socket_noise_overlay}", f"--wid={window_id}"
+    ])
+    set_noise_overlay_brightness(50)
+
+def stop_noise_overlay():
+    global ipc_socket_noise_overlay
+    # Terminate the secondary MPV process using the unique socket
+    subprocess.call(f"echo '{{\"command\": [\"quit\"]}}' | socat - UNIX-CONNECT:{ipc_socket_noise_overlay} > /dev/null 2>&1", shell=True)
+
+def set_noise_overlay_brightness(value):
+    global ipc_socket_noise_overlay
+    if os.path.exists(ipc_socket_noise_overlay):
+        # Clamp brightness between -100 (full transparent) and 0 (full visible)
+        # brightness = max(-100, min(0, brightness + value))
+        value = max(-100, min(0, value))
+        command = f'echo \'{{"command": ["set_property", "brightness", {value}]}}\' | socat - UNIX-CONNECT:{ipc_socket_noise_overlay} > /dev/null 2>&1'
+        subprocess.call(command, shell=True)
+        print(f"Set noise overlay brightness to {value}")
+    else:
+        print("Noise overlay IPC socket not found.")
+
+def listen_to_ipc_socket(ipc_socket_path):
+    try:
+        # Connect to the IPC socket
+        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as client:
+            client.connect(ipc_socket_path)
+            print(f"Connected to IPC socket at {ipc_socket_path}")
+            
+            while True:
+                # Receive data from mpv
+                data = client.recv(1024)
+                if data:
+                    try:
+                        # Parse the received JSON message
+                        message = json.loads(data.decode())
+                        print(f"Received message: {message}")
+
+                        # Handle specific script messages
+                        if "event" in message and message["event"] == "client-message":
+                            if message.get("data") == ["mouse-left"]:
+                                print("Left mouse button clicked!")
+                            elif message.get("data") == ["mouse-right"]:
+                                print("Right mouse button clicked!")
+                        
+                    except json.JSONDecodeError:
+                        print(f"Failed to decode message: {data}")
+    except FileNotFoundError:
+        print(f"IPC socket not found at {ipc_socket_path}")
+    except Exception as e:
+        print(f"Error: {e}")
+
+def check_mouse():
+    global window_width, window_height
+
+    for event in pygame.event.get():
+        print("mouse:", event)
+        if event.type == pygame.MOUSEMOTION:
+            # Get mouse position
+            x, y = event.pos
+            # Calculate percentage position relative to the center of the window
+            percent_x = ((x - (window_width / 2)) / window_width) * 100
+            percent_y = ((y - (window_height / 2)) / window_height) * 100
+            print(f"Mouse moved to X {percent_x:.2f}%, Y {percent_y:.2f}% of the window center")
+
+        elif event.type == pygame.MOUSEWHEEL:
+            print(f"Mouse wheel scrolled: {event.y}") """
+
 def close_program():
     print("Close the program..")
     # GPIO.output(LED_PIN, GPIO.LOW)  # Turn off LED - maybe not so it glows until pi is shut down properly?
@@ -884,16 +1129,33 @@ def shutdown():
         print(f"Error: {e}")
 
 def main():
+    global active_monitor
     print("--------------------------------------------------------------------------------")
+    gpio_init()
     pygame_init()
     player_init()
     system_init()
-    gpio_init()
+
+    current_monitor = active_monitor
+
+    last_run = 0
+    interval_monitor_check = 3  # seconds
 
     while True:
-        get_window_size()
+        #listen_to_ipc_socket(ipc_socket_path)
+        # Check if monitor setup was changed every 3 seconds
+        current_time = time.time()
+        if current_time - last_run >= interval_monitor_check:
+            active_monitor = get_active_monitor()
+            if current_monitor is not active_monitor:
+                print(f"Changing monitor from {current_monitor} to {active_monitor}")
+                set_current_monitor()
+                get_window_size()
+                current_monitor = active_monitor
+
         check_buttons()
         check_keypresses()
+        #check_mouse()
 
         # Update file list if USB is inserted or removed
         old_filelist = filelist.copy()

@@ -6,6 +6,13 @@ if [ "$EUID" -ne 0 ]; then
   exit 1
 fi
 
+
+# after fresh isntall of new raspi 4:
+# these are missing:
+# sudo apt install python3-natsort (for natsort)
+# sudo apt install libdrm-tests (for modetest)
+# sudo chmod 777 /tmp
+
 # ASK USER FOR PREFERENCES AT THE START
 read -p "Do you want to run 'sudo apt-get update'? (Y/n): " run_update
 run_update=${run_update,,}  # Convert to lowercase
