@@ -17,7 +17,7 @@ read -p "Do you want to create an autostart file? (Y/n): " create_autostart
 create_autostart=${create_autostart,,}  # Convert to lowercase
 
 if [[ "$create_autostart" == "y" ]]; then
-    read -p "Autostart with a dialog or just start the script directly? (Y/n): " with_dialog
+    read -p "Autostart with a dialog to confirm? Otherwise, start the script directly. (Y/n): " with_dialog
     with_dialog=${with_dialog,,}  # Convert to lowercase
 fi
 
@@ -89,12 +89,12 @@ if [[ "$create_autostart" == "y" ]]; then
     AUTOSTART_PATH="$USER_HOME/.config/autostart"
     if [[ "$with_dialog" == "y" ]]; then
         AUTOSTART_SCRIPT_NAME="tvPlayer-startdialog"
-        EXEC_AUTOSTART_COMMAND="sudo bash $SCRIPT_LOCATION/autostart.sh"
+        EXEC_AUTOSTART_COMMAND="sudo bash $SCRIPT_LOCATION/autostart-dialog.sh"
         FULL_ICON_PATH="$SCRIPT_LOCATION/assets/icon_autostart.png"
         AUTOSTART_FILE_PATH="$AUTOSTART_PATH/tvPlayer-startdialog.desktop"
     else
         AUTOSTART_SCRIPT_NAME="tvPlayer"
-        EXEC_AUTOSTART_COMMAND="sudo python3 $SCRIPT_LOCATION/tvPlayer.py"
+        EXEC_AUTOSTART_COMMAND="sudo bash $SCRIPT_LOCATION/autostart.sh"
         FULL_ICON_PATH="$SCRIPT_LOCATION/assets/icon.png"
         AUTOSTART_FILE_PATH="$AUTOSTART_PATH/tvPlayer.desktop"
     fi
