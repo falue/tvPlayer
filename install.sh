@@ -59,7 +59,7 @@ fi
 USER_HOME=$(getent passwd $SUDO_USER | cut -d: -f6)
 SCRIPT_PATH="$(realpath $0)"
 SCRIPT_LOCATION="$(dirname $SCRIPT_PATH)"
-EXCEC_PATH_MAIN="$SCRIPT_LOCATION/autostart.sh"
+EXCEC_PATH_MAIN="$SCRIPT_LOCATION/start.sh"
 FULL_ICON_PATH="$SCRIPT_LOCATION/assets/icon.png"
 
 # Make the Python script executable
@@ -94,7 +94,7 @@ if [[ "$create_autostart" == "y" ]]; then
         AUTOSTART_FILE_PATH="$AUTOSTART_PATH/tvPlayer-startdialog.desktop"
     else
         AUTOSTART_SCRIPT_NAME="tvPlayer"
-        EXEC_AUTOSTART_COMMAND="sudo bash $SCRIPT_LOCATION/autostart.sh"
+        EXEC_AUTOSTART_COMMAND="sudo bash $SCRIPT_LOCATION/start.sh"
         FULL_ICON_PATH="$SCRIPT_LOCATION/assets/icon.png"
         AUTOSTART_FILE_PATH="$AUTOSTART_PATH/tvPlayer.desktop"
     fi
