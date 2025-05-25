@@ -205,17 +205,19 @@ def system_init():
     set_volume(volume)
     zoom(zoom_level, True)
 
+    print("System initialized.\n")
+
 def detect_usb_root():
     global usb_root, script_dir
     # Automatically detect the user's home directory, find USB device
     usb_root = os.path.join('/media', os.getlogin())
 
     # Print the detected USB root for debugging purposes
-    print(f"USB root detected: {usb_root}")
+    # print(f"USB root detected: {usb_root}")
 
     # Get the directory where the script is located
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    print(f"script_dir detected: {script_dir}")
+    # print(f"script_dir detected: {script_dir}")
 
 def update_files_from_usb():
     global filelist, video_fittings, video_speeds, has_av_channel, tv_channel_offset, tv_channel
