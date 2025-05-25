@@ -932,4 +932,8 @@ if __name__ == '__main__':
         main()
     except Exception as e:
         # If crash: Run the script again because I learnt nothing
-        restart_program()
+        print("\nProgram interrupted by user or crashed.")
+        print("Error: ", e)
+        # restart_program()  ## TODO FINALLY !!
+    finally:
+        close_program()
