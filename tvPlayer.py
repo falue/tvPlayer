@@ -583,22 +583,30 @@ def check_buttons():
             time.sleep(0.05)  # Short debounce delay
 
             if i == 0:
-                prev_channel()
+                ## prev_channel()
+                print("prev_channel()")
             elif i == 1:
-                toggle_play()
+                ## toggle_play()
+                print("toggle_play()")
             elif i == 2:
-                next_channel()
+                ## next_channel()
+                print("next_channel()")
             elif i == 3:
-                set_video_fitting()
+                ## set_video_fitting()
+                print("set_video_fitting()")
             elif i == 4:
-                seek(-5)  # ?
+                ## seek(-5)  # ?
+                print("seek(-5)")
             elif i == 5:
-                seek(5)  # ?
+                ## seek(5)  # ?
+                print("seek(5)")
             elif i == 6:
-                toggle_black_screen()
+                ## toggle_black_screen()
+                print("toggle_black_screen()")
             elif i == 7:
                 # set_inpoints(tv_channel)  # ?
-                cycle_green_screen(0)
+                ## cycle_green_screen(0)
+                print("cycle_green_screen(0)")
             elif i == 8:
                 # Extra physical btn
                 shutdown()
