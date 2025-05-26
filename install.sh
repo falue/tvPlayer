@@ -73,7 +73,7 @@ if [[ "$create_desktop" == "y" ]]; then
 [Desktop Entry]
 Type=Application
 Name=tvPlayer
-Exec=sudo bash $EXCEC_PATH_MAIN
+Exec=bash $EXCEC_PATH_MAIN
 Icon=$FULL_ICON_PATH
 X-LXDE-Startup=true
 EOL
@@ -89,12 +89,12 @@ if [[ "$create_autostart" == "y" ]]; then
     AUTOSTART_PATH="$USER_HOME/.config/autostart"
     if [[ "$with_dialog" == "y" ]]; then
         AUTOSTART_SCRIPT_NAME="tvPlayer-startdialog"
-        EXEC_AUTOSTART_COMMAND="sudo bash $SCRIPT_LOCATION/autostart-dialog.sh"
+        EXEC_AUTOSTART_COMMAND="bash $SCRIPT_LOCATION/autostart-dialog.sh"
         FULL_ICON_PATH="$SCRIPT_LOCATION/assets/icon_autostart.png"
         AUTOSTART_FILE_PATH="$AUTOSTART_PATH/tvPlayer-startdialog.desktop"
     else
         AUTOSTART_SCRIPT_NAME="tvPlayer"
-        EXEC_AUTOSTART_COMMAND="sudo bash $SCRIPT_LOCATION/start.sh"
+        EXEC_AUTOSTART_COMMAND="bash $SCRIPT_LOCATION/start.sh"
         FULL_ICON_PATH="$SCRIPT_LOCATION/assets/icon.png"
         AUTOSTART_FILE_PATH="$AUTOSTART_PATH/tvPlayer.desktop"
     fi

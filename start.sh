@@ -1,8 +1,10 @@
 #!/bin/bash
 
 # Get the directory of the currently running script (autorun.sh)
-script_dir=$(dirname "$(realpath "$0")")
+SCRIPT_LOCATION=$(dirname "$(realpath "$0")")
+# wait for screen to be available
+sleep 5
 # Activate the virtual environment
-source "$script_dir/venv/bin/activate"
+source "$SCRIPT_LOCATION/venv/bin/activate"
 # Run the Python script using the directory of this script
-sudo python3 "$script_dir/tvPlayer.py"
+python3 "$SCRIPT_LOCATION/tvPlayer.py"
