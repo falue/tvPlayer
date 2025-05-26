@@ -149,7 +149,7 @@ def pygame_init():
     global screen, window_id, ipc_socket_path
     # Initialize pygame for keyboard input and fullscreen handling
     pygame.init()
-    screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+    screen = pygame.display.set_mode((1, 1), pygame.NOFRAME)
     pygame.display.set_caption('tvPlayer')
     pygame.mouse.set_visible(False)  # Hide the mouse cursor
 
@@ -439,10 +439,10 @@ def check_keypresses():
     global tv_channel
     for event in pygame.event.get():
         save_after_input = True
-        """ if event.type == pygame.ACTIVEEVENT:
+        if event.type == pygame.ACTIVEEVENT:
             if event.gain == 0:  # Focus lost
                 print("Focus lost. Should we attempt to regain focus...?")
-                #pygame.display.set_mode((0, 0), pygame.FULLSCREEN)  # Regain focus """
+                screen = pygame.display.set_mode((1, 1), pygame.NOFRAME)  # Regain focus
 
         if event.type == pygame.QUIT:
             print("Window closed - trigger pygame to quit")
