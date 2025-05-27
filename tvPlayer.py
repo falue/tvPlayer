@@ -748,6 +748,10 @@ def seek(seconds):
     else:
         print("mpv IPC socket not found.")
 
+def jump(seconds):
+    command = f'echo \'{{"command": ["seek", {seconds}, "absolute"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
+    subprocess.call(command, shell=True)
+
 def set_inpoints(channel):
     global inpoints
     current_inpoint = get_current_video_position()
@@ -772,6 +776,8 @@ def set_outpoints(channel):
     print(f"Set new outpoint for channel {channel}: {outpoints[channel]}")
     # Set A to whatever and B to now
     activate_ab_loop(inpoints[channel], outpoints[channel])
+    # Go to start of loop
+    jump(inpoints[channel])
     print(outpoints)
 
 def clear_outpoints(channel):
