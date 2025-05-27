@@ -529,16 +529,16 @@ def check_keypresses():
                 set_video_fitting()
             elif event.key == pygame.K_i and pygame.key.get_mods() & pygame.KMOD_SHIFT:
                 print("keypress [SHIFT]+[i] Clear inpoints")
-                clear_inpoints(tv_channel)
+                clear_inpoint(tv_channel)
             elif event.key == pygame.K_i:
                 print("keypress [i] set inpoint")
-                set_inpoints(tv_channel)
+                set_inpoint(tv_channel)
             elif event.key == pygame.K_o and pygame.key.get_mods() & pygame.KMOD_SHIFT:
                 print("keypress [SHIFT]+[o] Clear outpoints")
-                clear_outpoints(tv_channel)
+                clear_outpoint(tv_channel)
             elif event.key == pygame.K_o:
                 print("keypress [o] set outpoint")
-                set_outpoints(tv_channel)
+                set_outpoint(tv_channel)
             elif event.key == pygame.K_PERIOD and pygame.key.get_mods() & pygame.KMOD_SHIFT:
                 print("keypress [SHIFT]+[.] Zoom in")
                 zoom(0.01)
@@ -625,7 +625,7 @@ def check_buttons():
                 ## toggle_black_screen()
                 print("toggle_black_screen()")
             elif i == 7:
-                # set_inpoints(tv_channel)  # ?
+                # set_inpoint(tv_channel)  # ?
                 ## cycle_green_screen(0)
                 print("cycle_green_screen(0)")
             elif i == 8:
@@ -752,7 +752,7 @@ def jump(seconds):
     command = f'echo \'{{"command": ["seek", {seconds}, "absolute"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
     subprocess.call(command, shell=True)
 
-def set_inpoints(channel):
+def set_inpoint(channel):
     global inpoints
     current_inpoint = get_current_video_position()
     inpoints[channel] = current_inpoint
@@ -761,7 +761,7 @@ def set_inpoints(channel):
     activate_ab_loop(inpoints[channel], get_mpv_property("duration") if outpoints[channel] == 0 else outpoints[channel])
     print(inpoints)
 
-def clear_inpoints(channel):
+def clear_inpoint(channel):
     global inpoints
     inpoints[channel] = 0
     print(f"Cleared inpoint for channel {channel}")
@@ -769,7 +769,7 @@ def clear_inpoints(channel):
     activate_ab_loop(0, get_mpv_property("duration") if outpoints[channel] == 0 else outpoints[channel])
     print(inpoints)
 
-def set_outpoints(channel):
+def set_outpoint(channel):
     global outpoints
     current_inpoint = get_current_video_position()
     outpoints[channel] = current_inpoint
@@ -780,7 +780,7 @@ def set_outpoints(channel):
     jump(inpoints[channel])
     print(outpoints)
 
-def clear_outpoints(channel):
+def clear_outpoint(channel):
     global outpoints
     outpoints[channel] = 0
     print(f"Cleared outpoint for channel {channel}")
