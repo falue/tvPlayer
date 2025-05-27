@@ -689,6 +689,8 @@ def play_file(file, inpoint=0.0, outpoint=0.0):
         command = f'echo \'{{"command": ["loadfile", "{file}", "replace", "start={inpoint}"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
         subprocess.call(command, shell=True)
         
+        # This works even though it should not
+        # Inpoint is set by "start={inpoint}" above, but why does it loop? 
         if outpoint > 0:
             activate_ab_loop(inpoint, outpoint)
 
