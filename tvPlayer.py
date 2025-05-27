@@ -432,7 +432,7 @@ def cycle_green_screen(direction):
             green_path = os.path.join(script_dir, 'assets', 'greenscreen', f'{current_green_index+1}.png')
         else:
             # Play last video file from inpoint
-            play_file(filelist[tv_channel], inpoints[tv_channel])
+            play_file(filelist[tv_channel], inpoints[tv_channel], outpoints[tv_channel])
             return
     # Show green screen
     play_file(green_path)
@@ -526,15 +526,12 @@ def check_keypresses():
             elif event.key == pygame.K_i:
                 print("keypress [i] set inpoint")
                 set_inpoints(tv_channel)
-
-
             elif event.key == pygame.K_o and pygame.key.get_mods() & pygame.KMOD_SHIFT:
                 print("keypress [SHIFT]+[o] Clear outpoints")
                 clear_outpoints(tv_channel)
             elif event.key == pygame.K_o:
                 print("keypress [o] set outpoint")
                 set_outpoints(tv_channel)
-
             elif event.key == pygame.K_PERIOD and pygame.key.get_mods() & pygame.KMOD_SHIFT:
                 print("keypress [SHIFT]+[.] Zoom in")
                 zoom(0.01)
@@ -675,15 +672,18 @@ def go_to_channel(number):
 
     set_video_fitting(video_fittings[tv_channel])  # Set fit for this channel
     set_playback_speed(video_speeds[tv_channel])   # Set speed for this channel
-    play_file(filelist[number], inpoints[number])
+    play_file(filelist[number], inpoints[number], outpoints[number])
 
-def play_file(file, inpoint=0.0):
+def play_file(file, inpoint=0.0, outpoint=0.0):
     global mpv_process, current_file, ipc_socket_path
     if os.path.exists(ipc_socket_path):
         print(f"Swapping to new file: {os.path.basename(file)} at {inpoint} seconds.")
         # Use loadfile command to replace the video source without stopping mpv
         command = f'echo \'{{"command": ["loadfile", "{file}", "replace", "start={inpoint}"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
         subprocess.call(command, shell=True)
+        
+        if outpoint > 0:
+            activate_loop(inpoint, outpoint)
 
     current_file = file
     play()  # if paused, resume anyways
@@ -704,6 +704,13 @@ def pause():
         print("Video paused.")
     else:
         print("mpv IPC socket not found.")
+
+def activate_loop(inpoint, outpoint):
+    print("activate loop from ", inpoint, " to ", outpoint)
+    command_aba = f'echo \'{{"command": ["set_property", "ab-loop-a", {inpoint}]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
+    subprocess.call(command_aba, shell=True)
+    command_abb = f'echo \'{{"command": ["set_property", "ab-loop-b", {outpoint}]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
+    subprocess.call(command_abb, shell=True)
 
 def toggle_play():
     global ipc_socket_path
@@ -752,6 +759,7 @@ def set_outpoints(channel):
     current_inpoint = get_current_video_position()
     outpoints[channel] = current_inpoint
     print(f"Set new outpoint for channel {channel}: {outpoints[channel]}")
+    activate_loop(inpoints[channel], outpoints[channel])
     print(outpoints)
 
 def clear_outpoints(channel):
