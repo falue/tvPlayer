@@ -30,6 +30,7 @@ window_height = 0
 tv_channel = 0
 filelist = []
 inpoints = []
+outpoints = []
 video_fittings = []
 video_speeds = []
 ignored_devices = []
@@ -272,9 +273,10 @@ def update_files_from_usb():
         else:
             has_av_channel = False  # This makes no sense but its needed to show white noise when no USB is inserted
 
-def reset_inpoints_video_fitting():
-    global inpoints, video_fittings, video_speeds
+def reset_in_outpoints_video_fitting():
+    global inpoints, outpoints, video_fittings, video_speeds
     inpoints = [0] * len(filelist)  # Create a list of zeros with the same length as filelist
+    outpoints = [0] * len(filelist)  # Create a list of zeros with the same length as filelist
     video_fittings = [0] * len(filelist)  # Create a list of zeros with the same length as filelist
     video_speeds = [1.0] * len(filelist)  # Create a list of zeros with the same length as filelist
 
@@ -524,6 +526,15 @@ def check_keypresses():
             elif event.key == pygame.K_i:
                 print("keypress [i] set inpoint")
                 set_inpoints(tv_channel)
+
+
+            elif event.key == pygame.K_o and pygame.key.get_mods() & pygame.KMOD_SHIFT:
+                print("keypress [SHIFT]+[o] Clear outpoints")
+                clear_outpoints(tv_channel)
+            elif event.key == pygame.K_o:
+                print("keypress [o] set outpoint")
+                set_outpoints(tv_channel)
+
             elif event.key == pygame.K_PERIOD and pygame.key.get_mods() & pygame.KMOD_SHIFT:
                 print("keypress [SHIFT]+[.] Zoom in")
                 zoom(0.01)
@@ -627,10 +638,14 @@ def prev_channel():
     global tv_channel
     # if current file as an in-point and current_time is bigger than that, skip to input and
     # pause() for resetting scene
-    if inpoints[tv_channel] > 0 and get_current_video_position() > inpoints[tv_channel]:
+    print(inpoints, inpoints[tv_channel])
+    print("(outpoints: ", outpoints)
+    if inpoints[tv_channel] > 0 and get_current_video_position() > inpoints[tv_channel]+3:
+        print("this video has inpoints - dont skip but repeat from inpoint if within 3s of inpoint", inpoints[tv_channel])
         go_to_channel(tv_channel)
         pause()
     else:
+        print("this video has no inpoints -  skip to previous file")
         tv_channel -= 1
         go_to_channel(tv_channel)
 
@@ -735,6 +750,19 @@ def clear_inpoints(channel):
     inpoints[channel] = 0
     print(f"Cleard new inpoint for channel {channel}")
     print(inpoints)
+
+def set_outpoints(channel):
+    global outpoints
+    current_inpoint = get_current_video_position()
+    outpoints[channel] = current_inpoint
+    print(f"Set new inpoint for channel {channel}: {outpoints[channel]}")
+    print(outpoints)
+
+def clear_outpoints(channel):
+    global outpoints
+    outpoints[channel] = 0
+    print(f"Cleard new inpoint for channel {channel}")
+    print(outpoints)
 
 def get_mpv_property(property_name):
     global ipc_socket_path
@@ -863,9 +891,10 @@ def display_image(image_path, overlay_id, x, y, width, height, display_duration=
     print(f"Displaying image: {os.path.basename(image_path)} (@ID:{overlay_id}) at x={x} y={y} for {display_duration} seconds")
 
 
-def update_inpoints():
-    global inpoints
+def update_in_outpoints():
+    global inpoints, outpoints
     inpoints = [0] * len(filelist)
+    outpoints = [0] * len(filelist)
 
 def close_program():
     print("Close the program..")
@@ -908,11 +937,11 @@ def main():
         #print("compare filelist")
         if filelist != old_filelist:
             # USB drive was taken out or inserted again
-            update_inpoints()
+            update_in_outpoints()
             print(f"filelist updated ({len(filelist)}):")
             print("  " + ("\n  ".join(f"Ch.{i+1} > {os.path.basename(file)}" for i, file in enumerate(filelist))))
             print("inpoints and video fitting reset:")
-            reset_inpoints_video_fitting()
+            reset_in_outpoints_video_fitting()
             load_settings()
             # start first video
             go_to_channel(0)
