@@ -457,6 +457,12 @@ def check_keypresses():
                 print("keypress [SHIFT]+[DOWN] seek -0.04s")
                 pause()
                 seek(-.04)  # smaller than 0.2s: frame-by-frame
+            elif event.key == pygame.K_UP and pygame.key.get_mods() & pygame.KMOD_CTRL:
+                print("keypress [CTRL]+[UP] seek +60")
+                seek(60)
+            elif event.key == pygame.K_DOWN and pygame.key.get_mods() & pygame.KMOD_CTRL:
+                print("keypress [CTRL]+[DOWN] seek -60")
+                seek(-60)
             elif event.key == pygame.K_UP:
                 print("keypress [UP] seek +5s")
                 seek(5)

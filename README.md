@@ -105,9 +105,11 @@ If you want "black" to show up, use `rgb(1,1,1)`.
 | RIGHT           | next channel                             | aka "next file" on USB drive (alphabetically) |
 | [number]        | go to channel nr [number]                |      |
 | UP              | jump +5 seconds                          |      |
-| SHIFT+UP        | pause and jump one frame forwards        |      |
+| CTRL + UP       | jump +60 seconds                         |      |
+| SHIFT + UP      | pause and jump one frame forwards        |      |
 | DOWN            | jump -5 seconds                          |      |
-| SHIFT+DOWN      | pause and jump one frame backwards       |      |
+| CTRL + DOWN     | jump -60 seconds                         |      |
+| SHIFT + DOWN    | pause and jump one frame backwards       |      |
 | p *or* space    | toggle play / pause                      |      |
 | ESC             | toggle fullscreen                        |      |
 | q               | shutdown raspberry pi                    |      |
