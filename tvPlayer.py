@@ -759,7 +759,6 @@ def set_inpoint(channel):
     print(f"Set new inpoint for channel {channel}: {inpoints[channel]}")
     # Set A to now and B to whatever it is or end of file
     activate_ab_loop(inpoints[channel], get_mpv_property("duration") if outpoints[channel] == 0 else outpoints[channel])
-    print(inpoints)
 
 def clear_inpoint(channel):
     global inpoints
@@ -767,7 +766,6 @@ def clear_inpoint(channel):
     print(f"Cleared inpoint for channel {channel}")
     # Set A to beginning and B to whatever it is or end of file
     activate_ab_loop(0, get_mpv_property("duration") if outpoints[channel] == 0 else outpoints[channel])
-    print(inpoints)
 
 def set_outpoint(channel):
     global outpoints
@@ -778,7 +776,6 @@ def set_outpoint(channel):
     activate_ab_loop(inpoints[channel], outpoints[channel])
     # Go to start of loop
     jump(inpoints[channel])
-    print(outpoints)
 
 def clear_outpoint(channel):
     global outpoints
@@ -786,7 +783,6 @@ def clear_outpoint(channel):
     print(f"Cleared outpoint for channel {channel}")
     # Set A to whatever and B to end of file
     activate_ab_loop(inpoints[channel], get_mpv_property("duration"))
-    print(outpoints)
 
 def get_mpv_property(property_name):
     global ipc_socket_path
