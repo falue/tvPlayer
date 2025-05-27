@@ -638,14 +638,10 @@ def prev_channel():
     global tv_channel
     # if current file as an in-point and current_time is bigger than that, skip to input and
     # pause() for resetting scene
-    print(inpoints, inpoints[tv_channel])
-    print("(outpoints: ", outpoints)
-    if inpoints[tv_channel] > 0 and get_current_video_position() > inpoints[tv_channel]+3:
-        print("this video has inpoints - dont skip but repeat from inpoint if within 3s of inpoint", inpoints[tv_channel])
+    if inpoints[tv_channel] > 0 and get_current_video_position() > inpoints[tv_channel]+2:
         go_to_channel(tv_channel)
         pause()
     else:
-        print("this video has no inpoints -  skip to previous file")
         tv_channel -= 1
         go_to_channel(tv_channel)
 
@@ -748,20 +744,20 @@ def set_inpoints(channel):
 def clear_inpoints(channel):
     global inpoints
     inpoints[channel] = 0
-    print(f"Cleard new inpoint for channel {channel}")
+    print(f"Cleared inpoint for channel {channel}")
     print(inpoints)
 
 def set_outpoints(channel):
     global outpoints
     current_inpoint = get_current_video_position()
     outpoints[channel] = current_inpoint
-    print(f"Set new inpoint for channel {channel}: {outpoints[channel]}")
+    print(f"Set new outpoint for channel {channel}: {outpoints[channel]}")
     print(outpoints)
 
 def clear_outpoints(channel):
     global outpoints
     outpoints[channel] = 0
-    print(f"Cleard new inpoint for channel {channel}")
+    print(f"Cleared outpoint for channel {channel}")
     print(outpoints)
 
 def get_mpv_property(property_name):
