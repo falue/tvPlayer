@@ -191,17 +191,21 @@ def system_init():
 
     load_settings()
 
+    while len(filelist) == 0:
+        print("Wait for USB to be plugged in first..")
+        update_files_from_usb() 
+        time.sleep(2)
+
     print("Show first channel / first file or the one that was saved")
     go_to_channel(tv_channel)
 
-    if len(filelist) > 0:
-        print("Wait for osd-dimensions")
-        while get_mpv_property("osd-dimensions/w") == None:
-            time.sleep(0.25)
+    print("Wait for osd-dimensions")
+    while get_mpv_property("osd-dimensions/w") == None:
+        time.sleep(0.25)
 
-        print("Wait for video width")
-        while get_mpv_property("width") == None:
-            time.sleep(0.25)
+    print("Wait for video width")
+    while get_mpv_property("width") == None:
+        time.sleep(0.25)
     
     # Set from load_settings()
     pan(pan_offsets["x"], "x")
