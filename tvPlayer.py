@@ -779,17 +779,9 @@ def clear_outpoints(channel):
     global outpoints
     outpoints[channel] = 0
     print(f"Cleared outpoint for channel {channel}")
-    if inpoints[channel] > 0:
-        print("Set to end of file to loop from A to end of file")
-        duration = get_mpv_property("duration")
-        command_abb = f'echo \'{{"command": ["set_property", "ab-loop-b", {duration}]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
-        subprocess.call(command_abb, shell=True)
-    else:
-        print("Release the AB loop")
-        command_aba = f'echo \'{{"command": ["set_property", "ab-loop-a", null]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
-        subprocess.call(command_aba, shell=True)
-        command_abb = f'echo \'{{"command": ["set_property", "ab-loop-b", null]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
-        subprocess.call(command_abb, shell=True)
+    # Set B to end of file
+    command_abb = f'echo \'{{"command": ["set_property", "ab-loop-b", {get_mpv_property("duration")}]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
+    subprocess.call(command_abb, shell=True)
     print(outpoints)
 
 def get_mpv_property(property_name):
