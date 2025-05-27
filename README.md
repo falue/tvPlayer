@@ -121,6 +121,8 @@ If you want "black" to show up, use `rgb(1,1,1)`.
 | c               | video fitting                           | "Contain", "stretch" or "cover" |
 | i               | set inpoint                             | Set where this video starts to play when chaning channels |
 | I (SHIFT+i)     | clear inpoint on this video             |      |
+| o               | set outpoint                            | Set where this video ends (loops back to inpoint) |
+| O (SHIFT+o)     | clear outpoint on this video            |      |
 | a               | toggle tv GUI on or off                 | Show green channel numbers and volume bar |
 | w               | toggle white noise on or off between channel changes |      |
 | W (SHIFT+w)     | cycle through 4 different white noise effects | Also activates white noise between channel change and shows current white noise selection |
