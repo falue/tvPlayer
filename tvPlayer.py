@@ -761,6 +761,7 @@ def clear_inpoints(channel):
     global inpoints
     inpoints[channel] = 0
     print(f"Cleared inpoint for channel {channel}")
+    # set inpoint to 0 (not null) to loop from 0 to b (outpoint) if available
     command_aba = f'echo \'{{"command": ["set_property", "ab-loop-a", 0]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
     subprocess.call(command_aba, shell=True)
     print(inpoints)
@@ -770,18 +771,25 @@ def set_outpoints(channel):
     current_inpoint = get_current_video_position()
     outpoints[channel] = current_inpoint
     print(f"Set new outpoint for channel {channel}: {outpoints[channel]}")
+    # Reload file to trigger the activate_loop() function and start from A directly
     go_to_channel(tv_channel)
-    #activate_loop(inpoints[channel], outpoints[channel])
     print(outpoints)
 
 def clear_outpoints(channel):
     global outpoints
     outpoints[channel] = 0
-    print(f"Cleared outpoint for channel {channel} and released the ab-loop")
-    command_aba = f'echo \'{{"command": ["set_property", "ab-loop-a", null]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
-    subprocess.call(command_aba, shell=True)
-    command_abb = f'echo \'{{"command": ["set_property", "ab-loop-b", null]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
-    subprocess.call(command_abb, shell=True)
+    print(f"Cleared outpoint for channel {channel}")
+    if inpoints[channel] > 0:
+        print("Set to end of file to loop from A to end of file")
+        duration = get_mpv_property("duration")
+        command_abb = f'echo \'{{"command": ["set_property", "ab-loop-b", {duration}]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
+        subprocess.call(command_abb, shell=True)
+    else:
+        print("Release the AB loop")
+        command_aba = f'echo \'{{"command": ["set_property", "ab-loop-a", null]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
+        subprocess.call(command_aba, shell=True)
+        command_abb = f'echo \'{{"command": ["set_property", "ab-loop-b", null]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
+        subprocess.call(command_abb, shell=True)
     print(outpoints)
 
 def get_mpv_property(property_name):
