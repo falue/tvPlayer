@@ -757,6 +757,8 @@ def clear_inpoints(channel):
     global inpoints
     inpoints[channel] = 0
     print(f"Cleared inpoint for channel {channel}")
+    command_aba = f'echo \'{{"command": ["set_property", "ab-loop-a", 0]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
+    subprocess.call(command_aba, shell=True)
     print(inpoints)
 
 def set_outpoints(channel):
@@ -772,6 +774,8 @@ def clear_outpoints(channel):
     global outpoints
     outpoints[channel] = 0
     print(f"Cleared outpoint for channel {channel}")
+    command_aba = f'echo \'{{"command": ["set_property", "ab-loop-b", null]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
+    subprocess.call(command_aba, shell=True)
     print(outpoints)
 
 def get_mpv_property(property_name):
