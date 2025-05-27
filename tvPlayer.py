@@ -82,6 +82,7 @@ def load_settings():
     # Load filelist-dependent settings
     file_settings = data.get("file_dependent_settings", {})
     inpoints.clear()
+    outpoints.clear()
     video_fittings.clear()
     video_speeds.clear()
 
@@ -89,6 +90,7 @@ def load_settings():
         base_filename = os.path.basename(filename)
         settings = file_settings.get(base_filename, {})
         inpoints.append(settings.get("inpoints", 0))
+        outpoints.append(settings.get("outpoints", 0))
         video_fittings.append(settings.get("video_fittings", 0))
         video_speeds.append(settings.get("video_speeds", 1.0))
 
@@ -125,6 +127,7 @@ def save_settings():
         filename = os.path.basename(file)
         data["file_dependent_settings"][filename] = {
             "inpoints": inpoints[i],
+            "outpoints": outpoints[i],
             "video_fittings": video_fittings[i],
             "video_speeds": video_speeds[i],
         }
@@ -759,7 +762,8 @@ def set_outpoints(channel):
     current_inpoint = get_current_video_position()
     outpoints[channel] = current_inpoint
     print(f"Set new outpoint for channel {channel}: {outpoints[channel]}")
-    activate_loop(inpoints[channel], outpoints[channel])
+    go_to_channel(tv_channel)
+    #activate_loop(inpoints[channel], outpoints[channel])
     print(outpoints)
 
 def clear_outpoints(channel):
