@@ -22,7 +22,7 @@ Control it with a wireless keyboard and your actress ort actor can press what th
 ![screencapture.gif](assets/screencapture.gif)
 
 # Hardware
-Tested successfully on Raspberry 4 (Debian bullseye).
+Tested successfully on Raspberry 4 (Debian ***11*** *bullseye* 64bit - *12 bookworm* did NOT work out of the box).
 
 Raspberry pi 3 (Debian Bookworm 32bit) did ***not*** work. Very stuttery but very plausibly i'm doin something wrong.
 

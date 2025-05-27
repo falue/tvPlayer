@@ -9,6 +9,14 @@ from natsort import natsorted
 import random
 import RPi.GPIO as GPIO
 
+# WEBSERVER
+import asyncio
+import websockets
+SERVER_WS = "ws://localhost:8765"
+state = {}
+
+sys.stdout.reconfigure(line_buffering=True)
+
 # Customizing
 show_tv_gui = True  # show number of channels top right and volume bar
 show_whitenoise_channel_change = True  # white noise in between channel switching
@@ -145,6 +153,11 @@ def gpio_init():
     GPIO.output(LED_PIN, GPIO.HIGH)
 
     print("GPIO Initialized: LED ON, Buttons Ready")
+
+def webserver_init():
+    subprocess.Popen(["python3", "server.py"])
+    print("[tvPlayer] Server started. Running main loop...")
+    # asyncio.run(ws_talk())
 
 def pygame_init():
     global screen, window_id, ipc_socket_path
@@ -920,6 +933,7 @@ def shutdown():
 
 def main():
     print("--------------------------------------------------------------------------------")
+    ###### webserver_init()
     pygame_init()
     player_init()
     system_init()

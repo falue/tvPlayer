@@ -39,6 +39,20 @@ else
     echo "Skipping 'apt-get update'..."
 fi
 
+# Get the full path of the script to be executed
+USER_HOME=$(getent passwd $SUDO_USER | cut -d: -f6)
+SCRIPT_PATH="$(realpath $0)"
+SCRIPT_LOCATION="$(dirname $SCRIPT_PATH)"
+EXCEC_PATH_MAIN="$SCRIPT_LOCATION/start.sh"
+FULL_ICON_PATH="$SCRIPT_LOCATION/assets/icon.png"
+
+# Set up virtual environment
+### TODOOOOOO maybe manually....
+echo "Creating virtual environment from normal user.."
+REAL_USER=$(logname 2>/dev/null || echo "$SUDO_USER")
+##### sudo -u "$REAL_USER" python3 -m venv venv
+##### source "$SCRIPT_LOCATION/venv/bin/activate"
+
 # Install mpv and socat
 echo "Installing mpv and socat..."
 sudo apt-get install -y mpv socat wmctrl
@@ -54,13 +68,6 @@ else
     echo "Installing Python libraries using pip (Debian Bullseye)..."
     pip install -r requirements.txt
 fi
-
-# Get the full path of the script to be executed
-USER_HOME=$(getent passwd $SUDO_USER | cut -d: -f6)
-SCRIPT_PATH="$(realpath $0)"
-SCRIPT_LOCATION="$(dirname $SCRIPT_PATH)"
-EXCEC_PATH_MAIN="$SCRIPT_LOCATION/start.sh"
-FULL_ICON_PATH="$SCRIPT_LOCATION/assets/icon.png"
 
 # Make the Python script executable
 chmod +x "$EXCEC_PATH_MAIN"
