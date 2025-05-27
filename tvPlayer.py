@@ -690,7 +690,7 @@ def play_file(file, inpoint=0.0, outpoint=0.0):
         subprocess.call(command, shell=True)
         
         if outpoint > 0:
-            activate_loop(inpoint, outpoint)
+            activate_ab_loop(inpoint, outpoint)
 
     current_file = file
     play()  # if paused, resume anyways
@@ -712,7 +712,7 @@ def pause():
     else:
         print("mpv IPC socket not found.")
 
-def activate_loop(inpoint, outpoint):
+def activate_ab_loop(inpoint, outpoint):
     print("activate loop from ", inpoint, " to ", outpoint)
     command_aba = f'echo \'{{"command": ["set_property", "ab-loop-a", {inpoint}]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
     subprocess.call(command_aba, shell=True)
@@ -753,17 +753,16 @@ def set_inpoints(channel):
     current_inpoint = get_current_video_position()
     inpoints[channel] = current_inpoint
     print(f"Set new inpoint for channel {channel}: {inpoints[channel]}")
-    command_aba = f'echo \'{{"command": ["set_property", "ab-loop-a", {inpoints[channel]}]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
-    subprocess.call(command_aba, shell=True)
+    # Set A to now and B to whatever it is or end of file
+    activate_ab_loop(inpoints[channel], get_mpv_property("duration") if outpoints[channel] == 0 else outpoints[channel])
     print(inpoints)
 
 def clear_inpoints(channel):
     global inpoints
     inpoints[channel] = 0
     print(f"Cleared inpoint for channel {channel}")
-    # set inpoint to 0 (not null) to loop from 0 to b (outpoint) if available
-    command_aba = f'echo \'{{"command": ["set_property", "ab-loop-a", 0]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
-    subprocess.call(command_aba, shell=True)
+    # Set A to beginning and B to whatever it is or end of file
+    activate_ab_loop(0, get_mpv_property("duration") if outpoints[channel] == 0 else outpoints[channel])
     print(inpoints)
 
 def set_outpoints(channel):
@@ -771,17 +770,16 @@ def set_outpoints(channel):
     current_inpoint = get_current_video_position()
     outpoints[channel] = current_inpoint
     print(f"Set new outpoint for channel {channel}: {outpoints[channel]}")
-    # Reload file to trigger the activate_loop() function and start from A directly
-    go_to_channel(tv_channel)
+    # Set A to whatever and B to now
+    activate_ab_loop(inpoints[channel], outpoints[channel])
     print(outpoints)
 
 def clear_outpoints(channel):
     global outpoints
     outpoints[channel] = 0
     print(f"Cleared outpoint for channel {channel}")
-    # Set B to end of file
-    command_abb = f'echo \'{{"command": ["set_property", "ab-loop-b", {get_mpv_property("duration")}]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
-    subprocess.call(command_abb, shell=True)
+    # Set A to whatever and B to end of file
+    activate_ab_loop(inpoints[channel], get_mpv_property("duration"))
     print(outpoints)
 
 def get_mpv_property(property_name):
