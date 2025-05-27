@@ -749,6 +749,8 @@ def set_inpoints(channel):
     current_inpoint = get_current_video_position()
     inpoints[channel] = current_inpoint
     print(f"Set new inpoint for channel {channel}: {inpoints[channel]}")
+    command_aba = f'echo \'{{"command": ["set_property", "ab-loop-a", {inpoints[channel]}]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
+    subprocess.call(command_aba, shell=True)
     print(inpoints)
 
 def clear_inpoints(channel):
