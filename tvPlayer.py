@@ -180,7 +180,7 @@ def system_init():
     detect_usb_root()
     print("Get filelist")
     update_files_from_usb()
-    reset_inpoints_video_fitting()
+    reset_in_outpoints_video_fitting()
     print(f"Initial filelist ({len(filelist)}):")
     print("  " + ("\n  ".join(f"Ch.{i+1} > {os.path.basename(file)}" for i, file in enumerate(filelist))))
     get_window_size()
