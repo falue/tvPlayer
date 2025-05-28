@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MPV Remote Control</title>
+    <link rel="stylesheet" href="./styles.css">
+
+    <script src="./mqtt.min.js?v=250528" onerror="alert('mqtt.min.js failed to load!')"></script>
+    <script src="./scripts.js?V=5678" defer onerror="alert('scripts.js failed to load!')"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Test to python</h1>
+        <button id="seek-backward" onclick="sendCommand('hello2')">say hello</button>
+        <h1>Console + from python</h1>
+        <div id="console">Init</div>
+    </div>
+    <div class="container">
+        <h1>MPV Remote Control</h1>
+        
+        <div class="control-group">
+            <h2>Playback</h2>
+            <div class="button-row">
+                <button id="play-pause" class="big-button">Play/Pause</button>
+            </div>
+            <div class="button-row">
+                <button id="seek-backward">&laquo; 10s</button>
+                <button id="seek-backward-small">&laquo; 5s</button>
+                <button id="seek-forward-small">5s &raquo;</button>
+                <button id="seek-forward">10s &raquo;</button>
+            </div>
+        </div>
+        
+        <div class="control-group">
+            <h2>Volume</h2>
+            <div class="button-row">
+                <button id="volume-down">Volume -</button>
+                <button id="volume-up">Volume +</button>
+            </div>
+        </div>
+        
+        <div class="control-group">
+            <h2>Controls</h2>
+            <div class="button-row">
+                <button id="fullscreen">Fullscreen</button>
+                <button id="stop">Stop</button>
+            </div>
+        </div>
+        
+        <div class="playlist-section">
+            <h2>Playlist</h2>
+            <div id="playlist">
+                <!-- Playlist items will be loaded dynamically -->
+                <div class="playlist-item">Loading playlist...</div>
+            </div>
+            <button id="refresh-playlist" class="refresh-button">Refresh Playlist</button>
+        </div>
+        
+        <div class="playlist-section">
+            <h2>Available Videos</h2>
+            <div id="available-videos">
+                <!-- Available videos will be loaded dynamically -->
+                <div class="playlist-item">Loading videos...</div>
+            </div>
+            <button id="refresh-videos" class="refresh-button" onclick="loadAvailableVideos()">Refresh Videos</button>
+        </div>
+        
+        <div class="control-group">
+            <h2>Load Video</h2>
+            <div class="file-input">
+                <input type="text" id="video-path" placeholder="Enter video file path">
+                <button id="load-video" class="big-button">Load Video</button>
+            </div>
+        </div>
+        
+        <div id="status">Ready</div>
+    </div>
+
+
+</body>
+</html>

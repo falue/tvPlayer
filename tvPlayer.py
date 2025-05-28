@@ -8,6 +8,7 @@ import time
 from natsort import natsorted
 import random
 import RPi.GPIO as GPIO
+import mqtt_handler
 
 # Customizing
 show_tv_gui = True  # show number of channels top right and volume bar
@@ -53,6 +54,23 @@ zoom_level = 0.0
 file_settings = {}
 SETTINGS_FILE = "settings.json"
 
+def mqtt_init():
+    mqtt_handler.set_command_handler(mqtt_incoming)
+    mqtt_handler.start()
+
+def mqtt_incoming(data):
+    # print("[tvPlayer] Command from MQTT:", data)
+
+    cmd = data.get("command")
+    value = data.get("value")
+
+    if cmd == "give_settings":
+        save_settings()  # Triggers collection of settings including filelist and sends it to web by mqtt
+    elif cmd == "play_pause":
+        print("play_pause() oder so")
+    else:
+        print("[tvPlayer] Unknown command:", cmd)
+
 def load_settings():
     """
     Load settings from a JSON file and apply them to globals.
@@ -97,6 +115,8 @@ def load_settings():
         video_speeds.append(settings.get("video_speeds", 1.0))
 
     print("Settings loaded.")
+    mqtt_handler.send("settings", "Settings loaded", settings)
+
 
 def save_settings():
     """
@@ -140,6 +160,14 @@ def save_settings():
         json.dump(data, f, indent=4)
 
     print(f"Settings saved to {SETTINGS_FILE}.")
+    mqtt_handler.send("settings", "Settings saved", data)
+
+def server_init():
+    # Wireless access point controlled self-sufficiently with RaspAP
+    # Control the AP in the admin panel on a device that is connected to this raspis SSID "tvPlayer" here: http://10.3.141.1
+    # Start serving ./webremote to http://10.3.141.1:8080
+    server_script = os.path.join(script_dir, "server.py")
+    subprocess.Popen(["python3", server_script])
 
 def gpio_init():
     # GPIO Setup
@@ -970,6 +998,8 @@ def main():
     pygame_init()
     player_init()
     system_init()
+    server_init()
+    mqtt_init()
     gpio_init()
 
     while True:
