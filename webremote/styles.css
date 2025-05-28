@@ -12,6 +12,11 @@ body {
     padding: 20px;
 }
 
+.maxHeight400 {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
 h1 {
     text-align: center;
     margin-bottom: 30px;
@@ -114,6 +119,20 @@ input[type="text"] {
 .refresh-button {
     margin-top: 10px;
     width: 100%;
+}
+
+#heartbeat {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: rgb(255, 68, 0);
+    border: solid 2px rgba(255,255,255,.5);
+    transition: background-color 7.5s ease-in;
+}
+
+#heartbeat.active {
+    background-color: rgb(48, 213, 48);
+    transition: background-color 0.5s;
 }
 
 @media (max-width: 480px) {

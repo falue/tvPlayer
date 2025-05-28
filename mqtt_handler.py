@@ -17,10 +17,11 @@ def on_connect(client, userdata, flags, rc, properties=None):
 def on_message(client, userdata, msg):
     try:
         data = json.loads(msg.payload.decode())
-        # print("[MQTT] Received:", data)
+        print("[MQTT] Received:", data)
         if on_command_callback:
             on_command_callback(data)
     except Exception as e:
+        print(msg.payload.decode())
         print("[MQTT] Error parsing message:", e)
 
 

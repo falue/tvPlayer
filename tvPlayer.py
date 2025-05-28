@@ -62,12 +62,87 @@ def mqtt_incoming(data):
     # print("[tvPlayer] Command from MQTT:", data)
 
     cmd = data.get("command")
-    value = data.get("value")
+    value = data.get("value", 0)
 
     if cmd == "give_settings":
-        save_settings()  # Triggers collection of settings including filelist and sends it to web by mqtt
-    elif cmd == "play_pause":
-        print("play_pause() oder so")
+        # Triggers collection of settings including filelist and sends it to web by mqtt
+        save_settings()
+    elif cmd == "toggle_play":
+        toggle_play()
+    elif cmd == "toggle_fullscreen":
+        toggle_fullscreen()
+
+    elif cmd == "close_program":
+        close_program()
+    elif cmd == "jump":   # USE ME
+        jump(float(value))
+    elif cmd == "seek":  
+        if value < 0.05 and value > -0.05:
+            pause()
+        seek(float(value))
+    elif cmd == "next_channel":
+        next_channel()
+    elif cmd == "prev_channel":
+        prev_channel()
+
+    elif cmd == "adjust_volume":
+        adjust_volume(int(value))
+
+    elif cmd == "toggle_black_screen":
+        toggle_black_screen()
+    elif cmd == "set_video_fitting":
+        set_video_fitting()
+
+    elif cmd == "pan_reset":  # adjust in html
+        pan("reset", "x")
+        pan("reset", "y")
+    elif cmd == "pan":
+        pan(*value)
+
+    elif cmd == "adjust_video_brightness":
+        adjust_video_brightness(int(value))
+
+    elif cmd == "adjust_video_contrast":
+        adjust_video_contrast(int(value))
+
+    elif cmd == "adjust_video_speed":
+        if value == "reset":
+            adjust_video_speed(value)
+        else:
+            adjust_video_speed(float(value))
+
+    elif cmd == "cycle_green_screen":
+        cycle_green_screen(int(value))
+
+    elif cmd == "toggle_white_noise_on_channel_change":
+        toggle_white_noise_on_channel_change()
+    elif cmd == "cycle_white_noise":
+        cycle_white_noise()
+
+    elif cmd == "set_inpoint":
+        set_inpoint(tv_channel)
+    elif cmd == "clear_inpoint":
+        clear_inpoint(tv_channel)
+    elif cmd == "set_outpoint":
+        set_outpoint(tv_channel)
+    elif cmd == "clear_outpoint":
+        clear_outpoint(tv_channel)
+
+    elif cmd == "toggle_show_tv_gui":
+        toggle_show_tv_gui()
+
+    elif cmd == "zoom":
+        if float(value) == 0:
+            zoom(0, True)
+        else:
+            zoom(float(value))
+
+    elif cmd == "shutdown":
+        shutdown()
+
+    elif cmd == "go_to_channel":
+        go_to_channel(int(value))
+
     else:
         print("[tvPlayer] Unknown command:", cmd)
 
@@ -115,7 +190,7 @@ def load_settings():
         video_speeds.append(settings.get("video_speeds", 1.0))
 
     print("Settings loaded.")
-    mqtt_handler.send("settings", "Settings loaded", settings)
+    mqtt_handler.send("settings", "Settings loaded", {"settings": data, "filelist": filelist})
 
 
 def save_settings():
@@ -160,7 +235,7 @@ def save_settings():
         json.dump(data, f, indent=4)
 
     print(f"Settings saved to {SETTINGS_FILE}.")
-    mqtt_handler.send("settings", "Settings saved", data)
+    mqtt_handler.send("settings", "Settings saved", {"settings": data, "filelist": filelist})
 
 def server_init():
     # Wireless access point controlled self-sufficiently with RaspAP
