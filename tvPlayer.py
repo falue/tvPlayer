@@ -44,6 +44,7 @@ pan_offsets = {'x': 0.0, 'y': 0.0, 'x-real': 0, 'y-real': 0}  # Global variables
 has_av_channel = False
 ipc_socket_path = '/tmp/mpv_socket'
 brightness = 0  # 0 means 100% brightness
+contrast = 0  # -100 to 100, default 0
 volume = 100  # 100 means max loudness
 active_overlays = {}  # Dictionary to store active overlay threads
 current_green_index = 0
@@ -57,7 +58,7 @@ def load_settings():
     Load settings from a JSON file and apply them to globals.
     For file-dependent settings, only load settings for the files in the given filelist.
     """
-    global white_noise_index, pan_offsets, brightness, volume, current_green_index, show_tv_gui, zoom_level
+    global white_noise_index, pan_offsets, brightness, contrast, volume, current_green_index, show_tv_gui, zoom_level
     global file_settings, inpoints, video_fittings, video_speeds, tv_channel, show_whitenoise_channel_change
 
     if not os.path.exists(os.path.join(script_dir, SETTINGS_FILE)):
@@ -72,6 +73,7 @@ def load_settings():
     white_noise_index = general_settings.get("white_noise_index", white_noise_index)
     pan_offsets = general_settings.get("pan_offsets", pan_offsets)
     brightness = general_settings.get("brightness", brightness)
+    contrast = general_settings.get("contrast", contrast)
     volume = general_settings.get("volume", volume)
     current_green_index = general_settings.get("current_green_index", current_green_index)
     tv_channel = general_settings.get("tv_channel", tv_channel)
@@ -114,6 +116,7 @@ def save_settings():
         "white_noise_index": white_noise_index,
         "pan_offsets": pan_offsets,
         "brightness": brightness,
+        "contrast": contrast,
         "volume": volume,
         "tv_channel": tv_channel,
         "current_green_index": current_green_index,
@@ -210,6 +213,7 @@ def system_init():
     pan(pan_offsets["x"], "x")
     pan(pan_offsets["y"], "y")
     set_brightness(brightness)
+    set_brightness(contrast)
     set_volume(volume)
     zoom(zoom_level, True)
 
@@ -336,6 +340,21 @@ def adjust_video_brightness(value):
     # Clamp brightness between -100 (full transparent) and 0 (full visible)
     brightness = max(-100, min(0, brightness + value))
     set_brightness(brightness)
+
+def set_contrast(value):
+    global ipc_socket_path
+    if os.path.exists(ipc_socket_path):
+        command = f'echo \'{{"command": ["set_property", "contrast", {value}]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
+        subprocess.call(command, shell=True)
+        print(f"Set contrast to {value}")
+    else:
+        print("mpv IPC socket not found.")
+
+def adjust_video_contrast(value):
+    global contrast
+    # Clamp contrast between -100 (full dull) and 0 (max contrast)
+    contrast = max(-100, min(100, contrast + value))
+    set_contrast(contrast)
 
 def adjust_video_speed(value):
     global video_speeds
@@ -554,6 +573,12 @@ def check_keypresses():
             elif event.key == pygame.K_COMMA:
                 print("keypress [,] Less brightness")
                 adjust_video_brightness(-5)
+            elif event.key == pygame.K_m and pygame.key.get_mods() & pygame.KMOD_SHIFT:
+                print("keypress [SHIFT]+[m] More contrast")
+                adjust_video_contrast(5)
+            elif event.key == pygame.K_m:
+                print("keypress [m] Less contrast")
+                adjust_video_contrast(-5)
             elif event.key == pygame.K_j:
                 print("keypress [j] Playback speed slower")
                 adjust_video_speed(-.1)
