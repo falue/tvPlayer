@@ -8,6 +8,7 @@
             "y-real": 0
         },
         "brightness": 0,
+        "contrast": 0,
         "volume": 100,
         "tv_channel": 3,
         "current_green_index": 0,
