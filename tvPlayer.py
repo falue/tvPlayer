@@ -54,6 +54,7 @@ contrast = 0  # -100 to 100, default 0
 volume = 100  # 100 means max loudness
 active_overlays = {}  # Dictionary to store active overlay threads
 current_green_index = 0
+last_mpv_state_sent = 0
 zoom_level = 0.0
 
 file_settings = {}
@@ -841,6 +842,15 @@ def check_buttons():
                 print(f"Wait for user to release button {i+1}..")
                 time.sleep(0.05)
 
+def send_mpv_state():
+    mqtt_handler.send("general", "state", {
+        "isPlaying": not get_mpv_property("pause"), 
+        "currentFile": current_file, 
+        "tvChannel": tv_channel, 
+        "position": get_current_video_position(),
+        "duration": get_mpv_property("duration")
+    })
+
 
 def prev_channel():
     global tv_channel
@@ -1158,6 +1168,7 @@ def reboot():
         print(f"Error: {e}")
 
 def main():
+    global last_mpv_state_sent
     print("--------------------------------------------------------------------------------")
     pygame_init()
     player_init()
@@ -1167,9 +1178,13 @@ def main():
     gpio_init()
 
     while True:
+        now = time.time()
         get_window_size()
         check_buttons()
         check_keypresses()
+        if now - last_mpv_state_sent >= 1:
+            send_mpv_state()
+            last_mpv_state_sent = now
 
         # Update file list if USB is inserted or removed
         old_filelist = filelist.copy()
