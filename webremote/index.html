@@ -4,148 +4,235 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>tvPlayer Remote</title>
-    <link rel="stylesheet" href="./styles.css?v=250528-b" />
-    <script src="./mqtt.min.js?v=250528-b" onerror="alert('mqtt.min.js failed to load!')"></script>
-    <script src="./scripts.js?v=250528-b" defer onerror="alert('scripts.js failed to load!')"></script>
-</head>
+    <title>tvPlayer</title>
+    <link rel="stylesheet" href="./styles.css?v=250529-a" />
+    <script src="./md5.min.js?v=250529-a"></script>
+    <script src="./mqtt.min.js?v=250529-a"></script>
+    <script src="./scripts.js?v=250529-a" defer></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+</head> 
 
 <body>
     <div class="container">
         <div style="display: flex; justify-content: space-between; align-items: center;">
-            <img src="./icon.png?v=250528" alt="Logo" style="height: 40px;">
-            <div id="heartbeat"></div>
+            <img src="./assets/logo.png?v=250528" alt="Logo" style="height: 40px; margin-left:-8px">
+            <div class="heartbeatContainer" onclick="showState()">
+                <div>
+                    <div id="heartbeat"></div>
+                </div>
+            </div>
         </div>
 
-        <div class="control-group">
-            <h2>Playback</h2>
-            <div class="button-row">
-                <button onclick="sendCommand({'cmd': 'toggle_play'})">Play/Pause</button>
+        <div id="display" class="display" onclick="gebi('playstate').src='assets/icons/timer-sand.svg'; sendCommand({'cmd': 'toggle_play'})">
+            <div>
+                <img id="playstate" src="./assets/icons/help-rhombus-outline.svg">
             </div>
-            <div class="button-row">
-                <button onclick="sendCommand({'cmd': 'prev_channel'})">Previous</button>
-                <button onclick="sendCommand({'cmd': 'next_channel'})">Next</button>
-            </div>
-            <div class="button-row">
-                <button onclick="sendCommand({'cmd': 'go_to_channel', 'value': 0})">#1</button>
-                <button onclick="sendCommand({'cmd': 'go_to_channel', 'value': 1})">#2</button>
-                <button onclick="sendCommand({'cmd': 'go_to_channel', 'value': 2})">#3</button>
-                <button onclick="sendCommand({'cmd': 'go_to_channel', 'value': 3})">#4</button>
-            </div>
-
-            <h2>Seek & Speeds</h2>
-            <div class="button-row">
-                <button onclick="sendCommand({'cmd': 'jump', 'value': 33.3})">jump to...33.3</button>
-            </div>
-            <div class="button-row">
-                <button onclick="sendCommand({'cmd': 'seek', 'value': -60})">-60s</button>
-                <button onclick="sendCommand({'cmd': 'seek', 'value': -5})">-5s</button>
-                <button onclick="sendCommand({'cmd': 'seek', 'value': -0.04})">-Frame</button>
-                <button onclick="sendCommand({'cmd': 'seek', 'value': 0.04})">+Frame</button>
-                <button onclick="sendCommand({'cmd': 'seek', 'value': 5})">+5s</button>
-                <button onclick="sendCommand({'cmd': 'seek', 'value': 60})">+60s</button>
-            </div>
-            <div class="button-row">
-                <button onclick="sendCommand({'cmd': 'adjust_video_speed', 'value': -0.1})">Speed -</button>
-                <button onclick="sendCommand({'cmd': 'adjust_video_speed', 'value': 'reset'})">Speed Reset</button>
-                <button onclick="sendCommand({'cmd': 'adjust_video_speed', 'value': 0.1})">Speed +</button>
+        </div>
+        <div class="playerInfo">
+            <div id="currentFile" class="small">No current file. Insert USB with valid video or image files.</div>
+            <div style="position: relative;">
+                <input type="range" id="timeline" value="0" min="0" max="160" step=".1" 
+                    oninput="skipperPreviewTime(this)"
+                    onchange="skipper(this.value)"
+                >
+                <div id="timecode">00:00.0/00:00.0</div>
             </div>
         </div>
 
         <div class="control-group">
-            <h2>In/Out Points</h2>
+            <!-- MAIN CONTROL -->
             <div class="button-row">
-                <button onclick="sendCommand({'cmd': 'set_inpoint'})">Set In</button>
-                <button onclick="sendCommand({'cmd': 'set_outpoint'})">Set Out</button>
+                <button onclick="sendCommand({'cmd': 'prev_channel'})">
+                    <img src="assets/icons/skip-previous.svg">
+                </button>
+                <button onclick="gebi('playstate').src='assets/icons/timer-sand.svg'; sendCommand({'cmd': 'toggle_play'})" style="width:250%">
+                    <img src="assets/icons/play-pause.svg">
+                </button>
+                <button onclick="sendCommand({'cmd': 'next_channel'})">
+                    <img src="assets/icons/skip-next.svg">
+                </button>
+            </div>
+
+            <!-- SEEKING -->
+            <div class="button-row">
+                <button onclick="sendCommand({'cmd': 'seek', 'value': -60})">
+                    <img src="assets/icons/rewind.svg"><sup class="small">-1m</sup>
+                </button>
+                <button onclick="sendCommand({'cmd': 'seek', 'value': -5})">
+                    <img src="assets/icons/step-backward-2.svg"><sup class="small">-5s</sup>
+                </button>
+                <button onclick="sendCommand({'cmd': 'seek', 'value': -0.04})">
+                    <img src="assets/icons/step-backward.svg"><sup class="small">-f</sup>
+                </button>
+                <button onclick="sendCommand({'cmd': 'seek', 'value': 0.04})">
+                    <img src="assets/icons/step-forward.svg"><sup class="small">+f</sup>
+                </button>
+                <button onclick="sendCommand({'cmd': 'seek', 'value': 5})">
+                    <img src="assets/icons/step-forward-2.svg"><sup class="small">+5s</sup>
+                </button>
+                <button onclick="sendCommand({'cmd': 'seek', 'value': 60})">
+                    <img src="assets/icons/fast-forward.svg"><sup class="small">+1m</sup>
+                </button>
+            </div>
+            <!-- PLAYBACK SPEED -->
+            <div class="button-row" style="margin: 2em 0;">
+                <button onclick="sendCommand({'cmd': 'adjust_video_speed', 'value': -0.1})">
+                    <img src="assets/icons/speedometer-slow.svg"><sup>-</sup>
+                </button>
+                <button onclick="sendCommand({'cmd': 'adjust_video_speed', 'value': 'reset'})" style="width:250%">
+                    Speed <img src="assets/icons/speedometer-medium.svg"> reset
+                </button>
+                <button onclick="sendCommand({'cmd': 'adjust_video_speed', 'value': 0.1})">
+                    <img src="assets/icons/speedometer.svg"><sup>+</sup>
+                </button>
+            </div>
+
+            Files on USB:
+            <div id="filelist" class="grey">
+                No valid files on USB or no USB plugged.
+
+                <!-- <div class="button-row"><button class="filelistButton"><img class="thumbnails" src="./thumbnails/test.jpg">#1: 01<span class="grey">.mp4</span></button></div>
+                <div class="button-row"><button class="filelistButton"><img class="thumbnails" src="./thumbnails/test.jpg">#2: asdfasdf_ASDfasdfasdfasdf_ASdfasdfasdf-asDF_ASD_fASD_f_sdfA_sdF<span class="grey">.mp4</span></button></div>
+                <div class="button-row"><button class="filelistButton"><img class="thumbnails" src="./thumbnails/test.jpg">#3: asd fasdf sadfasdf asdf asdfasdf asdfasd fasefr awert fasdf sdf asdf sadf asdf<span class="grey">.mp4</span></button></div> -->
+            </div>
+
+            
+        </div>
+
+        <div class="control-group">
+            <h2>A-B loop</h2>
+            <div class="button-row">
+                <button onclick="sendCommand({'cmd': 'set_inpoint'})">Set Inpoint <img src="assets/icons/ray-start-arrow.svg"></button>
+                <button onclick="sendCommand({'cmd': 'set_outpoint'})"><img src="assets/icons/ray-end-arrow.svg"> Set Outpoint</button>
             </div>
             <div class="button-row">
-                <button onclick="sendCommand({'cmd': 'clear_inpoint'})">Clear In</button>
-                <button onclick="sendCommand({'cmd': 'clear_outpoint'})">Clear Out</button>
+                <button onclick="sendCommand({'cmd': 'clear_inpoint'})">Clear Inpoint <img src="assets/icons/ray-start-arrow-close.svg"></button>
+                <button onclick="sendCommand({'cmd': 'clear_outpoint'})"><img src="assets/icons/ray-end-arrow-close.svg"> Clear Outpoint</button>
             </div>
         </div>
 
         <div class="control-group">
-            <h2>Volume</h2>
+            <h2>Fill colors</h2>
             <div class="button-row">
-                <button onclick="sendCommand({'cmd': 'adjust_volume', 'value': -10})">- Volume</button>
-                <button onclick="sendCommand({'cmd': 'adjust_volume', 'value': 10})">+ Volume</button>
+                <button onclick="sendCommand({'cmd': 'toggle_black_screen'})">Toggle Black Screen</button>
+                <button onclick="sendCommand({'cmd': 'cycle_white_noise'})">Set Noise Style</button>
+            </div>
+            <div class="button-row">
+                <button onclick="sendCommand({'cmd': 'cycle_green_screen', 'value': -1})">Green Style -</button>
+                <button onclick="sendCommand({'cmd': 'cycle_green_screen', 'value': 0})">Toggle Green Screen</button>
+                <button onclick="sendCommand({'cmd': 'cycle_green_screen', 'value': 1})">Green Style +</button>
             </div>
         </div>
 
         <div class="control-group">
-            <h2>Zoom & Pan & Fitment</h2>
+            <h2>Image adjustment</h2>
             <div class="button-row">
-                <button onclick="sendCommand({'cmd': 'set_video_fitting'})">Fit</button>
+                <button onclick="sendCommand({'cmd': 'set_video_fitting'})">
+                    Cycle Video Fittings
+                    <img src="assets/icons/view-array-outline.svg">
+                </button>
             </div>
             <div class="button-row">
-                <button onclick="sendCommand({'cmd': 'zoom', 'value': -0.01})">Zoom -</button>
-                <button onclick="sendCommand({'cmd': 'zoom', 'value': 0})">Zoom Reset</button>
-                <button onclick="sendCommand({'cmd': 'zoom', 'value': 0.01})">Zoom +</button>
+                <button onclick="sendCommand({'cmd': 'adjust_video_brightness', 'value': -5})">
+                    <img src="assets/icons/brightness-6.svg"><sup>-</sup>
+                </button>
+                <button onclick="sendCommand({'cmd': 'adjust_video_brightness', 'value': 5})">
+                    <img src="assets/icons/brightness-6.svg"><sup>+</sup>
+                </button>
+                <button onclick="sendCommand({'cmd': 'adjust_video_contrast', 'value': -5})">
+                    <img src="assets/icons/image-filter-black-white.svg"><sup>-</sup>
+                </button>
+                <button onclick="sendCommand({'cmd': 'adjust_video_contrast', 'value': 5})">
+                    <img src="assets/icons/image-filter-black-white.svg"><sup>+</sup>
+                </button>
+                <button onclick="sendCommand({'cmd': 'adjust_video_saturation', 'value': -5})" disabled>
+                    <img src="assets/icons/palette.svg"><sup>-</sup>
+                </button>
+                <button onclick="sendCommand({'cmd': 'adjust_video_saturation', 'value': 5})" disabled>
+                    <img src="assets/icons/palette.svg"><sup>+</sup>
+                </button>
+            </div>
+            <div class="button-row" style="margin:2em 0">
+                <button onclick="sendCommand({'cmd': 'zoom', 'value': -0.01})">
+                    <img src="assets/icons/magnify-minus.svg">
+                </button>
+                <button onclick="sendCommand({'cmd': 'zoom', 'value': 0})" style="width:250%">
+                    Zoom <img src="assets/icons/magnify.svg"> reset</button>
+                <button onclick="sendCommand({'cmd': 'zoom', 'value': 0.01})">
+                    <img src="assets/icons/magnify-plus.svg">
+                </button>
             </div>
             <div class="button-row">
-                <button onclick="sendCommand({'cmd': 'pan', 'value': [-1, 'x']})">Left</button>
-                <button onclick="sendCommand({'cmd': 'pan', 'value': ['reset', 'x']})">Reset X</button>
-                <button onclick="sendCommand({'cmd': 'pan', 'value': [1, 'x']})">Right</button>
+                <button onclick="sendCommand({'cmd': 'pan', 'value': [-1, 'x']})">Move Left</button>
+                <button onclick="sendCommand({'cmd': 'pan', 'value': ['reset', 'x']})">
+                    Reset <img src="assets/icons/arrow-left-right.svg">
+                </button>
+                <button onclick="sendCommand({'cmd': 'pan', 'value': [1, 'x']})">Move Right</button>
             </div>
             <div class="button-row">
-                <button onclick="sendCommand({'cmd': 'pan_reset'})">Reset XY</button>
+                <button onclick="sendCommand({'cmd': 'pan_reset'})">
+                    Reset <img src="assets/icons/arrow-all.svg">
+                </button>
             </div>
             <div class="button-row">
-                <button onclick="sendCommand({'cmd': 'pan', 'value': [-1, 'y']})">Up</button>
-                <button onclick="sendCommand({'cmd': 'pan', 'value': ['reset', 'y']})">Reset Y</button>
-                <button onclick="sendCommand({'cmd': 'pan', 'value': [1, 'y']})">Down</button>
+                <button onclick="sendCommand({'cmd': 'pan', 'value': [-1, 'y']})">Move Up</button>
+                <button onclick="sendCommand({'cmd': 'pan', 'value': ['reset', 'y']})">
+                    Reset <img src="assets/icons/arrow-up-down.svg">
+                </button>
+                <button onclick="sendCommand({'cmd': 'pan', 'value': [1, 'y']})">Move Down</button>
             </div>
         </div>
 
         <div class="control-group">
-            <h2>Green Screen</h2>
+            <h2>Look & feel</h2>
             <div class="button-row">
-                <button onclick="sendCommand({'cmd': 'cycle_green_screen', 'value': -1})">Index -</button>
-                <button onclick="sendCommand({'cmd': 'cycle_green_screen', 'value': 0})">Toggle</button>
-                <button onclick="sendCommand({'cmd': 'cycle_green_screen', 'value': 1})">Index +</button>
+                <button onclick="sendCommand({'cmd': 'toggle_show_tv_gui'})">
+                    Toggle TV channel numbers
+                    <img src="assets/icons/tv-gui.svg">
+                </button>
+                <button onclick="sendCommand({'cmd': 'toggle_white_noise_on_channel_change'})">
+                    Toggle white noise between channel changes
+                    <img src="assets/icons/gradient-vertical.svg">
+                </button>
             </div>
-
-            <h2>Black & Noise style</h2>
             <div class="button-row">
-                <button onclick="sendCommand({'cmd': 'toggle_black_screen'})">Black</button>
-                <button onclick="sendCommand({'cmd': 'cycle_white_noise'})">Set noise style</button>
-            </div>
-        </div>
-
-        <div class="control-group">
-            <h2>Colors</h2>
-            <div class="button-row">
-                <button onclick="sendCommand({'cmd': 'adjust_video_brightness', 'value': -5})">Brightness -</button>
-                <button onclick="sendCommand({'cmd': 'adjust_video_brightness', 'value': 5})">Brightness +</button>
-                <button onclick="sendCommand({'cmd': 'adjust_video_contrast', 'value': -5})">Contrast -</button>
-                <button onclick="sendCommand({'cmd': 'adjust_video_contrast', 'value': 5})">Contrast +</button>
-            </div>
-            <h2>System Look & feel</h2>
-            <div class="button-row">
-                <button onclick="sendCommand({'cmd': 'toggle_show_tv_gui'})">TV GUI</button>
-                <button onclick="sendCommand({'cmd': 'toggle_white_noise_on_channel_change'})">White Noise
-                    Toggle</button>
+                <button onclick="sendCommand({'cmd': 'adjust_volume', 'value': -10})">
+                    <img src="assets/icons/volume-minus.svg">
+                </button>
+                <button onclick="sendCommand({'cmd': 'adjust_volume', 'value': 10})">
+                    <img src="assets/icons/volume-plus.svg">
+                </button>
             </div>
         </div>
 
         <div class="control-group">
             <h2>System</h2>
             <div class="button-row">
-                <button onclick="sendCommand({'cmd': 'shutdown'})">Shutdown</button>
+                <button onclick="sendCommand({'cmd': 'shutdown'})">
+                    Shutdown
+                    <img src="assets/icons/power.svg">
+                </button>
+                <button onclick="sendCommand({'cmd': 'reboot'})">
+                    Reboot
+                    <img src="assets/icons/restart.svg">
+                </button>
             </div>
+        </div>
+
+        <div class="control-group small grey" style="text-align: center;">
+            tvPlayer by Fabian Lüscher with <img src="assets/icons/heart-box.svg" style="height:1.5em; opacity: .7; vertical-align: middle;"> @ 2025
+            <div class="small">www.fluescher.ch</div>
         </div>
 
         <div class="control-group">
-            <h2>ADMIN</h2>
+            <h2>Admin</h2>
             <div class="button-row">
-                <button onclick="sendCommand({'cmd': 'toggle_fullscreen'})">Fullscreen</button>
-                <button onclick="sendCommand({'cmd': 'close_program'})">Exit</button>
+                <button onclick="sendCommand({'cmd': 'toggle_fullscreen'})">Toggle Fullscreen</button>
+                <button onclick="sendCommand({'cmd': 'close_program'})">Exit to Desktop</button>
+                <a href="http://10.3.141.1" target="_blank"><button>RaspAP&nbsp;Admin</button></a>
             </div>
-        </div>
-
-        <div class="container maxHeight400">
-            <h2>Console</h2>
-            <div id="console">Init</div>
+            <h2 style="margin-top:2em;">MQTT Console</h2>
+            <div id="console" class="maxHeight400" style="font-family: 'Courier New', Courier, monospace; font-size: .8em; line-height: 1.5em;">Init</div>
         </div>
     </div>
 </body>

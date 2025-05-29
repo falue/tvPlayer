@@ -1,25 +1,19 @@
 body {
-    font-family: Arial, sans-serif;
+    font-family: Helvetica, Arial, sans-serif;
     margin: 0;
     padding: 0;
     background-color: #121212;
     color: #fff;
 }
 
+.small {
+    font-size: .75em;
+}
+
 .container {
     max-width: 600px;
     margin: 0 auto;
     padding: 20px;
-}
-
-.maxHeight400 {
-    max-height: 400px;
-    overflow-y: auto;
-}
-
-h1 {
-    text-align: center;
-    margin-bottom: 30px;
 }
 
 .control-group {
@@ -36,6 +30,116 @@ h1 {
     color: #bb86fc;
 }
 
+.display {
+    box-sizing: border-box;
+    border: solid grey thin;
+    position: relative;
+    background-color: black;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    /* background-image: url("your-image.jpg"); */
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    overflow: hidden;
+}
+
+#playstate {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    /* Optional styles */
+    color: white;
+    width: 5em;
+    text-align: center;
+}
+
+.playerInfo {
+    margin-bottom: 1em;
+    overflow: hidden;
+    background-color: grey;
+    border: solid grey thin;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+#currentFile {
+    padding: .75em;
+    word-break: break-all;
+}
+
+#timecode {
+    text-align: center;
+    mix-blend-mode:exclusion;
+    line-height: 2.5em;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    vertical-align: middle;
+    top:0;
+    left:0;
+    user-select: none;
+    pointer-events: none;
+}
+
+#timeline {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 3em;
+    background: #aaa;
+    margin: 0;
+    padding: 0;
+    border: none;
+    outline: none;
+    overflow: hidden;
+  }
+  
+  /* WebKit (Chrome, Safari) */
+  #timeline::-webkit-slider-runnable-track {
+    height: 3em;
+    background: transparent;
+  }
+  
+  #timeline::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 4px;
+    height: 3em;
+    background: white;
+    box-shadow: -1000px 0 0 1000px #3700b3; /* Fill left side */
+    border: none;
+    cursor: pointer;
+  }
+  
+  /* Firefox */
+  #timeline::-moz-range-track {
+    height: 3em;
+    background: #aaa;
+  }
+  
+  #timeline::-moz-range-progress {
+    background-color: #3700b3;
+    height: 3em;
+  }
+  
+  #timeline::-moz-range-thumb {
+    width: 4px;
+    height: 3em;
+    background: white;
+    border: none;
+    cursor: pointer;
+  }
+
+.maxHeight400 {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
 .button-row {
     display: flex;
     justify-content: center;
@@ -45,22 +149,61 @@ h1 {
 
 button {
     background-color: #3700b3;
+    width: 100%;
     color: white;
     border: none;
     border-radius: 4px;
-    padding: 12px 20px;
+    padding: 12px 10px;
     font-size: 16px;
     cursor: pointer;
-    min-width: 100px;
     transition: background-color 0.3s;
+    overflow: hidden;
 }
 
-button:hover {
+button[disabled] {
+    filter: saturate(0.125);
+    cursor: default;
+    color: grey;
+}
+button[disabled] img[src$=".svg"] {
+    opacity: 0.5;
+}
+
+button:not([disabled]):hover {
     background-color: #6200ee;
 }
 
-button:active {
+button:not([disabled]):active {
     background-color: #bb86fc;
+}
+
+button img[src$=".svg"] {
+    vertical-align: middle;
+    height: 1.5em;
+}
+
+#filelist {
+    padding: .5em 0;
+}
+
+.filelistButton {
+    display: flex;
+    align-items: center;  
+    text-align: left;
+
+    padding: 0px 20px 0px 0px;
+    word-break: break-all;
+}
+
+button .thumbnails {
+    width: 8em;
+    margin-right: 1em;
+    vertical-align: middle;
+    
+  flex-shrink: 0;
+}
+.filelistButton div {
+    line-height: 1.2;
 }
 
 .big-button {
@@ -92,6 +235,10 @@ input[type="text"] {
     color: #fff;
 }
 
+.grey {
+    color: grey;
+}
+
 .playlist-section {
     margin-bottom: 30px;
     background-color: #1e1e1e;
@@ -121,13 +268,29 @@ input[type="text"] {
     width: 100%;
 }
 
-#heartbeat {
-    width: 12px;
-    height: 12px;
+.heartbeatContainer {
+    padding:1em 0 1em 2em;
+}
+.heartbeatContainer > div {
+    background-color: #434343;
+    width: 1.5em;
+    height: 1.5em;
+    padding: .25em .25em .25em .125em;
     border-radius: 50%;
+    box-sizing: border-box;
+}
+
+#heartbeat {
+    width: 1.25em;
+    height: 1.25em;
     background-color: rgb(255, 68, 0);
-    border: solid 2px rgba(255,255,255,.5);
     transition: background-color 7.5s ease-in;
+    -webkit-mask-image: url('assets/icons/wifi.svg');
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-size: cover;
+    mask-image: url('assets/icons/wifi.svg');
+    mask-repeat: no-repeat;
+    mask-size: cover;
 }
 
 #heartbeat.active {
@@ -139,8 +302,9 @@ input[type="text"] {
     .container {
         padding: 10px;
     }
+
     button {
-        padding: 15px 10px;
+        padding: 15px 5px;
         font-size: 14px;
         min-width: 0;
         flex-grow: 1;

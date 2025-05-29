@@ -619,10 +619,12 @@ def toggle_black_screen():
         # Restore normal brightness
         set_brightness(0)
         play()
+        mqtt_handler.send("general", "fillcolor", {"type": "black", "show": False})
     else:
         # Set brightness to -100 to black out the screen
         set_brightness(-100)
         pause()
+        mqtt_handler.send("general", "fillcolor", {"type": "black", "show": True})
     is_black_screen = not is_black_screen
 
 def cycle_green_screen(direction):
@@ -639,9 +641,11 @@ def cycle_green_screen(direction):
         else:
             # Play last video file from inpoint
             play_file(filelist[tv_channel], inpoints[tv_channel], outpoints[tv_channel])
+            mqtt_handler.send("general", "fillcolor", {"type": "green", "index": current_green_index, "show": False})
             return
     # Show green screen
     play_file(green_path)
+    mqtt_handler.send("general", "fillcolor", {"type": "green", "index": current_green_index, "show": True})
 
 def check_keypresses():
     global tv_channel
@@ -1041,6 +1045,8 @@ def cycle_white_noise():
         white_noise_index = 0
     print("white_noise_index>", white_noise_index)
     show_white_noise()
+    # FIXME needs to behave like greenscreen
+    mqtt_handler.send("general", "fillcolor", {"type": "noise", "index": white_noise_index, "show": True})
 
 # List of fitting modes
 def set_video_fitting(fitting_index=None):
