@@ -17,6 +17,11 @@ white_noise_duration = 0.1  # duration which shows white noise when changing cha
 gui_display_duration = 2.0  # Duration of the gui numbers stays alive, minus the white_noise_duration, in seconds
 tv_channel_offset = 1  # display higher channel nr than actually available
 
+allowed_fileendings = (
+    '.mp4', '.mkv', '.avi', '.mxf', '.mov', '.m4v',
+    '.jpg', '.jpeg', '.png', '.gif', '.tiff', '.bmp'
+)
+
 # GPIO Pin Definitions
 LED_PIN = 18  # Choose any free GPIO pin for LED
 
@@ -289,6 +294,7 @@ def system_init():
     detect_usb_root()
     print("Get filelist")
     update_files_from_usb()
+    create_thumbnails(filelist)
     reset_in_outpoints_video_fitting()
     print(f"Initial filelist ({len(filelist)}):")
     print("  " + ("\n  ".join(f"Ch.{i+1} > {os.path.basename(file)}" for i, file in enumerate(filelist))))
@@ -345,10 +351,6 @@ def update_files_from_usb():
             if os.path.isdir(device_path):
                 try:
                     for file in os.listdir(device_path):
-                        allowed_fileendings = (
-                            '.mp4', '.mkv', '.avi', '.mxf', '.mov', '.m4v',
-                            '.jpg', '.jpeg', '.png', '.gif', '.tiff', '.bmp'
-                        )
                         if file.lower().endswith(allowed_fileendings) and not file.startswith('.'):
                             if file.lower().startswith("av."):
                                 has_av_channel = True
@@ -386,6 +388,78 @@ def update_files_from_usb():
             filelist.append(av_channel_path)
         else:
             has_av_channel = False  # This makes no sense but its needed to show white noise when no USB is inserted
+
+def create_thumbnails(current_filelist):
+    """
+    Remove all images from ./webremote/thumbnails.
+    For each file in current_filelist:
+        - If it's an image, convert to 600px wide PNG if not already in ./webremote/thumbnails
+        - If it's a video, extract a middle-frame PNG if not already in ./webremote/thumbnails
+    """
+    print("Create thumbnails from filelist..")
+    mqtt_handler.send("general", "createThumbnails")
+
+    thumbnail_folder = os.path.join(script_dir, "webremote", "thumbnails")
+    os.makedirs(thumbnail_folder, exist_ok=True)
+
+    # Step 1: remove existing thumbnails
+    for f in os.listdir(thumbnail_folder):
+        if f.endswith(".png"):
+            os.remove(os.path.join(thumbnail_folder, f))
+
+    # Step 2: generate new thumbnails
+    for filepath in current_filelist:
+        if not filepath.lower().endswith(allowed_fileendings):
+            continue
+
+        if not os.path.exists(filepath):
+            continue
+
+        basename = os.path.splitext(os.path.basename(filepath))[0]
+        thumb_path = os.path.join(thumbnail_folder, f"{basename}.png")
+
+        if os.path.exists(thumb_path):
+            continue
+
+        if filepath.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.tiff', '.bmp')):
+            # Generate thumbnail from image using ImageMagick
+            subprocess.run([
+                "convert", filepath,
+                "-resize", "600x",
+                thumb_path
+            ])
+        else:
+            # Get video duration to find midpoint
+            result = subprocess.run([
+                "ffprobe", "-v", "error",
+                "-hide_banner", "-loglevel", "error",
+                "-select_streams", "v:0",
+                "-show_entries", "format=duration",
+                "-of", "default=noprint_wrappers=1:nokey=1",
+                filepath
+            ], capture_output=True, text=True)
+
+            try:
+                duration = float(result.stdout.strip())
+            except:
+                duration = 1
+
+            midpoint = duration / 2
+
+            # Generate thumbnail from video using FFmpeg
+            subprocess.run([
+                "ffmpeg", "-y",
+                "-hide_banner", "-loglevel", "error",
+                "-ss", str(midpoint),
+                "-i", filepath,
+                "-vframes", "1",
+                "-vf", "scale=600:-1",
+                thumb_path
+            ])
+
+    print("Thumbnail creation complete.")
+
+
 
 def reset_in_outpoints_video_fitting():
     global inpoints, outpoints, video_fittings, video_speeds
@@ -1092,6 +1166,7 @@ def main():
             update_in_outpoints()
             print(f"filelist updated ({len(filelist)}):")
             print("  " + ("\n  ".join(f"Ch.{i+1} > {os.path.basename(file)}" for i, file in enumerate(filelist))))
+            create_thumbnails(filelist)
             print("inpoints and video fitting reset:")
             reset_in_outpoints_video_fitting()
             load_settings()
