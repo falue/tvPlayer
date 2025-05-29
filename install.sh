@@ -73,7 +73,7 @@ if [[ "$create_desktop" == "y" ]]; then
 [Desktop Entry]
 Type=Application
 Name=tvPlayer
-Exec=sudo python3 $EXCEC_PATH_MAIN
+Exec=python3 $EXCEC_PATH_MAIN
 Icon=$FULL_ICON_PATH
 X-LXDE-Startup=true
 EOL
@@ -94,7 +94,7 @@ if [[ "$create_autostart" == "y" ]]; then
         AUTOSTART_FILE_PATH="$AUTOSTART_PATH/tvPlayer-startdialog.desktop"
     else
         AUTOSTART_SCRIPT_NAME="tvPlayer"
-        EXEC_AUTOSTART_COMMAND="sudo python3 $SCRIPT_LOCATION/tvPlayer.py"
+        EXEC_AUTOSTART_COMMAND="python3 $SCRIPT_LOCATION/tvPlayer.py"
         FULL_ICON_PATH="$SCRIPT_LOCATION/assets/icon.png"
         AUTOSTART_FILE_PATH="$AUTOSTART_PATH/tvPlayer.desktop"
     fi

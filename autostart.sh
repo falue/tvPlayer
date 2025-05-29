@@ -76,7 +76,7 @@ if [ "$response" -eq 0 ] || [ "$response" -eq 5 ]; then
     # Get the directory of the currently running script (autorun.sh)
     script_dir=$(dirname "$(realpath "$0")")
     # Run the Python script using the directory of this script
-    sudo python3 "$script_dir/tvPlayer.py" &
+    python3 "$script_dir/tvPlayer.py" &
 
 else
     echo "Cancel clicked, doing nothing."
