@@ -144,6 +144,8 @@ def mqtt_incoming(data):
 
     elif cmd == "shutdown":
         shutdown()
+    elif cmd == "reboot":
+        reboot()
 
     elif cmd == "go_to_channel":
         go_to_channel(int(value))
@@ -1138,6 +1140,19 @@ def shutdown():
         # Check if the command failed (non-zero return code indicates failure)
         if result != 0:
             raise PermissionError("Shutdown failed. Ensure the script is run with sudo privileges.")
+    
+    except PermissionError as e:
+        print(f"Error: {e}")
+
+def reboot():
+    try:
+        # Attempt to shut down the Raspberry Pi
+        print("Attempting to reboot...")
+        result = os.system("sudo reboot now")
+        
+        # Check if the command failed (non-zero return code indicates failure)
+        if result != 0:
+            raise PermissionError("Reboot failed. Ensure the script is run with sudo privileges.")
     
     except PermissionError as e:
         print(f"Error: {e}")
