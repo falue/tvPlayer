@@ -1,3 +1,7 @@
+html, body, button {
+    touch-action: manipulation;
+}
+  
 body {
     font-family: Helvetica, Arial, sans-serif;
     margin: 0;
@@ -158,6 +162,7 @@ button {
     cursor: pointer;
     transition: background-color 0.3s;
     overflow: hidden;
+    user-select: none;
 }
 
 button[disabled] {
