@@ -254,6 +254,18 @@ function secondsToTimecode(seconds, fps = 25) {
   }
 }
 
+function startPan(e, axis, value) {
+  if (e) e.preventDefault(); // prevent touch scrolling
+  sendCommand({ cmd: 'pan', value: [value, axis] });
+  panInterval = setInterval(() => {
+    sendCommand({ cmd: 'pan', value: [value, axis] });
+  }, 75);
+}
+
+function stopPan() {
+  clearInterval(panInterval);
+}
+
 function logging(text) {
   console.log(text);
   document.getElementById("console").innerHTML =

@@ -163,11 +163,23 @@
                 </button>
             </div>
             <div class="button-row">
-                <button onclick="sendCommand({'cmd': 'pan', 'value': [-1, 'x']})">Move Left</button>
+                <button 
+                    onmousedown="startPan(event, 'x', -1)"
+                    onmouseup="stopPan(event, 'x', -1)"
+                    onmouseleave="stopPan(event, 'x', -1)"
+                    ontouchstart="startPan(event, 'x', -1)"
+                    ontouchend="stopPan(event, 'x', -1)"
+                >Move Left</button>
                 <button onclick="sendCommand({'cmd': 'pan', 'value': ['reset', 'x']})">
                     Reset <img src="assets/icons/arrow-left-right.svg">
                 </button>
-                <button onclick="sendCommand({'cmd': 'pan', 'value': [1, 'x']})">Move Right</button>
+                <button 
+                    onmousedown="startPan(event, 'x', 1)"
+                    onmouseup="stopPan(event, 'x', 1)"
+                    onmouseleave="stopPan(event, 'x', 1)"
+                    ontouchstart="startPan(event, 'x', 1)"
+                    ontouchend="stopPan(event, 'x', 1)"
+                >Move Right</button>
             </div>
             <div class="button-row">
                 <button onclick="sendCommand({'cmd': 'pan_reset'})">
@@ -175,11 +187,23 @@
                 </button>
             </div>
             <div class="button-row">
-                <button onclick="sendCommand({'cmd': 'pan', 'value': [-1, 'y']})">Move Up</button>
+                <button 
+                    onmousedown="startPan(event, 'y', -1)"
+                    onmouseup="stopPan(event, 'y', -1)"
+                    onmouseleave="stopPan(event, 'y', -1)"
+                    ontouchstart="startPan(event, 'y', -1)"
+                    ontouchend="stopPan(event, 'y', -1)"
+                >Move Up</button>
                 <button onclick="sendCommand({'cmd': 'pan', 'value': ['reset', 'y']})">
                     Reset <img src="assets/icons/arrow-up-down.svg">
                 </button>
-                <button onclick="sendCommand({'cmd': 'pan', 'value': [1, 'y']})">Move Down</button>
+                <button 
+                    onmousedown="startPan(event, 'y', 1)"
+                    onmouseup="stopPan(event, 'y', 1)"
+                    onmouseleave="stopPan(event, 'y', 1)"
+                    ontouchstart="startPan(event, 'y', 1)"
+                    ontouchend="stopPan(event, 'y', 1)"
+                >Move Down</button>
             </div>
         </div>
 
