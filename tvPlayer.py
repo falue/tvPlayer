@@ -49,7 +49,7 @@ current_file = ""
 pan_offsets = {'x': 0.0, 'y': 0.0, 'x-real': 0, 'y-real': 0}  # Global variables to track the pan offsets
 has_av_channel = False
 ipc_socket_path = '/tmp/mpv_socket'
-brightness = 0  # 0 means 100% brightness
+brightness = 0  # -100 to 100, default 0
 contrast = 0  # -100 to 100, default 0
 saturation = 0  # -100 to 100, default 0
 volume = 100  # 100 means max loudness
@@ -523,8 +523,8 @@ def set_brightness(value):
 
 def adjust_video_brightness(value):
     global brightness
-    # Clamp brightness between -100 (full transparent) and 0 (full visible)
-    brightness = max(-100, min(0, brightness + value))
+    # Clamp brightness between -100 (full transparent) and 100 (full bright)
+    brightness = max(-100, min(100, brightness + value))
     set_brightness(brightness)
 
 def set_contrast(value):
