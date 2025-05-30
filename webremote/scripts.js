@@ -301,9 +301,18 @@ function stopPan() {
 
 function logging(text) {
   console.log(text);
-  document.getElementById("console").innerHTML =
-    text + "<br>" + document.getElementById("console").innerHTML;
+  const consoleDiv = document.getElementById("console");
+
+  const newLine = document.createElement("div");
+  newLine.innerHTML = text;
+  consoleDiv.prepend(newLine); // adds to the top
+
+  // limit to 100 lines
+  while (consoleDiv.children.length > 100) {
+    consoleDiv.removeChild(consoleDiv.lastChild);
+  }
 }
+
 
 
 function hide(id) {
