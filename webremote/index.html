@@ -5,10 +5,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>tvPlayer</title>
-    <link rel="stylesheet" href="./styles.css?v=250530-B" />
-    <script src="./md5.min.js?v=250530-B"></script>
-    <script src="./mqtt.min.js?v=250530-B"></script>
-    <script src="./scripts.js?v=250530-B" defer></script>
+    <link rel="stylesheet" href="./styles.css?v=250530-C" />
+    <script src="./md5.min.js?v=250530-C"></script>
+    <script src="./mqtt.min.js?v=250530-C"></script>
+    <script src="./scripts.js?v=250530-C" defer></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 </head> 
 
@@ -259,11 +259,11 @@
         <div class="control-group">
             <h2>System</h2>
             <div class="button-row">
-                <button onclick="sendCommand({'cmd': 'shutdown'})">
+                <button onclick="sendCommand({'cmd': 'shutdown'}); window.location.href = 'shutdown.html'">
                     Shutdown
                     <img src="assets/icons/power.svg">
                 </button>
-                <button onclick="sendCommand({'cmd': 'reboot'})">
+                <button onclick="sendCommand({'cmd': 'reboot'}); window.location.href = 'reboot.html'">
                     Reboot
                     <img src="assets/icons/restart.svg">
                 </button>
