@@ -139,5 +139,9 @@ If you want "black" to show up, use `rgb(1,1,1)`.
 | CTRL + .        | zoom reset                              |      |
 | ,               | reduce video brightness by 5%           |      |
 | SHIFT + ,       | increase video brightness by 5%         |      |
+| m               | reduce video contrast by 2.5%           |      |
+| SHIFT + m       | increase video contrast by 2.5%         |      |
+| n               | reduce video saturation by 2.5%         |      |
+| SHIFT + n       | increase video saturation by 2.5%       |      |
 | +               | reduce volume by 10%                    |      |
 | -               | increase volume by 10%                  |      |

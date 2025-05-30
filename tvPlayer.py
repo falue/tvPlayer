@@ -51,6 +51,7 @@ has_av_channel = False
 ipc_socket_path = '/tmp/mpv_socket'
 brightness = 0  # 0 means 100% brightness
 contrast = 0  # -100 to 100, default 0
+saturation = 0  # -100 to 100, default 0
 volume = 100  # 100 means max loudness
 active_overlays = {}  # Dictionary to store active overlay threads
 current_green_index = 0
@@ -107,9 +108,11 @@ def mqtt_incoming(data):
 
     elif cmd == "adjust_video_brightness":
         adjust_video_brightness(int(value))
-
     elif cmd == "adjust_video_contrast":
         adjust_video_contrast(int(value))
+        adjust_video_brightness(int(value))
+    elif cmd == "adjust_video_saturation":
+        adjust_video_saturation(int(value))
 
     elif cmd == "adjust_video_speed":
         if value == "reset":
@@ -159,7 +162,7 @@ def load_settings():
     Load settings from a JSON file and apply them to globals.
     For file-dependent settings, only load settings for the files in the given filelist.
     """
-    global white_noise_index, pan_offsets, brightness, contrast, volume, current_green_index, show_tv_gui, zoom_level
+    global white_noise_index, pan_offsets, brightness, contrast, saturation, volume, current_green_index, show_tv_gui, zoom_level
     global file_settings, inpoints, video_fittings, video_speeds, tv_channel, show_whitenoise_channel_change
 
     if not os.path.exists(os.path.join(script_dir, SETTINGS_FILE)):
@@ -175,6 +178,7 @@ def load_settings():
     pan_offsets = general_settings.get("pan_offsets", pan_offsets)
     brightness = general_settings.get("brightness", brightness)
     contrast = general_settings.get("contrast", contrast)
+    saturation = general_settings.get("saturation", saturation)
     volume = general_settings.get("volume", volume)
     current_green_index = general_settings.get("current_green_index", current_green_index)
     tv_channel = general_settings.get("tv_channel", tv_channel)
@@ -220,6 +224,7 @@ def save_settings():
         "pan_offsets": pan_offsets,
         "brightness": brightness,
         "contrast": contrast,
+        "saturation": saturation,
         "volume": volume,
         "tv_channel": tv_channel,
         "current_green_index": current_green_index,
@@ -325,7 +330,8 @@ def system_init():
     pan(pan_offsets["x"], "x")
     pan(pan_offsets["y"], "y")
     set_brightness(brightness)
-    set_brightness(contrast)
+    set_contrast(contrast)
+    set_saturation(saturation)
     set_volume(volume)
     zoom(zoom_level, True)
 
@@ -532,9 +538,24 @@ def set_contrast(value):
 
 def adjust_video_contrast(value):
     global contrast
-    # Clamp contrast between -100 (full dull) and 0 (max contrast)
+    # Clamp contrast between -100 (full dull) and 100 (max contrast)
     contrast = max(-100, min(100, contrast + value))
     set_contrast(contrast)
+
+def set_saturation(value):
+    global ipc_socket_path
+    if os.path.exists(ipc_socket_path):
+        command = f'echo \'{{"command": ["set_property", "saturation", {value}]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
+        subprocess.call(command, shell=True)
+        print(f"Set saturation to {value}")
+    else:
+        print("mpv IPC socket not found.")
+
+def adjust_video_saturation(value):
+    global saturation
+    # Clamp saturation between -100 (full greyscale) and 100 (max vibrance)
+    saturation = max(-100, min(100, saturation + value))
+    set_saturation(saturation)
 
 def adjust_video_speed(value):
     global video_speeds
@@ -763,6 +784,12 @@ def check_keypresses():
             elif event.key == pygame.K_m:
                 print("keypress [m] Less contrast")
                 adjust_video_contrast(-5)
+            elif event.key == pygame.K_n and pygame.key.get_mods() & pygame.KMOD_SHIFT:
+                print("keypress [SHIFT]+[n] More saturation")
+                adjust_video_saturation(5)
+            elif event.key == pygame.K_n:
+                print("keypress [n] Less saturation")
+                adjust_video_saturation(-5)
             elif event.key == pygame.K_j:
                 print("keypress [j] Playback speed slower")
                 adjust_video_speed(-.1)
