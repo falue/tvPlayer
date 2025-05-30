@@ -110,7 +110,6 @@ def mqtt_incoming(data):
         adjust_video_brightness(int(value))
     elif cmd == "adjust_video_contrast":
         adjust_video_contrast(int(value))
-        adjust_video_brightness(int(value))
     elif cmd == "adjust_video_saturation":
         adjust_video_saturation(int(value))
 
