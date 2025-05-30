@@ -52,7 +52,7 @@ ipc_socket_path = '/tmp/mpv_socket'
 brightness = 0  # -100 to 100, default 0
 contrast = 0  # -100 to 100, default 0
 saturation = 0  # -100 to 100, default 0
-volume = 100  # 100 means max loudness
+volume = 100  # 0 to 100, 100 means max loudness
 active_overlays = {}  # Dictionary to store active overlay threads
 current_green_index = 0
 last_mpv_state_sent = 0
@@ -873,6 +873,8 @@ def check_buttons():
                 time.sleep(0.05)
 
 def send_mpv_state():
+    # Ttrigger settings to have current data about the playing file on web
+    save_settings()
     mqtt_handler.send("general", "state", {
         "isPlaying": not get_mpv_property("pause"), 
         "currentFile": current_file, 

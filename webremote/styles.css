@@ -203,6 +203,10 @@ button img[src$=".svg"] {
   padding-bottom: .25em;
 }
 
+.buttonNote img {
+    height: 3em;
+}
+
 #filelist {
     padding: .5em 0;
 }

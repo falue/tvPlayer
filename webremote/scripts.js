@@ -32,11 +32,11 @@ function init() {
   client.on("message", (topic, message) => {
     const data = JSON.parse(message.toString());
     if (topic === "tvPlayer/heartbeat") {
-      logging(`Received heartbeat: <pre>${JSON.stringify(data)}</pre>`);
+      logging(`Received heartbeat`);
       handleHeartbeat();
 
     } else if (topic === "tvPlayer/settings") {
-      logging(`Received settings: <pre>${JSON.stringify(data)}</pre>`);
+      logging(`Received settings`);
       hasReceivedSettings = true;
       handleSettings(data.payload);
 
@@ -64,11 +64,6 @@ function init() {
     logging("Window lost focus — clearing timeouts");
     clearTimeout(raspi_available_timer);
   });
-
-  /* window.addEventListener("focus", () => {
-        console.log("Window regained focus — restarting timeouts");
-        startHeartbeatTimeouts();
-    }); */
 }
 
 function sendCommand(data, ignore_availability=false, giveFeedback=false) {
@@ -121,15 +116,30 @@ function showState() {
 }
 
 function handleSettings(data) {
-  logging(data.filelist);
-
-  /* SET SOME GUI ELEMENTS OPF GENERAL_SETTINGS */
+  // update currentfile?
+  // SET SOME GUI ELEMENTS OPF GENERAL_SETTINGS
   let settings = data.settings.general_settings;
   gebi('note-brightness').innerHTML = parseInt((settings.brightness+100)/2);  // Range from -100 - 100
   gebi('note-contrast').innerHTML = parseInt((settings.contrast+100)/2);  // Range from -100 - 100
   gebi('note-saturation').innerHTML = parseInt((settings.saturation+100)/2);  // Range from -100 - 100
 
-  /* HANDLE FILE LIST */
+  // GENERAL
+  gebi('note-zoom').innerHTML = ((settings.zoom_level+1)*100).toFixed(0);  // 0 = normal
+  gebi('note-pan').innerHTML = `X ${(settings.pan_offsets.x*100).toFixed(1)} / Y ${(settings.pan_offsets.y*100).toFixed(1)}`;  // 0.0/0.0
+  gebi('note-volume').innerHTML = settings.volume;  // 0 to 100
+  
+  // PER VIDEO FILE
+  let fileSettings = data.settings.file_dependent_settings;
+  if(fileSettings[currentFile.filename]) {
+    let thisVideo = fileSettings[currentFile.filename];
+    gebi('note-speed').innerHTML = `${thisVideo.video_speeds.toFixed(2)}&times;`;  // 1 = normal
+    let fitting_modes = ['contain', 'stretch', 'cover']
+    gebi('note-videoFitting').innerHTML = `<img src="assets/icons/fitting-${fitting_modes[thisVideo.video_fittings]}.svg"><br>${fitting_modes[thisVideo.video_fittings]}`
+    gebi('note-inpoint').innerHTML = thisVideo.inpoints > 0 ? secondsToTimecode(thisVideo.inpoints) : "-";
+    gebi('note-outpoint').innerHTML = thisVideo.outpoints > 0 ? secondsToTimecode(thisVideo.outpoints) : "-";
+  }
+
+  // HANDLE FILE LIST
   const filelistContainer = gebi("filelist");
   filelistContainer.innerHTML = ""; // Clear previous entries
 
@@ -180,9 +190,10 @@ function handleState(data) {
     }
     if (data.currentFile.length > 0 && !isShowingFillColor) {
       let name = splitFileName(data.currentFile);
-      let basename = name.basename;
-      let suffix = name.suffix;
-      gebi("currentFile").innerHTML = `#${data.tvChannel + 1} - ${basename}<span class='grey'>.${suffix}</span>`;
+      data.basename = name.basename;
+      data.suffix = name.suffix;
+      data.filename = `${name.basename}.${name.suffix}`;
+      gebi("currentFile").innerHTML = `#${data.tvChannel + 1} - ${data.basename}<span class='grey'>.${data.suffix}</span>`;
       let timeline = gebi("timeline");
       if(data.duration>0){
         show("timeline");
@@ -195,7 +206,7 @@ function handleState(data) {
         hide("timeline");
         gebi("timecode").innerHTML = "";
       }
-      gebi("display").style.backgroundImage = `url("thumbnails/${basename}.png")`;
+      gebi("display").style.backgroundImage = `url("thumbnails/${data.basename}.png")`;
     } else {
       gebi("currentFile").innerHTML = "No current file. Insert USB with valid video or image files.";
       gebi("display").style.backgroundImage = ``;
@@ -277,9 +288,10 @@ function secondsToTimecode(seconds, fps = 25) {
 
 function startPan(e, axis, value) {
   if (e) e.preventDefault(); // prevent touch scrolling
-  sendCommand({ cmd: 'pan', value: [value, axis] });
+  setToWait('note-pan'); 
+  sendCommand({ cmd: 'pan', value: [value, axis] }, false, true);
   panInterval = setInterval(() => {
-    sendCommand({ cmd: 'pan', value: [value, axis] });
+    sendCommand({ cmd: 'pan', value: [value, axis] }, false, true);
   }, 75);
 }
 
