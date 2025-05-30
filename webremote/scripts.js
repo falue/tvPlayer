@@ -71,7 +71,7 @@ function init() {
     }); */
 }
 
-function sendCommand(data, ignore_availability = false) {
+function sendCommand(data, ignore_availability=false, giveFeedback=false) {
   if (!raspi_available && !ignore_availability) {
     alert("Cannot connect to tvPlayer. Go closer.");
     return;
@@ -83,6 +83,9 @@ function sendCommand(data, ignore_availability = false) {
       value: data.value ? data.value : 0,
     })
   );
+  if(giveFeedback) {
+    sendCommand({ cmd: "give_settings" }, true);
+  }
 }
 
 function gebi(id) {
@@ -120,6 +123,13 @@ function showState() {
 function handleSettings(data) {
   logging(data.filelist);
 
+  /* SET SOME GUI ELEMENTS OPF GENERAL_SETTINGS */
+  let settings = data.settings.general_settings;
+  gebi('note-brightness').innerHTML = parseInt((settings.brightness+100)/2);  // Range from -100 - 100
+  gebi('note-contrast').innerHTML = parseInt((settings.contrast+100)/2);  // Range from -100 - 100
+  gebi('note-saturation').innerHTML = parseInt((settings.saturation+100)/2);  // Range from -100 - 100
+
+  /* HANDLE FILE LIST */
   const filelistContainer = gebi("filelist");
   filelistContainer.innerHTML = ""; // Clear previous entries
 
@@ -203,6 +213,17 @@ function handleFillColor(data) {
   } else {
     isShowingFillColor = false;
     display.style.backgroundImage = lastThumbnail;
+  }
+}
+
+function setToWait(id) {
+  if(gebi(id).src) {
+    gebi(id).src = 'assets/icons/timer-sand.svg';
+  } else {
+    const img = document.createElement("img");
+    img.className = "wait";
+    img.src = 'assets/icons/timer-sand.svg';
+    gebi(id).replaceChildren(img);
   }
 }
 

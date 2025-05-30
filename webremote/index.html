@@ -45,7 +45,7 @@
                 <button onclick="sendCommand({'cmd': 'prev_channel'})">
                     <img src="assets/icons/skip-previous.svg">
                 </button>
-                <button onclick="gebi('playstate').src='assets/icons/timer-sand.svg'; sendCommand({'cmd': 'toggle_play'})" style="width:250%">
+                <button onclick="setToWait('playstate'); sendCommand({'cmd': 'toggle_play'})" style="width:250%">
                     <img src="assets/icons/play-pause.svg">
                 </button>
                 <button onclick="sendCommand({'cmd': 'next_channel'})">
@@ -133,22 +133,27 @@
                 </button>
             </div>
             <div class="button-row">
-                <button onclick="sendCommand({'cmd': 'adjust_video_brightness', 'value': -5})">
+                <div class="buttonNote" id="note-brightness" title="brightness">100</div>
+                <div class="buttonNote" id="note-contrast" title="contrast">100</div>
+                <div class="buttonNote" id="note-saturation" title="saturation">100</div>
+            </div>
+            <div class="button-row">
+                <button onclick="setToWait('note-brightness'); sendCommand({'cmd': 'adjust_video_brightness', 'value': -5}, false, true)">
                     <img src="assets/icons/brightness-6.svg"><sup>-</sup>
                 </button>
-                <button onclick="sendCommand({'cmd': 'adjust_video_brightness', 'value': 5})">
+                <button onclick="setToWait('note-brightness'); sendCommand({'cmd': 'adjust_video_brightness', 'value': 5}, false, true)">
                     <img src="assets/icons/brightness-6.svg"><sup>+</sup>
                 </button>
-                <button onclick="sendCommand({'cmd': 'adjust_video_contrast', 'value': -5})">
+                <button onclick="setToWait('note-contrast'); sendCommand({'cmd': 'adjust_video_contrast', 'value': -5}, false, true)">
                     <img src="assets/icons/image-filter-black-white.svg"><sup>-</sup>
                 </button>
-                <button onclick="sendCommand({'cmd': 'adjust_video_contrast', 'value': 5})">
+                <button onclick="setToWait('note-contrast'); sendCommand({'cmd': 'adjust_video_contrast', 'value': 5}, false, true)">
                     <img src="assets/icons/image-filter-black-white.svg"><sup>+</sup>
                 </button>
-                <button onclick="sendCommand({'cmd': 'adjust_video_saturation', 'value': -5})">
+                <button onclick="setToWait('note-saturation'); sendCommand({'cmd': 'adjust_video_saturation', 'value': -5}, false, true)">
                     <img src="assets/icons/palette.svg"><sup>-</sup>
                 </button>
-                <button onclick="sendCommand({'cmd': 'adjust_video_saturation', 'value': 5})">
+                <button onclick="setToWait('note-saturation'); sendCommand({'cmd': 'adjust_video_saturation', 'value': 5}, false, true)">
                     <img src="assets/icons/palette.svg"><sup>+</sup>
                 </button>
             </div>
