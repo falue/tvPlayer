@@ -233,8 +233,13 @@ button img[src$=".svg"] {
 .buttonNote {
     text-align: center;
     width: 100%;
-    padding: 12px 10px 4px 10px;
+    padding: 4px 10px;
+    margin-top:8px;
     user-select: none;
+    border:#3e3e3e 1px solid;
+    border-bottom:none;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
 }
 
 .buttonNote:before {
