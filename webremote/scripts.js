@@ -52,6 +52,7 @@ function init() {
 
       } else if (data.command == "state") {
         handleState(data.payload);
+        handleHeartbeat();  // Treat as heartbeat because it comes every second
 
       } else if (data.command == "fillcolor") {
         handleFillColor(data.payload);
