@@ -118,11 +118,16 @@ function showState() {
 
 function handleSettings(data) {
   // update currentfile?
-  // SET SOME GUI ELEMENTS OPF GENERAL_SETTINGS
+  // SET SOME GUI ELEMENTS OF GENERAL_SETTINGS
   let settings = data.settings.general_settings;
   gebi('note-brightness').innerHTML = parseInt((settings.brightness+100)/2);  // Range from -100 - 100
   gebi('note-contrast').innerHTML = parseInt((settings.contrast+100)/2);  // Range from -100 - 100
   gebi('note-saturation').innerHTML = parseInt((settings.saturation+100)/2);  // Range from -100 - 100
+
+  gebi('note-show_tv_gui').innerHTML = settings.show_tv_gui ? "On" : "Off";
+  gebi('note-white_noise_on_channel_change').innerHTML = settings.show_whitenoise_channel_change ? "On" : "Off";
+  gebi('note-cycle_green_screen').innerHTML = `<img src="assets/screens/green${settings.current_green_index}.png">`;
+  gebi('note-cycle_white_noise').innerHTML = `<img src="assets/screens/noise${settings.white_noise_index}.png">`;
 
   // GENERAL
   gebi('note-zoom').innerHTML = ((settings.zoom_level+1)*100).toFixed(0);  // 0 = normal

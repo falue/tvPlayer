@@ -253,6 +253,7 @@ button img[src$=".svg"] {
 
 .buttonNote img {
     height: 3em;
+    border-radius: 4px;
 }
 
 #filelist {
