@@ -92,12 +92,42 @@ body {
     height: 100%;
     top: 0px;
     pointer-events: none;
+    vertical-align: middle;
 }
+
 .marker.in {
-    border-right:solid 2px green;
+    border-left:solid 2px yellow;
+    color: yellow;
+}
+.marker.in:before {
+    content: "A";
+    font-size: .65em;
+    position: absolute;
+    margin-left:-1.1em
+}
+.marker.in:after {
+    content: "⇾";
+    font-size: 1.7em;
+    position: absolute;
+    line-height: 0.35em;
+    margin-left: -.275em;
 }
 .marker.out {
     border-left:solid 2px blue;
+    color: blue;
+}
+.marker.out:before {
+    content: "⇽";
+    font-size: 1.7em;
+    position: absolute;
+    line-height: 0.35em;
+    margin-left: -.57em;
+}
+.marker.out:after {
+    content: "B";
+    font-size: .65em;
+    position: absolute;
+    margin-left:.15em
 }
 
 #timeline {
