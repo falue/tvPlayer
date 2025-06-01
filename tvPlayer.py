@@ -146,10 +146,10 @@ def mqtt_incoming(data):
             zoom(float(value))
 
     elif cmd == "shutdown":
-        time.sleep(2)  # Wait for user interface to load shutdown.html
+        time.sleep(1)  # Wait for user interface to load shutdown.html
         shutdown()
     elif cmd == "reboot":
-        time.sleep(2)  # Wait for user interface to load reboot.html
+        time.sleep(1)  # Wait for user interface to load reboot.html
         reboot()
 
     elif cmd == "go_to_channel":
