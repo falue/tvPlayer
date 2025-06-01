@@ -23,12 +23,12 @@ allowed_fileendings = (
 )
 
 # GPIO Pin Definitions
-LED_PIN = 18  # Choose any free GPIO pin for LED
+LED_PIN = 18  # GPIO pin for LED
 
 # 2x 4-button-foil-keypad and one additinal push btn
 # https://toptechboy.com/wp-content/uploads/2022/04/pinout-corrected.jpg
 # "Shorting pins 5 (GPIO3) and 6 (GND) when shutdown should boot the Pi." => https://dreamonward.com/2019/11/20/on-off-button/
-BUTTON_PINS = [4, 17, 27, 22, 5, 6, 13, 19, 3]  # Choose 8 free GPIO pins for buttons
+BUTTON_PINS = [4, 17, 27, 22, 5, 6, 13, 19, 3]  # GPIO pins for buttons
 
 # Leave me be
 window_width = 0
