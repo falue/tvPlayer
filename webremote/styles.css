@@ -87,6 +87,19 @@ body {
     pointer-events: none;
 }
 
+.marker {
+    position: absolute;
+    height: 100%;
+    top: 0px;
+    pointer-events: none;
+}
+.marker.in {
+    border-right:solid 2px green;
+}
+.marker.out {
+    border-left:solid 2px blue;
+}
+
 #timeline {
     -webkit-appearance: none;
     width: 100%;

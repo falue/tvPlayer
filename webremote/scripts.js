@@ -136,8 +136,22 @@ function handleSettings(data) {
     gebi('note-speed').innerHTML = `${thisVideo.video_speeds.toFixed(2)}&times;`;  // 1 = normal
     let fitting_modes = ['contain', 'stretch', 'cover']
     gebi('note-videoFitting').innerHTML = `<img src="assets/icons/fitting-${fitting_modes[thisVideo.video_fittings]}.svg"><br>${fitting_modes[thisVideo.video_fittings]}`
-    gebi('note-inpoint').innerHTML = thisVideo.inpoints > 0 ? secondsToTimecode(thisVideo.inpoints) : "-";
-    gebi('note-outpoint').innerHTML = thisVideo.outpoints > 0 ? secondsToTimecode(thisVideo.outpoints) : "-";
+    if(thisVideo.inpoints > 0) {
+      show('inpoint');
+      gebi('inpoint').style.left = `${(thisVideo.inpoints / parseFloat(gebi("timeline").max)) * 100}%`;
+      gebi('note-inpoint').innerHTML = secondsToTimecode(thisVideo.inpoints);
+    } else {
+      hide('inpoint');
+      gebi('note-inpoint').innerHTML = "-";
+    }
+    if(thisVideo.outpoints > 0) {
+      show('outpoint');
+      gebi('outpoint').style.left = `${(thisVideo.outpoints / parseFloat(gebi("timeline").max)) * 100}%`;
+      gebi('note-outpoint').innerHTML = secondsToTimecode(thisVideo.outpoints);
+    } else {
+      hide('outpoint');
+      gebi('note-outpoint').innerHTML = "-";
+    }
   }
 
   // HANDLE FILE LIST

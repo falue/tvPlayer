@@ -30,12 +30,14 @@
         </div>
         <div class="playerInfo">
             <div id="currentFile" class="small">No current file. Insert USB with valid video or image files.</div>
-            <div style="position: relative;">
+            <div style="position: relative; height: 2.5em;">
                 <input type="range" id="timeline" value="0" min="0" max="160" step=".1" 
                     oninput="skipperPreviewTime(this)"
                     onchange="skipper(this.value)"
                 >
                 <div id="timecode">00:00.0/00:00.0</div>
+                <div id="inpoint" class="marker in" style="display:none">&nbsp;</div>
+                <div id="outpoint" class="marker out" style="display:none">&nbsp;</div>
             </div>
         </div>
 
