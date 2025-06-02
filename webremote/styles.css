@@ -67,6 +67,8 @@ a:hover {
     color: white;
     width: 5em;
     text-align: center;
+    user-select: none;
+    pointer-events: none;
 }
 
 .playerInfo {

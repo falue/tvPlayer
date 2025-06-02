@@ -91,7 +91,7 @@
                     <img src="assets/icons/speedometer-slow.svg"><sup>-</sup>
                 </button>
                 <button onclick="setToWait('note-speed'); sendCommand({'cmd': 'adjust_video_speed', 'value': 'reset'}, false, true)" style="width:250%">
-                    Speed <img src="assets/icons/speedometer-medium.svg"> reset
+                    <sup style="opacity: 0;">reset</sup> <img src="assets/icons/speedometer-medium.svg"> <sup>reset</sup>
                 </button>
                 <button onclick="setToWait('note-speed'); sendCommand({'cmd': 'adjust_video_speed', 'value': 0.1}, false, true)">
                     <img src="assets/icons/speedometer.svg"><sup>+</sup>
@@ -101,17 +101,13 @@
             <span id="filelistLength">0 files</span> on USB:
             <div id="filelist" class="grey">
                 No <a href="#" onclick="showValidFiles()">valid files</a> on USB or no USB plugged.
-
-                <!-- <div class="button-row"><button class="filelistButton"><img class="thumbnails" src="./thumbnails/test.jpg">#1: 01<span class="grey">.mp4</span></button></div>
-                <div class="button-row"><button class="filelistButton"><img class="thumbnails" src="./thumbnails/test.jpg">#2: asdfasdf_ASDfasdfasdfasdf_ASdfasdfasdf-asDF_ASD_fASD_f_sdfA_sdF<span class="grey">.mp4</span></button></div>
-                <div class="button-row"><button class="filelistButton"><img class="thumbnails" src="./thumbnails/test.jpg">#3: asd fasdf sadfasdf asdf asdfasdf asdfasd fasefr awert fasdf sdf asdf sadf asdf<span class="grey">.mp4</span></button></div> -->
             </div>
 
             
         </div>
 
         <div class="control-group">
-            <h2>A&rarr;B loop</h2>
+            <h2>A &rlarr; B loop</h2>
             <div class="button-row">
                 <div class="buttonNote" id="note-inpoint" title="inpoint">-</div>
                 <div class="buttonNote" id="note-outpoint" title="outpoint">-</div>
@@ -260,12 +256,12 @@
             </div>
             <div class="button-row">
                 <button onclick="setToWait('note-show_tv_gui'); sendCommand({'cmd': 'toggle_show_tv_gui'}, false, true)">
-                    Show/Hide TV channel numbers
+                    Show/Hide TV channel numbers<br>
                     <img src="assets/icons/tv-gui.svg">
                 </button>
                 <button onclick="setToWait('note-white_noise_on_channel_change'); sendCommand({'cmd': 'toggle_white_noise_on_channel_change'}, false, true)">
-                    Show/Hide white noise between channel changes
-                    <img src="assets/icons/gradient-vertical.svg">
+                    Show/Hide white noise between channel changes<br>
+                    <img src="assets/icons/noise.svg">
                 </button>
             </div>
             <div class="button-row">
@@ -314,7 +310,7 @@
                     <button onclick="sendCommand({'cmd': 'toggle_fullscreen'})">Toggle Fullscreen</button>
                     <button onclick="sendCommand({'cmd': 'restart'})">Restart App</button>
                     <button onclick="sendCommand({'cmd': 'close_program'})">Exit to Desktop</button>
-                    <a href="http://10.3.141.1" target="_blank"><button>RaspAP&nbsp;Admin</button></a>
+                    <button onclick="window.open('http://10.3.141.1', '_blank')">RaspAP Admin</button></a>
                 </div>
                 <h2 style="margin-top:2em;">
                     MQTT Console
