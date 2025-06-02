@@ -98,9 +98,9 @@
                 </button>
             </div>
 
-            Files on USB:
+            <span id="filelistLength">0 files</span> on USB:
             <div id="filelist" class="grey">
-                No valid files on USB or no USB plugged.
+                No <a href="#" onclick="showValidFiles()">valid files</a> on USB or no USB plugged.
 
                 <!-- <div class="button-row"><button class="filelistButton"><img class="thumbnails" src="./thumbnails/test.jpg">#1: 01<span class="grey">.mp4</span></button></div>
                 <div class="button-row"><button class="filelistButton"><img class="thumbnails" src="./thumbnails/test.jpg">#2: asdfasdf_ASDfasdfasdfasdf_ASdfasdfasdf-asDF_ASD_fASD_f_sdfA_sdF<span class="grey">.mp4</span></button></div>
@@ -155,7 +155,7 @@
         <div class="control-group">
             <h2>Image adjustment</h2>
             <div class="button-row">
-                <div class="buttonNote" id="note-videoFitting" title="video fitting">
+                <div class="buttonNote" id="note-videoFitting" title="This video fitting">
                     -
                 </div>
             </div>
@@ -301,14 +301,29 @@
         </div>
 
         <div class="control-group">
-            <h2>Admin</h2>
-            <div class="button-row">
-                <button onclick="sendCommand({'cmd': 'toggle_fullscreen'})">Toggle Fullscreen</button>
-                <button onclick="sendCommand({'cmd': 'close_program'})">Exit to Desktop</button>
-                <a href="http://10.3.141.1" target="_blank"><button>RaspAP&nbsp;Admin</button></a>
+            <button style="position: relative; width: 100%; margin-bottom: 1em;">
+                <div id="adminPanel-toggle-on" onclick="show('adminPanel', 'adminPanel-toggle-off'); hide('adminPanel-toggle-on')">
+                    Show Admin Panel
+                </div>
+                <div id="adminPanel-toggle-off" onclick="show('adminPanel-toggle-on'); hide('adminPanel', 'adminPanel-toggle-off')" style="display: none;">
+                    Hide Admin Panel
+                </div>
+            </button>
+            <div id="adminPanel" style="display: none;">
+                <div class="button-row">
+                    <button onclick="sendCommand({'cmd': 'toggle_fullscreen'})">Toggle Fullscreen</button>
+                    <button onclick="sendCommand({'cmd': 'restart'})">Restart App</button>
+                    <button onclick="sendCommand({'cmd': 'close_program'})">Exit to Desktop</button>
+                    <a href="http://10.3.141.1" target="_blank"><button>RaspAP&nbsp;Admin</button></a>
+                </div>
+                <h2 style="margin-top:2em;">
+                    MQTT Console
+                </h2>
+                <button onclick="sendConsole()">
+                    Send MQTT console to Fabian Lüscher by mail
+                </button>
+                <div id="console" class="maxHeight400" style="margin-top: 1em; padding: 1em; background-color: black; border-radius: 4px;  font-family: 'Courier New', Courier, monospace; font-size: .8em; line-height: 1.5em;">Init</div>
             </div>
-            <h2 style="margin-top:2em;">MQTT Console</h2>
-            <div id="console" class="maxHeight400" style="font-family: 'Courier New', Courier, monospace; font-size: .8em; line-height: 1.5em;">Init</div>
         </div>
     </div>
 </body>

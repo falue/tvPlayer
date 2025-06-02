@@ -10,6 +10,16 @@ body {
     color: #fff;
 }
 
+a {
+    color: #bb86fc;
+}
+a:active {
+    color: #bb86fc;
+}
+a:hover {
+    color: #6200ee;
+}
+
 .small {
     font-size: .75em;
 }
@@ -133,7 +143,7 @@ body {
 #timeline {
     -webkit-appearance: none;
     width: 100%;
-    height: 3em;
+    height: 100%;
     background: #747474;
     margin: 0;
     padding: 0;
@@ -144,14 +154,14 @@ body {
   
   /* WebKit (Chrome, Safari) */
   #timeline::-webkit-slider-runnable-track {
-    height: 3em;
+    height: 100%;
     background: transparent;
   }
   
   #timeline::-webkit-slider-thumb {
     -webkit-appearance: none;
     width: 4px;
-    height: 3em;
+    height: 100%;
     background: white;
     box-shadow: -1000px 0 0 1000px #3700b3; /* Fill left side */
     border: none;
@@ -160,18 +170,18 @@ body {
   
   /* Firefox */
   #timeline::-moz-range-track {
-    height: 3em;
+    height: 100%;
     background: #aaa;
   }
   
   #timeline::-moz-range-progress {
     background-color: #3700b3;
-    height: 3em;
+    height: 100%;
   }
   
   #timeline::-moz-range-thumb {
     width: 4px;
-    height: 3em;
+    height: 100%;
     background: white;
     border: none;
     cursor: pointer;
@@ -273,8 +283,7 @@ button .thumbnails {
     width: 8em;
     margin-right: 1em;
     vertical-align: middle;
-    
-  flex-shrink: 0;
+    flex-shrink: 0;
 }
 
 .filelistButton div {

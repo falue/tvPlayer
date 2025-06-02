@@ -228,7 +228,7 @@ function handleState(data) {
       }
       gebi("display").style.backgroundImage = `url("thumbnails/${data.basename}.png")`;
     } else {
-      gebi("currentFile").innerHTML = "No current file. Insert USB with valid video or image files.";
+      gebi("currentFile").innerHTML = "No current file. Insert USB with <a href='#' onclick='showValidFiles()'>valid video or image files</a>.";
       gebi("display").style.backgroundImage = ``;
     }
     currentFile = data;
@@ -325,15 +325,23 @@ function logging(text) {
 
   const newLine = document.createElement("div");
   newLine.innerHTML = text;
+  consoleDiv.prepend("\n");
   consoleDiv.prepend(newLine); // adds to the top
 
   // limit to 100 lines
-  while (consoleDiv.children.length > 100) {
+  while (consoleDiv.children.length > 333) {
     consoleDiv.removeChild(consoleDiv.lastChild);
   }
 }
 
+function sendConsole() {
+  alert("Make shure you have internet access before sending");
+  window.location = `mailto:info@fluescher.ch?body=${encodeURI(gebi('console').textContent)}`
+}
 
+function showValidFiles() {
+  alert("Valid video files are: .mp4, .mkv, .avi, .mxf, .m4v or .mov.\nValid image files are: .jpg, .jpeg, .png, .gif, .tiff or .bmp.\n\nBest practice is .mp4 container with a h264 codec.\n\nDo NOT use 4K or other heavy files, they will not play smoothly.\n\nNote that .png files do not work when it has a color mode of “indexed colors”.")
+}
 
 function hide(id) {
 	for(i=0; i< arguments.length; i++) { 
