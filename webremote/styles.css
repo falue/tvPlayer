@@ -253,6 +253,10 @@ button img[src$=".svg"] {
     border-top-left-radius: 8px;
     border-top-right-radius: 8px;
 }
+.buttonNote.closed {
+    border-bottom:#3e3e3e 1px solid;
+    border-radius: 8px;
+}
 
 .buttonNote:before {
   content: attr(title);
@@ -356,6 +360,10 @@ img.wait {
 .refresh-button {
     margin-top: 10px;
     width: 100%;
+}
+
+#error {
+    color:rgb(255, 68, 0);
 }
 
 .heartbeatContainer {

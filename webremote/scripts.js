@@ -33,7 +33,7 @@ function init() {
     const data = JSON.parse(message.toString());
     if (topic === "tvPlayer/heartbeat") {
       logging(`Received heartbeat`);
-      handleHeartbeat();
+      handleHeartbeat(data.temp);
 
     } else if (topic === "tvPlayer/settings") {
       logging(`Received settings`);
@@ -88,9 +88,29 @@ function gebi(id) {
   return document.getElementById(id);
 }
 
-function handleHeartbeat() {
+function handleHeartbeat(temp=false) {
   raspi_available = true;
   clearTimeout(raspi_available_timer);
+  if(temp !== false) {
+    // Set CPU temp
+    if(temp > 90) {
+      alert('tvPlayer is INCREDIBLY hot - turn off NOW!')
+    }
+    if(temp > 85) {
+      gebi('note-temp').innerHTML = `!!! ${temp.toFixed(1)}°C !!!`;
+      gebi('note-temp').style.color= "rgb(255, 68, 0)";
+      gebi('error').innerHTML = 'tvPlayer is VERY hot - turn off NOW'
+    } else if(temp >= 80) {
+      gebi('note-temp').innerHTML = `${temp.toFixed(1)}°C!`;
+      gebi('note-temp').style.color= "rgb(255, 115, 0)";
+      gebi('error').innerHTML = 'tvPlayer is hot - turn off'
+    } else {
+      gebi('note-temp').innerHTML = `${temp.toFixed(1)}°C`;
+      gebi('note-temp').style.color= "inherit";
+      gebi('error').innerHTML = ''
+    }
+  }
+
   // Add green class
   gebi("heartbeat").classList.add("active");
   // remove green class after 1s (+css-fadeout)
