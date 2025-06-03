@@ -170,8 +170,11 @@ def load_settings():
         print(f"Settings file {SETTINGS_FILE} not found. Using defaults.")
         return
 
-    with open(os.path.join(script_dir, SETTINGS_FILE), "r") as f:
-        data = json.load(f)
+    try:
+        with open(os.path.join(script_dir, SETTINGS_FILE), "r") as f:
+            data = json.load(f)
+    except (json.JSONDecodeError, FileNotFoundError, ValueError):
+        data = {"general_settings": {}, "file_dependent_settings": {}}
 
     # Load general settings
     general_settings = data.get("general_settings", {})
@@ -205,18 +208,22 @@ def load_settings():
     print("Settings loaded.")
     mqtt_handler.send("settings", "Settings loaded", {"settings": data, "filelist": filelist})
 
+""" def collect_settings(): """
 
-def save_settings():
+
+def save_settings(only_transmit=False):
     """
     Save the current settings to a JSON file, preserving settings for files not currently in the filelist.
     """
     global filelist, file_settings
 
     # Load existing settings from file, if any
-    if os.path.exists(os.path.join(script_dir, SETTINGS_FILE)):
+    try:
         with open(os.path.join(script_dir, SETTINGS_FILE), "r") as f:
             data = json.load(f)
-    else:
+            if not isinstance(data, dict):
+                raise ValueError("Settings file was empty somehow")
+    except (json.JSONDecodeError, FileNotFoundError, ValueError):
         data = {"general_settings": {}, "file_dependent_settings": {}}
 
     # Update general settings
