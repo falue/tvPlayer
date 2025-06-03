@@ -247,8 +247,10 @@ def save_settings(only_transmit=False):
         data["file_dependent_settings"][filename] = {
             "inpoints": inpoints[i],
             "outpoints": outpoints[i],
-            "video_fittings": video_fittings[i],
-            "video_speeds": video_speeds[i],
+            # FIXME: When dead USB sticks in/media/dp/.., this is not on par with the filelist and len() is zero:
+            "video_fittings": video_fittings[i] if i < len(video_fittings) else 0,
+            # FIXME: When dead USB sticks in/media/dp/.., this is not on par with the filelist and len() is zero:
+            "video_speeds": video_speeds[i] if i < len(video_speeds) else 1.0,
         }
 
     # Save updated settings back to the file
