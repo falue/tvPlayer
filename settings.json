@@ -10,9 +10,9 @@
         "brightness": 0,
         "contrast": 0,
         "saturation": 0,
-        "volume": 0,
-        "tv_channel": 4,
-        "current_green_index": 12,
+        "volume": 100,
+        "tv_channel": 0,
+        "current_green_index": 1,
         "show_tv_gui": false,
         "show_whitenoise_channel_change": false,
         "zoom_level": 0.0
@@ -60,6 +60,30 @@
             "video_speeds": 1.0
         },
         "timer.mp4": {
+            "inpoints": 0,
+            "outpoints": 0,
+            "video_fittings": 0,
+            "video_speeds": 1.0
+        },
+        "defaultvideo.mp4": {
+            "inpoints": 0,
+            "outpoints": 0,
+            "video_fittings": 0,
+            "video_speeds": 1.0
+        },
+        "test-pattern_4_3.png": {
+            "inpoints": 0,
+            "outpoints": 0,
+            "video_fittings": 0,
+            "video_speeds": 1.0
+        },
+        "testimage_4_3.jpg": {
+            "inpoints": 0,
+            "outpoints": 0,
+            "video_fittings": 0,
+            "video_speeds": 1.0
+        },
+        "testimage_16_9.jpg": {
             "inpoints": 0,
             "outpoints": 0,
             "video_fittings": 0,
