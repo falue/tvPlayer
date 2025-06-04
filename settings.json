@@ -10,16 +10,58 @@
         "brightness": 0,
         "contrast": 0,
         "saturation": 0,
-        "volume": 100,
-        "tv_channel": 0,
-        "current_green_index": 0,
-        "show_tv_gui": true,
-        "show_whitenoise_channel_change": true,
+        "volume": 0,
+        "tv_channel": 4,
+        "current_green_index": 12,
+        "show_tv_gui": false,
+        "show_whitenoise_channel_change": false,
         "zoom_level": 0.0
     },
     "file_dependent_settings": {
         "example_file.mp4": {
             "inpoints": 0,
+            "video_fittings": 0,
+            "video_speeds": 1.0
+        },
+        "Elephants_Up_Close_Gentle_African_Giants_Full_Widlife_Documentary_360p.mp4": {
+            "inpoints": 1692.52,
+            "outpoints": 2111.6,
+            "video_fittings": 0,
+            "video_speeds": 1.0
+        },
+        "VP_HalloBetty_HeidiAbel_250227_V1.mov": {
+            "inpoints": 0,
+            "outpoints": 0,
+            "video_fittings": 0,
+            "video_speeds": 1.0
+        },
+        "Elephants_Up_Close_Gentle_African_Giants_Full_Widlife_Documentary_720p.mp4": {
+            "inpoints": 1691.48,
+            "outpoints": 2150.52,
+            "video_fittings": 0,
+            "video_speeds": 1.0
+        },
+        "4_3.jpg": {
+            "inpoints": 0,
+            "outpoints": 0,
+            "video_fittings": 0,
+            "video_speeds": 1.0
+        },
+        "16_9.jpg": {
+            "inpoints": 0,
+            "outpoints": 0,
+            "video_fittings": 0,
+            "video_speeds": 1.0
+        },
+        "badApple.mp4": {
+            "inpoints": 0,
+            "outpoints": 0,
+            "video_fittings": 0,
+            "video_speeds": 1.0
+        },
+        "timer.mp4": {
+            "inpoints": 0,
+            "outpoints": 0,
             "video_fittings": 0,
             "video_speeds": 1.0
         }

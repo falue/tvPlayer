@@ -11,7 +11,7 @@
     <script>
         function startCountdown() {
         const span = document.getElementById("countdown");
-        let seconds = 43;
+        let seconds = 48;
 
         const interval = setInterval(() => {
             span.innerHTML = seconds;
@@ -19,10 +19,9 @@
 
             if (seconds < 0) {
                 clearInterval(interval);
-                    span.innerHTML = "<br><br>Almost there, one sec..";
+                    span.innerHTML = "Almost there, one sec..";
                     setTimeout(() => {
-                        // window.location.href = "index.html";
-                        span.innerHTML = "<br><br>Please reconnect to the WiFi 'tvPlayer' and then click <a href='index.html'>here</a>.";
+                        window.location.href = "index.html";
                     }, 2000);
                 }
             }, 1000);

@@ -10,16 +10,6 @@ body {
     color: #fff;
 }
 
-a {
-    color: #bb86fc;
-}
-a:active {
-    color: #bb86fc;
-}
-a:hover {
-    color: #6200ee;
-}
-
 .small {
     font-size: .75em;
 }
@@ -67,8 +57,6 @@ a:hover {
     color: white;
     width: 5em;
     text-align: center;
-    user-select: none;
-    pointer-events: none;
 }
 
 .playerInfo {
@@ -145,7 +133,7 @@ a:hover {
 #timeline {
     -webkit-appearance: none;
     width: 100%;
-    height: 100%;
+    height: 3em;
     background: #747474;
     margin: 0;
     padding: 0;
@@ -156,14 +144,14 @@ a:hover {
   
   /* WebKit (Chrome, Safari) */
   #timeline::-webkit-slider-runnable-track {
-    height: 100%;
+    height: 3em;
     background: transparent;
   }
   
   #timeline::-webkit-slider-thumb {
     -webkit-appearance: none;
     width: 4px;
-    height: 100%;
+    height: 3em;
     background: white;
     box-shadow: -1000px 0 0 1000px #3700b3; /* Fill left side */
     border: none;
@@ -172,18 +160,18 @@ a:hover {
   
   /* Firefox */
   #timeline::-moz-range-track {
-    height: 100%;
+    height: 3em;
     background: #aaa;
   }
   
   #timeline::-moz-range-progress {
     background-color: #3700b3;
-    height: 100%;
+    height: 3em;
   }
   
   #timeline::-moz-range-thumb {
     width: 4px;
-    height: 100%;
+    height: 3em;
     background: white;
     border: none;
     cursor: pointer;
@@ -253,10 +241,6 @@ button img[src$=".svg"] {
     border-top-left-radius: 8px;
     border-top-right-radius: 8px;
 }
-.buttonNote.closed {
-    border-bottom:#3e3e3e 1px solid;
-    border-radius: 8px;
-}
 
 .buttonNote:before {
   content: attr(title);
@@ -289,7 +273,8 @@ button .thumbnails {
     width: 8em;
     margin-right: 1em;
     vertical-align: middle;
-    flex-shrink: 0;
+    
+  flex-shrink: 0;
 }
 
 .filelistButton div {
@@ -360,10 +345,6 @@ img.wait {
 .refresh-button {
     margin-top: 10px;
     width: 100%;
-}
-
-#error {
-    color:rgb(255, 68, 0);
 }
 
 .heartbeatContainer {

@@ -32,13 +32,6 @@ def send(topic="general", command="", payload=None):
             message["payload"] = payload
         client.publish(f"tvPlayer/{topic}", json.dumps(message))
 
-def get_cpu_temp():
-    with open("/sys/class/thermal/thermal_zone0/temp", "r") as f:
-        temp_str = f.read().strip()
-    temp = int(temp_str) / 1000  # in Celsius
-    return temp
-
-
 def start():
     def mqtt_loop():
         global client
@@ -50,8 +43,7 @@ def start():
 
         try:
             while True:
-                temp = get_cpu_temp()
-                heartbeat = json.dumps({"msg": "heartbeat from tvPlayer", "temp": temp})
+                heartbeat = json.dumps({"msg": "heartbeat from tvPlayer"})
                 client.publish("tvPlayer/heartbeat", heartbeat)
                 time.sleep(5)
         except KeyboardInterrupt:

@@ -170,11 +170,8 @@ def load_settings():
         print(f"Settings file {SETTINGS_FILE} not found. Using defaults.")
         return
 
-    try:
-        with open(os.path.join(script_dir, SETTINGS_FILE), "r") as f:
-            data = json.load(f)
-    except (json.JSONDecodeError, FileNotFoundError, ValueError):
-        data = {"general_settings": {}, "file_dependent_settings": {}}
+    with open(os.path.join(script_dir, SETTINGS_FILE), "r") as f:
+        data = json.load(f)
 
     # Load general settings
     general_settings = data.get("general_settings", {})
@@ -208,22 +205,18 @@ def load_settings():
     print("Settings loaded.")
     mqtt_handler.send("settings", "Settings loaded", {"settings": data, "filelist": filelist})
 
-""" def collect_settings(): """
 
-
-def save_settings(only_transmit=False):
+def save_settings():
     """
     Save the current settings to a JSON file, preserving settings for files not currently in the filelist.
     """
     global filelist, file_settings
 
     # Load existing settings from file, if any
-    try:
+    if os.path.exists(os.path.join(script_dir, SETTINGS_FILE)):
         with open(os.path.join(script_dir, SETTINGS_FILE), "r") as f:
             data = json.load(f)
-            if not isinstance(data, dict):
-                raise ValueError("Settings file was empty somehow")
-    except (json.JSONDecodeError, FileNotFoundError, ValueError):
+    else:
         data = {"general_settings": {}, "file_dependent_settings": {}}
 
     # Update general settings
@@ -247,10 +240,8 @@ def save_settings(only_transmit=False):
         data["file_dependent_settings"][filename] = {
             "inpoints": inpoints[i],
             "outpoints": outpoints[i],
-            # FIXME: When dead USB sticks in/media/dp/.., this is not on par with the filelist and len() is zero:
-            "video_fittings": video_fittings[i] if i < len(video_fittings) else 0,
-            # FIXME: When dead USB sticks in/media/dp/.., this is not on par with the filelist and len() is zero:
-            "video_speeds": video_speeds[i] if i < len(video_speeds) else 1.0,
+            "video_fittings": video_fittings[i],
+            "video_speeds": video_speeds[i],
         }
 
     # Save updated settings back to the file
