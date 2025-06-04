@@ -190,7 +190,7 @@ function handleSettings(data) {
   gebi('filelistLength').innerHTML = `${data.filelist.length} ${data.filelist.length == 1 ? 'file' : 'files'}`;
 
   if (data.filelist.length == 0) {
-    filelistContainer.innerHTML = "No valid files on USB or no USB plugged.";
+    filelistContainer.innerHTML = "No <a href='#' onclick='showValidFiles()'>valid files</a> on USB or no USB plugged.";
     return;
   }
 
