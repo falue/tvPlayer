@@ -139,6 +139,7 @@ function showState() {
 
 function handleSettings(data) {
   if (lastSettings != md5(JSON.stringify(data))) {
+    lastSettings = md5(JSON.stringify(data));
     // update currentfile?
     // SET SOME GUI ELEMENTS OF GENERAL_SETTINGS
     let settings = data.settings.general_settings;
