@@ -187,6 +187,8 @@ function handleSettings(data) {
   const filelistContainer = gebi("filelist");
   filelistContainer.innerHTML = ""; // Clear previous entries
 
+  gebi('filelistLength').innerHTML = `${data.filelist.length} ${data.filelist.length == 1 ? 'file' : 'files'}`;
+
   if (data.filelist.length == 0) {
     filelistContainer.innerHTML = "No valid files on USB or no USB plugged.";
     return;
