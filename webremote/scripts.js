@@ -4,6 +4,7 @@ let raspi_available = false;
 let raspi_available_timer = null;
 let settings = {};
 let lastPlaystate = "";
+let lastSettings = "";
 let currentFile = {};
 let blockTimerUpdate = false;
 let isShowingFillColor = false;
@@ -33,7 +34,7 @@ function init() {
     const data = JSON.parse(message.toString());
     if (topic === "tvPlayer/heartbeat") {
       logging(`Received heartbeat`);
-      handleHeartbeat();
+      handleHeartbeat(data.temp ? data.temp : false);
 
     } else if (topic === "tvPlayer/settings") {
       logging(`Received settings`);
@@ -88,9 +89,29 @@ function gebi(id) {
   return document.getElementById(id);
 }
 
-function handleHeartbeat() {
+function handleHeartbeat(temp=false) {
   raspi_available = true;
   clearTimeout(raspi_available_timer);
+  if(temp !== false) {
+    // Set CPU temp
+    if(temp > 90) {
+      alert('tvPlayer is INCREDIBLY hot - turn off NOW!')
+    }
+    if(temp > 85) {
+      gebi('note-temp').innerHTML = `!!! ${temp.toFixed(1)}°C !!!`;
+      gebi('note-temp').style.color= "rgb(255, 68, 0)";
+      gebi('error').innerHTML = 'tvPlayer is VERY hot - turn off NOW'
+    } else if(temp >= 80) {
+      gebi('note-temp').innerHTML = `${temp.toFixed(1)}°C!`;
+      gebi('note-temp').style.color= "rgb(255, 115, 0)";
+      gebi('error').innerHTML = 'tvPlayer is hot - turn off'
+    } else {
+      gebi('note-temp').innerHTML = `${temp.toFixed(1)}°C`;
+      gebi('note-temp').style.color= "inherit";
+      gebi('error').innerHTML = ''
+    }
+  }
+
   // Add green class
   gebi("heartbeat").classList.add("active");
   // remove green class after 1s (+css-fadeout)
@@ -117,45 +138,47 @@ function showState() {
 }
 
 function handleSettings(data) {
-  // update currentfile?
-  // SET SOME GUI ELEMENTS OF GENERAL_SETTINGS
-  let settings = data.settings.general_settings;
-  gebi('note-brightness').innerHTML = parseInt((settings.brightness+100)/2);  // Range from -100 - 100
-  gebi('note-contrast').innerHTML = parseInt((settings.contrast+100)/2);  // Range from -100 - 100
-  gebi('note-saturation').innerHTML = parseInt((settings.saturation+100)/2);  // Range from -100 - 100
+  if (lastSettings != md5(JSON.stringify(data))) {
+    // update currentfile?
+    // SET SOME GUI ELEMENTS OF GENERAL_SETTINGS
+    let settings = data.settings.general_settings;
+    gebi('note-brightness').innerHTML = parseInt((settings.brightness+100)/2);  // Range from -100 - 100
+    gebi('note-contrast').innerHTML = parseInt((settings.contrast+100)/2);  // Range from -100 - 100
+    gebi('note-saturation').innerHTML = parseInt((settings.saturation+100)/2);  // Range from -100 - 100
 
-  gebi('note-show_tv_gui').innerHTML = settings.show_tv_gui ? "On" : "Off";
-  gebi('note-white_noise_on_channel_change').innerHTML = settings.show_whitenoise_channel_change ? "On" : "Off";
-  gebi('note-cycle_green_screen').innerHTML = `<img src="assets/screens/green${settings.current_green_index}.png">`;
-  gebi('note-cycle_white_noise').innerHTML = `<img src="assets/screens/noise${settings.white_noise_index}.png">`;
+    gebi('note-show_tv_gui').innerHTML = settings.show_tv_gui ? "On" : "Off";
+    gebi('note-white_noise_on_channel_change').innerHTML = settings.show_whitenoise_channel_change ? "On" : "Off";
+    gebi('note-cycle_green_screen').innerHTML = `<img src="assets/screens/green${settings.current_green_index}.png">`;
+    gebi('note-cycle_white_noise').innerHTML = `<img src="assets/screens/noise${settings.white_noise_index}.png">`;
 
-  // GENERAL
-  gebi('note-zoom').innerHTML = ((settings.zoom_level+1)*100).toFixed(0);  // 0 = normal
-  gebi('note-pan').innerHTML = `X ${(settings.pan_offsets.x*100).toFixed(1)} / Y ${(settings.pan_offsets.y*100).toFixed(1)}`;  // 0.0/0.0
-  gebi('note-volume').innerHTML = settings.volume;  // 0 to 100
-  
-  // PER VIDEO FILE
-  let fileSettings = data.settings.file_dependent_settings;
-  if(fileSettings[currentFile.filename]) {
-    let thisVideo = fileSettings[currentFile.filename];
-    gebi('note-speed').innerHTML = `${thisVideo.video_speeds.toFixed(2)}&times;`;  // 1 = normal
-    let fitting_modes = ['contain', 'stretch', 'cover']
-    gebi('note-videoFitting').innerHTML = `<img src="assets/icons/fitting-${fitting_modes[thisVideo.video_fittings]}.svg"><br>${fitting_modes[thisVideo.video_fittings]}`
-    if(thisVideo.inpoints > 0) {
-      show('inpoint');
-      gebi('inpoint').style.left = `${(thisVideo.inpoints / parseFloat(gebi("timeline").max)) * 100}%`;
-      gebi('note-inpoint').innerHTML = secondsToTimecode(thisVideo.inpoints);
-    } else {
-      hide('inpoint');
-      gebi('note-inpoint').innerHTML = "-";
-    }
-    if(thisVideo.outpoints > 0) {
-      show('outpoint');
-      gebi('outpoint').style.left = `${(thisVideo.outpoints / parseFloat(gebi("timeline").max)) * 100}%`;
-      gebi('note-outpoint').innerHTML = secondsToTimecode(thisVideo.outpoints);
-    } else {
-      hide('outpoint');
-      gebi('note-outpoint').innerHTML = "-";
+    // GENERAL
+    gebi('note-zoom').innerHTML = ((settings.zoom_level+1)*100).toFixed(0);  // 0 = normal
+    gebi('note-pan').innerHTML = `X ${(settings.pan_offsets.x*100).toFixed(1)} / Y ${(settings.pan_offsets.y*100).toFixed(1)}`;  // 0.0/0.0
+    gebi('note-volume').innerHTML = settings.volume;  // 0 to 100
+    
+    // PER VIDEO FILE
+    let fileSettings = data.settings.file_dependent_settings;
+    if(fileSettings[currentFile.filename]) {
+      let thisVideo = fileSettings[currentFile.filename];
+      gebi('note-speed').innerHTML = `${thisVideo.video_speeds.toFixed(2)}&times;`;  // 1 = normal
+      let fitting_modes = ['contain', 'stretch', 'cover']
+      gebi('note-videoFitting').innerHTML = `<img src="assets/icons/fitting-${fitting_modes[thisVideo.video_fittings]}.svg"><br>${fitting_modes[thisVideo.video_fittings]}`
+      if(thisVideo.inpoints > 0) {
+        show('inpoint');
+        gebi('inpoint').style.left = `${(thisVideo.inpoints / parseFloat(gebi("timeline").max)) * 100}%`;
+        gebi('note-inpoint').innerHTML = secondsToTimecode(thisVideo.inpoints);
+      } else {
+        hide('inpoint');
+        gebi('note-inpoint').innerHTML = "-";
+      }
+      if(thisVideo.outpoints > 0) {
+        show('outpoint');
+        gebi('outpoint').style.left = `${(thisVideo.outpoints / parseFloat(gebi("timeline").max)) * 100}%`;
+        gebi('note-outpoint').innerHTML = secondsToTimecode(thisVideo.outpoints);
+      } else {
+        hide('outpoint');
+        gebi('note-outpoint').innerHTML = "-";
+      }
     }
   }
 
@@ -228,7 +251,7 @@ function handleState(data) {
       }
       gebi("display").style.backgroundImage = `url("thumbnails/${data.basename}.png")`;
     } else {
-      gebi("currentFile").innerHTML = "No current file. Insert USB with valid video or image files.";
+      gebi("currentFile").innerHTML = "No current file. Insert USB with <a href='#' onclick='showValidFiles()'>valid video or image files</a>.";
       gebi("display").style.backgroundImage = ``;
     }
     currentFile = data;
@@ -325,15 +348,23 @@ function logging(text) {
 
   const newLine = document.createElement("div");
   newLine.innerHTML = text;
+  consoleDiv.prepend("\n");
   consoleDiv.prepend(newLine); // adds to the top
 
   // limit to 100 lines
-  while (consoleDiv.children.length > 100) {
+  while (consoleDiv.children.length > 333) {
     consoleDiv.removeChild(consoleDiv.lastChild);
   }
 }
 
+function sendConsole() {
+  alert("Make shure you have internet access before sending");
+  window.location = `mailto:info@fluescher.ch?body=${encodeURI(gebi('console').textContent)}`
+}
 
+function showValidFiles() {
+  alert("Valid video files are: .mp4, .mkv, .avi, .mxf, .m4v or .mov.\nValid image files are: .jpg, .jpeg, .png, .gif, .tiff or .bmp.\n\nBest practice is .mp4 container with a h264 codec.\n\nDo NOT use 4K or other heavy files, they will not play smoothly.\n\nNote that .png files do not work when it has a color mode of “indexed colors”.")
+}
 
 function hide(id) {
 	for(i=0; i< arguments.length; i++) { 

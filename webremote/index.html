@@ -5,10 +5,16 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>tvPlayer</title>
-    <link rel="stylesheet" href="./styles.css?v=250601" />
-    <script src="./md5.min.js?v=250601"></script>
-    <script src="./mqtt.min.js?v=250601"></script>
-    <script src="./scripts.js?v=250601" defer></script>
+
+    <link rel="apple-touch-icon" sizes="180x180" href="favicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon/favicon-16x16.png">
+    <link rel="manifest" href="favicon/site.webmanifest">
+
+    <link rel="stylesheet" href="./styles.css?v=250604" />
+    <script src="./md5.min.js?v=250604"></script>
+    <script src="./mqtt.min.js?v=250604"></script>
+    <script src="./scripts.js?v=250604" defer></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 </head> 
 
@@ -16,6 +22,7 @@
     <div class="container">
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <img src="./assets/logo.png?v=250528-B" alt="Logo" style="height: 40px; margin-left:-8px">
+            <div id="error"></div>
             <div class="heartbeatContainer" onclick="showState()">
                 <div>
                     <div id="heartbeat"></div>
@@ -32,7 +39,7 @@
             </div>
         </div>
         <div class="playerInfo">
-            <div id="currentFile" class="small">No current file. Insert USB with valid video or image files.</div>
+            <div id="currentFile" class="small">No current file. Insert USB with <a href="#" onclick="showValidFiles()">valid video or image files</a>.</div>
             <div style="position: relative; height: 2.5em;">
                 <input type="range" id="timeline" value="0" min="0" max="160" step=".1" 
                     oninput="skipperPreviewTime(this)"
@@ -88,27 +95,23 @@
                     <img src="assets/icons/speedometer-slow.svg"><sup>-</sup>
                 </button>
                 <button onclick="setToWait('note-speed'); sendCommand({'cmd': 'adjust_video_speed', 'value': 'reset'}, false, true)" style="width:250%">
-                    Speed <img src="assets/icons/speedometer-medium.svg"> reset
+                    <sup style="opacity: 0;">reset</sup> <img src="assets/icons/speedometer-medium.svg"> <sup>reset</sup>
                 </button>
                 <button onclick="setToWait('note-speed'); sendCommand({'cmd': 'adjust_video_speed', 'value': 0.1}, false, true)">
                     <img src="assets/icons/speedometer.svg"><sup>+</sup>
                 </button>
             </div>
 
-            Files on USB:
+            <span id="filelistLength">0 files</span> on USB:
             <div id="filelist" class="grey">
-                No valid files on USB or no USB plugged.
-
-                <!-- <div class="button-row"><button class="filelistButton"><img class="thumbnails" src="./thumbnails/test.jpg">#1: 01<span class="grey">.mp4</span></button></div>
-                <div class="button-row"><button class="filelistButton"><img class="thumbnails" src="./thumbnails/test.jpg">#2: asdfasdf_ASDfasdfasdfasdf_ASdfasdfasdf-asDF_ASD_fASD_f_sdfA_sdF<span class="grey">.mp4</span></button></div>
-                <div class="button-row"><button class="filelistButton"><img class="thumbnails" src="./thumbnails/test.jpg">#3: asd fasdf sadfasdf asdf asdfasdf asdfasd fasefr awert fasdf sdf asdf sadf asdf<span class="grey">.mp4</span></button></div> -->
+                No <a href="#" onclick="showValidFiles()">valid files</a> on USB or no USB plugged.
             </div>
 
             
         </div>
 
         <div class="control-group">
-            <h2>A&rarr;B loop</h2>
+            <h2>A &rlarr; B loop</h2>
             <div class="button-row">
                 <div class="buttonNote" id="note-inpoint" title="inpoint">-</div>
                 <div class="buttonNote" id="note-outpoint" title="outpoint">-</div>
@@ -152,7 +155,7 @@
         <div class="control-group">
             <h2>Image adjustment</h2>
             <div class="button-row">
-                <div class="buttonNote" id="note-videoFitting" title="video fitting">
+                <div class="buttonNote" id="note-videoFitting" title="This video fitting">
                     -
                 </div>
             </div>
@@ -163,9 +166,9 @@
                 </button>
             </div>
             <div class="button-row">
-                <div class="buttonNote" id="note-brightness" title="brightness">100</div>
-                <div class="buttonNote" id="note-contrast" title="contrast">100</div>
-                <div class="buttonNote" id="note-saturation" title="saturation">100</div>
+                <div class="buttonNote" id="note-brightness" title="brightness">50</div>
+                <div class="buttonNote" id="note-contrast" title="contrast">50</div>
+                <div class="buttonNote" id="note-saturation" title="saturation">50</div>
             </div>
             <div class="button-row">
                 <button onclick="setToWait('note-brightness'); sendCommand({'cmd': 'adjust_video_brightness', 'value': -5}, false, true)">
@@ -257,12 +260,12 @@
             </div>
             <div class="button-row">
                 <button onclick="setToWait('note-show_tv_gui'); sendCommand({'cmd': 'toggle_show_tv_gui'}, false, true)">
-                    Show/Hide TV channel numbers
+                    Show/Hide TV channel numbers<br>
                     <img src="assets/icons/tv-gui.svg">
                 </button>
                 <button onclick="setToWait('note-white_noise_on_channel_change'); sendCommand({'cmd': 'toggle_white_noise_on_channel_change'}, false, true)">
-                    Show/Hide white noise between channel changes
-                    <img src="assets/icons/gradient-vertical.svg">
+                    Show/Hide white noise between channel changes<br>
+                    <img src="assets/icons/noise.svg">
                 </button>
             </div>
             <div class="button-row">
@@ -281,6 +284,9 @@
         <div class="control-group">
             <h2>System</h2>
             <div class="button-row">
+                <div class="buttonNote closed" id="note-temp" title="CPU Temperature">-</div>
+            </div>
+            <div class="button-row">
                 <button onclick="sendCommand({'cmd': 'shutdown'}); window.location.href = 'shutdown.html'">
                     Shutdown
                     <img src="assets/icons/power.svg">
@@ -298,14 +304,29 @@
         </div>
 
         <div class="control-group">
-            <h2>Admin</h2>
-            <div class="button-row">
-                <button onclick="sendCommand({'cmd': 'toggle_fullscreen'})">Toggle Fullscreen</button>
-                <button onclick="sendCommand({'cmd': 'close_program'})">Exit to Desktop</button>
-                <a href="http://10.3.141.1" target="_blank"><button>RaspAP&nbsp;Admin</button></a>
+            <button style="position: relative; width: 100%; margin-bottom: 1em;">
+                <div id="adminPanel-toggle-on" onclick="show('adminPanel', 'adminPanel-toggle-off'); hide('adminPanel-toggle-on')">
+                    Show Admin Panel
+                </div>
+                <div id="adminPanel-toggle-off" onclick="show('adminPanel-toggle-on'); hide('adminPanel', 'adminPanel-toggle-off')" style="display: none;">
+                    Hide Admin Panel
+                </div>
+            </button>
+            <div id="adminPanel" style="display: none;">
+                <div class="button-row">
+                    <button onclick="sendCommand({'cmd': 'toggle_fullscreen'})">Toggle Fullscreen</button>
+                    <button onclick="sendCommand({'cmd': 'restart'})" disabled>Restart App</button>
+                    <button onclick="sendCommand({'cmd': 'close_program'})">Exit to Desktop</button>
+                    <button onclick="window.open('http://10.3.141.1', '_blank')">RaspAP Admin</button></a>
+                </div>
+                <h2 style="margin-top:2em;">
+                    MQTT Console
+                </h2>
+                <button onclick="sendConsole()">
+                    Send MQTT console to Fabian Lüscher by mail
+                </button>
+                <div id="console" class="maxHeight400" style="margin-top: 1em; padding: 1em; background-color: black; border-radius: 4px;  font-family: 'Courier New', Courier, monospace; font-size: .8em; line-height: 1.5em;">Init</div>
             </div>
-            <h2 style="margin-top:2em;">MQTT Console</h2>
-            <div id="console" class="maxHeight400" style="font-family: 'Courier New', Courier, monospace; font-size: .8em; line-height: 1.5em;">Init</div>
         </div>
     </div>
 </body>
