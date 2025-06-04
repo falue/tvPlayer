@@ -236,14 +236,15 @@ function handleState(data) {
       gebi("currentFile").innerHTML = `#${data.tvChannel + 1} - ${data.basename}<span class='grey'>.${data.suffix}</span>`;
       let timeline = gebi("timeline");
       if(data.duration>0){
-        show("timeline");
+        show("timeline", "togglePlayBtn", "abLoop");
+        showFlex("seeking", "speed", "speedNoteRow");
         if(!blockTimerUpdate) {
           timeline.value=data.position;
           timeline.max=data.duration;
           gebi("timecode").innerHTML = `${secondsToTimecode(data.position)}/${secondsToTimecode(data.duration)}`;
         }
       } else {
-        hide("timeline");
+        hide("timeline", "seeking", "speed", "speedNoteRow", "togglePlayBtn", "abLoop");
         gebi("timecode").innerHTML = "";
       }
       gebi("display").style.backgroundImage = `url("thumbnails/${data.basename}.png")`;
@@ -372,6 +373,12 @@ function hide(id) {
 function show(id) {
 	for(i=0; i< arguments.length; i++) { 
 		document.getElementById(arguments[i]).style.display = 'block';
+	}
+}
+
+function showFlex(id) {
+	for(i=0; i< arguments.length; i++) { 
+		document.getElementById(arguments[i]).style.display = 'flex';
 	}
 }
 

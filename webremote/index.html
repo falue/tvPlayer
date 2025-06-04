@@ -57,7 +57,7 @@
                 <button onclick="sendCommand({'cmd': 'prev_channel'})">
                     <img src="assets/icons/skip-previous.svg">
                 </button>
-                <button onclick="setToWait('playstate'); sendCommand({'cmd': 'toggle_play'}, false, true)" style="width:250%">
+                <button id="togglePlayBtn" onclick="setToWait('playstate'); sendCommand({'cmd': 'toggle_play'}, false, true)" style="width:250%">
                     <img src="assets/icons/play-pause.svg">
                 </button>
                 <button onclick="sendCommand({'cmd': 'next_channel'})">
@@ -66,7 +66,7 @@
             </div>
 
             <!-- SEEKING -->
-            <div class="button-row">
+            <div id="seeking" class="button-row">
                 <button onclick="sendCommand({'cmd': 'seek', 'value': -60})">
                     <img src="assets/icons/rewind.svg"><sup class="small">-1m</sup>
                 </button>
@@ -87,10 +87,10 @@
                 </button>
             </div>
             <!-- PLAYBACK SPEED -->
-            <div class="button-row">
+            <div id="speedNoteRow" class="button-row">
                 <div class="buttonNote" id="note-speed" title="speed">1.00&times;</div>
             </div>
-            <div class="button-row" style="margin-bottom: 2em;">
+            <div id="speed" class="button-row" style="margin-bottom: 2em;">
                 <button onclick="setToWait('note-speed'); sendCommand({'cmd': 'adjust_video_speed', 'value': -0.1}, false, true)">
                     <img src="assets/icons/speedometer-slow.svg"><sup>-</sup>
                 </button>
@@ -110,7 +110,7 @@
             
         </div>
 
-        <div class="control-group">
+        <div id="abLoop" class="control-group">
             <h2>A &rlarr; B loop</h2>
             <div class="button-row">
                 <div class="buttonNote" id="note-inpoint" title="inpoint">-</div>
