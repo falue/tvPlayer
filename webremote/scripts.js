@@ -239,7 +239,7 @@ function handleState(data) {
       data.filename = `${name.basename}.${name.suffix}`;
       gebi("currentFile").innerHTML = `#${data.tvChannel + 1} - ${data.basename}<span class='grey'>.${data.suffix}</span>`;
       let timeline = gebi("timeline");
-      if(data.duration>0){
+      if(data.duration>1){  // somehow, images have a duration of 1
         show("timeline", "togglePlayBtn", "abLoop");
         showFlex("seeking", "speed", "speedNoteRow");
         if(!blockTimerUpdate) {
