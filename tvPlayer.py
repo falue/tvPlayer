@@ -301,6 +301,7 @@ def system_init():
     global filelist, inpoints, window_width, window_height
     print("Get usb root")
     detect_usb_root()
+    ensure_valid_settings()
     print("Get filelist")
     update_files_from_usb()
     create_thumbnails(filelist)
@@ -1202,6 +1203,17 @@ def reboot():
     
     except PermissionError as e:
         print(f"Error: {e}")
+
+def ensure_valid_settings():
+    path = os.path.join(script_dir, SETTINGS_FILE)
+    default = {"general_settings": {}, "file_dependent_settings": {}}
+    try:
+        with open(path, "r") as f:
+            json.load(f)
+    except (json.JSONDecodeError, FileNotFoundError):
+        print("Settings file was empty - write default")
+        with open(path, "w") as f:
+            json.dump(default, f, indent=2)
 
 def main():
     global last_mpv_state_sent
