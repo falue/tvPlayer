@@ -1274,6 +1274,7 @@ if __name__ == '__main__':
         # If crash: Run the script again because I learnt nothing
         print("\nProgram interrupted by user or crashed.")
         print("Error: ", e)
+        mqtt_handler.send("general", "error", {"error": e})
         # restart_program()  ## TODO FINALLY !!
     finally:
         close_program()
