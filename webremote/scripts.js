@@ -3,12 +3,13 @@ let hasReceivedSettings = false;
 let raspi_available = false;
 let raspi_available_timer = null;
 let settings = {};
+let lastThumbnail = "";
 let lastPlaystate = "";
 let lastSettings = "";
 let currentFile = {};
 let blockTimerUpdate = false;
 let isShowingFillColor = false;
-let lastThumbnail = ""
+let tvChannel = 0;
 
 function init() {
   logging("start!");
@@ -54,6 +55,10 @@ function init() {
       } else if (data.command == "state") {
         handleState(data.payload);
         handleHeartbeat();  // Treat as heartbeat because it comes every second
+
+      } else if (data.command == "error") {
+        logging(data.payload);
+        alert("Oh snap, the tvPlayer crashed.\n\n", data.payload.error);
 
       } else if (data.command == "fillcolor") {
         handleFillColor(data.payload);
@@ -139,15 +144,21 @@ function showState() {
 
 function handleSettings(data) {
   if (lastSettings != md5(JSON.stringify(data))) {
+    // update currentfile
     lastSettings = md5(JSON.stringify(data));
-    // update currentfile?
     // SET SOME GUI ELEMENTS OF GENERAL_SETTINGS
     let settings = data.settings.general_settings;
     gebi('note-brightness').innerHTML = parseInt((settings.brightness+100)/2);  // Range from -100 - 100
     gebi('note-contrast').innerHTML = parseInt((settings.contrast+100)/2);  // Range from -100 - 100
     gebi('note-saturation').innerHTML = parseInt((settings.saturation+100)/2);  // Range from -100 - 100
-
-    gebi('note-show_tv_gui').innerHTML = settings.show_tv_gui ? "On" : "Off";
+    if(settings.show_tv_gui) {
+      gebi('note-show_tv_gui').innerHTML = "On";
+      show('channel_number');
+      gebi('channel_number').src=`assets/channel_numbers/${tvChannel}.png`;
+    } else {
+      gebi('note-show_tv_gui').innerHTML = "Off";
+      hide('channel_number');
+    }
     gebi('note-white_noise_on_channel_change').innerHTML = settings.show_whitenoise_channel_change ? "On" : "Off";
     gebi('note-cycle_green_screen').innerHTML = `<img src="assets/screens/green${settings.current_green_index}.png">`;
     gebi('note-cycle_white_noise').innerHTML = `<img src="assets/screens/noise${settings.white_noise_index}.png">`;
@@ -181,54 +192,55 @@ function handleSettings(data) {
         gebi('note-outpoint').innerHTML = "-";
       }
     }
+
+    // HANDLE FILE LIST
+    const filelistContainer = gebi("filelist");
+    filelistContainer.innerHTML = ""; // Clear previous entries
+
+    gebi('filelistLength').innerHTML = `${data.filelist.length} ${data.filelist.length == 1 ? 'file' : 'files'}`;
+
+    if (data.filelist.length == 0) {
+      filelistContainer.innerHTML = "No <a href='#' onclick='showValidFiles()'>valid files</a> on USB or no USB plugged.";
+      return;
+    }
+
+    data.filelist.forEach((filepath, index) => {
+      const filename = filepath.split("/").pop();
+      const dotIndex = filename.lastIndexOf(".");
+      const basename = filename.slice(0, dotIndex);
+      const suffix = filename.slice(dotIndex + 1);
+
+      const container = document.createElement("div");
+      container.classList.add("button-row");
+      const button = document.createElement("button");
+      button.className = "filelistButton";
+      button.onclick = () => sendCommand({ cmd: "go_to_channel", value: index });
+
+      const img = document.createElement("img");
+      img.className = "thumbnails";
+      img.src = `./thumbnails/${basename}.png`;
+
+      const label = document.createTextNode(`#${index + 1}: ${basename}`);
+      const span = document.createElement("span");
+      span.className = "grey";
+      span.textContent = `.${suffix}`;
+
+      button.appendChild(img);
+      const divText = document.createElement("div");
+      divText.appendChild(label);
+      divText.appendChild(span);
+      button.appendChild(divText);
+      container.appendChild(button);
+      filelistContainer.appendChild(container);
+    });
   }
-
-  // HANDLE FILE LIST
-  const filelistContainer = gebi("filelist");
-  filelistContainer.innerHTML = ""; // Clear previous entries
-
-  gebi('filelistLength').innerHTML = `${data.filelist.length} ${data.filelist.length == 1 ? 'file' : 'files'}`;
-
-  if (data.filelist.length == 0) {
-    filelistContainer.innerHTML = "No <a href='#' onclick='showValidFiles()'>valid files</a> on USB or no USB plugged.";
-    return;
-  }
-
-  data.filelist.forEach((filepath, index) => {
-    const filename = filepath.split("/").pop();
-    const dotIndex = filename.lastIndexOf(".");
-    const basename = filename.slice(0, dotIndex);
-    const suffix = filename.slice(dotIndex + 1);
-
-    const container = document.createElement("div");
-    container.classList.add("button-row");
-    const button = document.createElement("button");
-    button.className = "filelistButton";
-    button.onclick = () => sendCommand({ cmd: "go_to_channel", value: index });
-
-    const img = document.createElement("img");
-    img.className = "thumbnails";
-    img.src = `./thumbnails/${basename}.png`;
-
-    const label = document.createTextNode(`#${index + 1}: ${basename}`);
-    const span = document.createElement("span");
-    span.className = "grey";
-    span.textContent = `.${suffix}`;
-
-    button.appendChild(img);
-    const divText = document.createElement("div");
-    divText.appendChild(label);
-    divText.appendChild(span);
-    button.appendChild(divText);
-    container.appendChild(button);
-    filelistContainer.appendChild(container);
-  });
 }
 
 function handleState(data) {
   // Check if data changed, if yes..
   if (lastPlaystate != md5(JSON.stringify(data))) {
     lastPlaystate = md5(JSON.stringify(data));
+    tvChannel = data.tvChannel;
     if (data.isPlaying) {
       gebi("playstate").src = "./assets/icons/pause.svg";
     } else {
@@ -247,7 +259,7 @@ function handleState(data) {
         if(!blockTimerUpdate) {
           timeline.value=data.position;
           timeline.max=data.duration;
-          gebi("timecode").innerHTML = `${secondsToTimecode(data.position)}/${secondsToTimecode(data.duration)}`;
+          gebi("timecode").innerHTML = `${secondsToTimecode(data.position, {"showFrames": false})}/${secondsToTimecode(data.duration, {"showFrames": false})}`;
         }
       } else {
         hide("timeline", "seeking", "speed", "speedNoteRow", "togglePlayBtn", "abLoop");
@@ -263,6 +275,7 @@ function handleState(data) {
 }
 
 function handleFillColor(data) {
+  // FIXME: DOES NOT PROPERLY WORK YET
   let display = gebi("display");
   if(data.show) {
     isShowingFillColor = true;
@@ -313,7 +326,7 @@ function splitFileName(path) {
   };
 }
 
-function secondsToTimecode(seconds, fps = 25) {
+function secondsToTimecode(seconds, { fps = 25, showFrames = true } = {}) {
   const totalSeconds = Math.floor(seconds);
   const frames = Math.round((seconds - totalSeconds) * fps);
 
@@ -321,17 +334,20 @@ function secondsToTimecode(seconds, fps = 25) {
   const minutes = Math.floor((totalSeconds % 3600) / 60)
     .toString()
     .padStart(2, "0");
-  const secs = (totalSeconds % 60).toString().padStart(2, "0");
+  let secs = (totalSeconds % 60).toString().padStart(2, "0");
   const frameStr = frames.toString().padStart(2, "0");
+  
+  if (showFrames) {
+    secs = `${secs}.${frameStr}`;
+  }
 
   if (hours > 0) {
-    return `${hours
-      .toString()
-      .padStart(2, "0")}:${minutes}:${secs}.${frameStr}`;
+    return `${hours.toString().padStart(2, "0")}:${minutes}:${secs}`;
   } else {
-    return `${minutes}:${secs}.${frameStr}`;
+    return `${minutes}:${secs}`;
   }
 }
+
 
 function startPan(e, axis, value) {
   if (e) e.preventDefault(); // prevent touch scrolling

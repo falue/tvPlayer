@@ -34,6 +34,9 @@
             <div>
                 <img id="playstate" src="./assets/icons/help-rhombus-outline.svg">
             </div>
+            <div style="padding:.5em; position: absolute; top:0; right:0" class="grey">
+                <img id="channel_number" src="./assets/channel_numbers/--.png" style="display:none; height:2.5em">
+            </div>
             <div style="user-select: none; pointer-events: none; padding:.5em; position: absolute; mix-blend-mode:exclusion; opacity: .6; font-size: .8em; bottom:0; right:0" class="grey">
                 Image preview only
             </div>
@@ -45,7 +48,7 @@
                     oninput="skipperPreviewTime(this)"
                     onchange="skipper(this.value)"
                 >
-                <div id="timecode">00:00.0/00:00.0</div>
+                <div id="timecode">00:00/00:00</div>
                 <div id="inpoint" class="marker in" style="display:none">&nbsp;</div>
                 <div id="outpoint" class="marker out" style="display:none">&nbsp;</div>
             </div>

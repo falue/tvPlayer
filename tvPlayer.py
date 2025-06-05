@@ -79,9 +79,7 @@ def mqtt_incoming(data):
     elif cmd == "toggle_fullscreen":
         toggle_fullscreen()
 
-    elif cmd == "close_program":
-        close_program()
-    elif cmd == "jump":   # USE ME
+    elif cmd == "jump":
         jump(float(value))
     elif cmd == "seek":  
         if value < 0.05 and value > -0.05:
@@ -148,9 +146,13 @@ def mqtt_incoming(data):
     elif cmd == "shutdown":
         time.sleep(1)  # Wait for user interface to load shutdown.html
         shutdown()
+    elif cmd == "restart":
+        restart_program("Restarting as demanded by user")
     elif cmd == "reboot":
         time.sleep(1)  # Wait for user interface to load reboot.html
         reboot()
+    elif cmd == "close_program":
+        close_program()
 
     elif cmd == "go_to_channel":
         go_to_channel(int(value))
@@ -891,6 +893,9 @@ def prev_channel():
     global tv_channel
     # if current file as an in-point and current_time is bigger than that, skip to input and
     # pause() for resetting scene
+    # FIXME: cannot skip to the beginning of the video if inpoint is set. need to clear inpoint first.
+    # workaround: if is pausend and EXACTLY at the inpoint, jump() to beginning of video and play without
+    # editing the inpoints (does that work or is ab-loop active?)
     if inpoints[tv_channel] > 0 and get_current_video_position() > inpoints[tv_channel]+2:
         go_to_channel(tv_channel)
         pause()
@@ -1263,8 +1268,8 @@ def main():
         pygame.display.update()
         time.sleep(0.1)
 
-def restart_program():
-    print("Restarting program due to critical error...")
+def restart_program(msg="Restarting program due to critical error..."):
+    print(msg)
     python = sys.executable
     os.execl(python, python, *sys.argv)
 
@@ -1275,6 +1280,7 @@ if __name__ == '__main__':
         # If crash: Run the script again because I learnt nothing
         print("\nProgram interrupted by user or crashed.")
         print("Error: ", e)
+        mqtt_handler.send("general", "error", {"error": e})
         # restart_program()  ## TODO FINALLY !!
     finally:
         close_program()
