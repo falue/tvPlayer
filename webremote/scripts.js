@@ -5,10 +5,11 @@ let raspi_available_timer = null;
 let settings = {};
 let lastThumbnail = "";
 let lastPlaystate = "";
+let lastSettings = "";
 let currentFile = {};
 let blockTimerUpdate = false;
 let isShowingFillColor = false;
-let lastThumbnail = ""
+let tvChannel = 0;
 
 function init() {
   logging("start!");
@@ -138,92 +139,105 @@ function showState() {
 }
 
 function handleSettings(data) {
-  // update currentfile?
-  // SET SOME GUI ELEMENTS OF GENERAL_SETTINGS
-  let settings = data.settings.general_settings;
-  gebi('note-brightness').innerHTML = parseInt((settings.brightness+100)/2);  // Range from -100 - 100
-  gebi('note-contrast').innerHTML = parseInt((settings.contrast+100)/2);  // Range from -100 - 100
-  gebi('note-saturation').innerHTML = parseInt((settings.saturation+100)/2);  // Range from -100 - 100
+  if (lastSettings != md5(JSON.stringify(data))) {
+    lastSettings = md5(JSON.stringify(data));
 
-  gebi('note-show_tv_gui').innerHTML = settings.show_tv_gui ? "On" : "Off";
-  gebi('note-white_noise_on_channel_change').innerHTML = settings.show_whitenoise_channel_change ? "On" : "Off";
-  gebi('note-cycle_green_screen').innerHTML = `<img src="assets/screens/green${settings.current_green_index}.png">`;
-  gebi('note-cycle_white_noise').innerHTML = `<img src="assets/screens/noise${settings.white_noise_index}.png">`;
+    // SET SOME GUI ELEMENTS OF GENERAL_SETTINGS
+    let settings = data.settings.general_settings;
+    gebi('note-brightness').innerHTML = parseInt((settings.brightness+100)/2);  // Range from -100 - 100
+    gebi('note-contrast').innerHTML = parseInt((settings.contrast+100)/2);  // Range from -100 - 100
+    gebi('note-saturation').innerHTML = parseInt((settings.saturation+100)/2);  // Range from -100 - 100
 
-  // GENERAL
-  gebi('note-zoom').innerHTML = ((settings.zoom_level+1)*100).toFixed(0);  // 0 = normal
-  gebi('note-pan').innerHTML = `X ${(settings.pan_offsets.x*100).toFixed(1)} / Y ${(settings.pan_offsets.y*100).toFixed(1)}`;  // 0.0/0.0
-  gebi('note-volume').innerHTML = settings.volume;  // 0 to 100
-  
-  // PER VIDEO FILE
-  let fileSettings = data.settings.file_dependent_settings;
-  if(fileSettings[currentFile.filename]) {
-    let thisVideo = fileSettings[currentFile.filename];
-    gebi('note-speed').innerHTML = `${thisVideo.video_speeds.toFixed(2)}&times;`;  // 1 = normal
-    let fitting_modes = ['contain', 'stretch', 'cover']
-    gebi('note-videoFitting').innerHTML = `<img src="assets/icons/fitting-${fitting_modes[thisVideo.video_fittings]}.svg"><br>${fitting_modes[thisVideo.video_fittings]}`
-    if(thisVideo.inpoints > 0) {
-      show('inpoint');
-      gebi('inpoint').style.left = `${(thisVideo.inpoints / parseFloat(gebi("timeline").max)) * 100}%`;
-      gebi('note-inpoint').innerHTML = secondsToTimecode(thisVideo.inpoints);
+    if(settings.show_tv_gui) {
+      gebi('note-show_tv_gui').innerHTML = "On";
+      show('channel_number');
+      gebi('channel_number').src=`assets/channel_numbers/${tvChannel}.png`;
     } else {
-      hide('inpoint');
-      gebi('note-inpoint').innerHTML = "-";
+      gebi('note-show_tv_gui').innerHTML = "Off";
+      hide('channel_number');
     }
-    if(thisVideo.outpoints > 0) {
-      show('outpoint');
-      gebi('outpoint').style.left = `${(thisVideo.outpoints / parseFloat(gebi("timeline").max)) * 100}%`;
-      gebi('note-outpoint').innerHTML = secondsToTimecode(thisVideo.outpoints);
-    } else {
-      hide('outpoint');
-      gebi('note-outpoint').innerHTML = "-";
+    gebi('note-white_noise_on_channel_change').innerHTML = settings.show_whitenoise_channel_change ? "On" : "Off";
+    gebi('note-cycle_green_screen').innerHTML = `<img src="assets/screens/green${settings.current_green_index}.png">`;
+    gebi('note-cycle_white_noise').innerHTML = `<img src="assets/screens/noise${settings.white_noise_index}.png">`;
+
+    // GENERAL
+    gebi('note-zoom').innerHTML = ((settings.zoom_level+1)*100).toFixed(0);  // 0 = normal
+    gebi('note-pan').innerHTML = `X ${(settings.pan_offsets.x*100).toFixed(1)} / Y ${(settings.pan_offsets.y*100).toFixed(1)}`;  // 0.0/0.0
+    gebi('note-volume').innerHTML = settings.volume;  // 0 to 100
+    
+    // PER VIDEO FILE
+    let fileSettings = data.settings.file_dependent_settings;
+    if(fileSettings[currentFile.filename]) {
+      let thisVideo = fileSettings[currentFile.filename];
+      gebi('note-speed').innerHTML = `${thisVideo.video_speeds.toFixed(2)}&times;`;  // 1 = normal
+      let fitting_modes = ['contain', 'stretch', 'cover']
+      gebi('note-videoFitting').innerHTML = `<img src="assets/icons/fitting-${fitting_modes[thisVideo.video_fittings]}.svg"><br>${fitting_modes[thisVideo.video_fittings]}`
+      if(thisVideo.inpoints > 0) {
+        show('inpoint');
+        gebi('inpoint').style.left = `${(thisVideo.inpoints / parseFloat(gebi("timeline").max)) * 100}%`;
+        gebi('note-inpoint').innerHTML = secondsToTimecode(thisVideo.inpoints);
+      } else {
+        hide('inpoint');
+        gebi('note-inpoint').innerHTML = "-";
+      }
+      if(thisVideo.outpoints > 0) {
+        show('outpoint');
+        gebi('outpoint').style.left = `${(thisVideo.outpoints / parseFloat(gebi("timeline").max)) * 100}%`;
+        gebi('note-outpoint').innerHTML = secondsToTimecode(thisVideo.outpoints);
+      } else {
+        hide('outpoint');
+        gebi('note-outpoint').innerHTML = "-";
+      }
     }
+
+    // HANDLE FILE LIST
+    const filelistContainer = gebi("filelist");
+    filelistContainer.innerHTML = ""; // Clear previous entries
+
+    gebi('filelistLength').innerHTML = `${data.filelist.length} ${data.filelist.length == 1 ? 'file' : 'files'}`;
+
+    if (data.filelist.length == 0) {
+      filelistContainer.innerHTML = "No <a href='#' onclick='showValidFiles()'>valid files</a> on USB or no USB plugged.";
+      return;
+    }
+
+    data.filelist.forEach((filepath, index) => {
+      const filename = filepath.split("/").pop();
+      const dotIndex = filename.lastIndexOf(".");
+      const basename = filename.slice(0, dotIndex);
+      const suffix = filename.slice(dotIndex + 1);
+
+      const container = document.createElement("div");
+      container.classList.add("button-row");
+      const button = document.createElement("button");
+      button.className = "filelistButton";
+      button.onclick = () => sendCommand({ cmd: "go_to_channel", value: index });
+
+      const img = document.createElement("img");
+      img.className = "thumbnails";
+      img.src = `./thumbnails/${basename}.png`;
+
+      const label = document.createTextNode(`#${index + 1}: ${basename}`);
+      const span = document.createElement("span");
+      span.className = "grey";
+      span.textContent = `.${suffix}`;
+
+      button.appendChild(img);
+      const divText = document.createElement("div");
+      divText.appendChild(label);
+      divText.appendChild(span);
+      button.appendChild(divText);
+      container.appendChild(button);
+      filelistContainer.appendChild(container);
+    });
   }
-
-  // HANDLE FILE LIST
-  const filelistContainer = gebi("filelist");
-  filelistContainer.innerHTML = ""; // Clear previous entries
-
-  if (data.filelist.length == 0) {
-    filelistContainer.innerHTML = "No valid files on USB or no USB plugged.";
-    return;
-  }
-
-  data.filelist.forEach((filepath, index) => {
-    const filename = filepath.split("/").pop();
-    const dotIndex = filename.lastIndexOf(".");
-    const basename = filename.slice(0, dotIndex);
-    const suffix = filename.slice(dotIndex + 1);
-
-    const container = document.createElement("div");
-    container.classList.add("button-row");
-    const button = document.createElement("button");
-    button.className = "filelistButton";
-    button.onclick = () => sendCommand({ cmd: "go_to_channel", value: index });
-
-    const img = document.createElement("img");
-    img.className = "thumbnails";
-    img.src = `./thumbnails/${basename}.png`;
-
-    const label = document.createTextNode(`#${index + 1}: ${basename}`);
-    const span = document.createElement("span");
-    span.className = "grey";
-    span.textContent = `.${suffix}`;
-
-    button.appendChild(img);
-    const divText = document.createElement("div");
-    divText.appendChild(label);
-    divText.appendChild(span);
-    button.appendChild(divText);
-    container.appendChild(button);
-    filelistContainer.appendChild(container);
-  });
 }
 
 function handleState(data) {
   // Check if data changed, if yes..
   if (lastPlaystate != md5(JSON.stringify(data))) {
     lastPlaystate = md5(JSON.stringify(data));
+    tvChannel = data.tvChannel;
     if (data.isPlaying) {
       gebi("playstate").src = "./assets/icons/pause.svg";
     } else {
