@@ -1216,6 +1216,7 @@ def reboot():
 
 def main():
     global last_mpv_state_sent
+    time.sleep(2)  #
     print("--------------------------------------------------------------------------------")
     pygame_init()
     player_init()
