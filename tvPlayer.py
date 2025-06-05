@@ -901,6 +901,9 @@ def prev_channel():
     global tv_channel
     # if current file as an in-point and current_time is bigger than that, skip to input and
     # pause() for resetting scene
+    # FIXME: cannot skip to the beginning of the video if inpoint is set. need to clear inpoint first.
+    # workaround: if is pausend and EXACTLY at the inpoint, jump() to beginning of video and play without
+    # editing the inpoints (does that work or is ab-loop active?)
     if inpoints[tv_channel] > 0 and get_current_video_position() > inpoints[tv_channel]+2:
         go_to_channel(tv_channel)
         pause()
