@@ -213,7 +213,7 @@ def load_settings():
 """ def collect_settings(): """
 
 
-def save_settings(only_transmit=False):
+def save_settings():
     """
     Save the current settings to a JSON file, preserving settings for files not currently in the filelist.
     """
