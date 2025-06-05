@@ -56,6 +56,10 @@ function init() {
         handleState(data.payload);
         handleHeartbeat();  // Treat as heartbeat because it comes every second
 
+      } else if (data.command == "error") {
+        logging(data.payload);
+        alert("Oh snap, the tvPlayer crashed.\n\n", data.payload.error);
+
       } else if (data.command == "fillcolor") {
         handleFillColor(data.payload);
       }
