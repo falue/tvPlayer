@@ -3,6 +3,7 @@ let hasReceivedSettings = false;
 let raspi_available = false;
 let raspi_available_timer = null;
 let settings = {};
+let lastThumbnail = "";
 let lastPlaystate = "";
 let currentFile = {};
 let blockTimerUpdate = false;
