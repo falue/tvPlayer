@@ -24,7 +24,7 @@ read -p "Do you want to create an autostart file? (Y/n): " create_autostart
 create_autostart=${create_autostart,,}  # Convert to lowercase
 
 if [[ "$create_autostart" == "y" ]]; then
-    read -p "Autostart with a dialog or just start the script directly? (Y/n): " with_dialog
+    read -p "Autostart with a dialog to confirm? Otherwise, start the script directly. (Y/n): " with_dialog
     with_dialog=${with_dialog,,}  # Convert to lowercase
 fi
 
@@ -46,6 +46,20 @@ else
     echo "Skipping 'apt-get update'..."
 fi
 
+# Get the full path of the script to be executed
+USER_HOME=$(getent passwd $SUDO_USER | cut -d: -f6)
+SCRIPT_PATH="$(realpath $0)"
+SCRIPT_LOCATION="$(dirname $SCRIPT_PATH)"
+EXCEC_PATH_MAIN="$SCRIPT_LOCATION/start.sh"
+FULL_ICON_PATH="$SCRIPT_LOCATION/assets/icon.png"
+
+# Set up virtual environment
+### TODOOOOOO maybe manually....
+echo "Creating virtual environment from normal user.."
+REAL_USER=$(logname 2>/dev/null || echo "$SUDO_USER")
+##### sudo -u "$REAL_USER" python3 -m venv venv
+##### source "$SCRIPT_LOCATION/venv/bin/activate"
+
 # Install mpv and socat
 echo "Installing mpv and socat..."
 sudo apt-get install -y mpv socat wmctrl
@@ -62,13 +76,6 @@ else
     pip install -r requirements.txt
 fi
 
-# Get the full path of the script to be executed
-USER_HOME=$(getent passwd $SUDO_USER | cut -d: -f6)
-SCRIPT_PATH="$(realpath $0)"
-SCRIPT_LOCATION="$(dirname $SCRIPT_PATH)"
-EXCEC_PATH_MAIN="$SCRIPT_LOCATION/tvPlayer.py"
-FULL_ICON_PATH="$SCRIPT_LOCATION/assets/icon.png"
-
 # Make the Python script executable
 chmod +x "$EXCEC_PATH_MAIN"
 
@@ -80,7 +87,7 @@ if [[ "$create_desktop" == "y" ]]; then
 [Desktop Entry]
 Type=Application
 Name=tvPlayer
-Exec=sudo python3 $EXCEC_PATH_MAIN
+Exec=bash $EXCEC_PATH_MAIN
 Icon=$FULL_ICON_PATH
 X-LXDE-Startup=true
 EOL
@@ -96,12 +103,12 @@ if [[ "$create_autostart" == "y" ]]; then
     AUTOSTART_PATH="$USER_HOME/.config/autostart"
     if [[ "$with_dialog" == "y" ]]; then
         AUTOSTART_SCRIPT_NAME="tvPlayer-startdialog"
-        EXEC_AUTOSTART_COMMAND="sudo bash $SCRIPT_LOCATION/autostart.sh"
+        EXEC_AUTOSTART_COMMAND="bash $SCRIPT_LOCATION/autostart-dialog.sh"
         FULL_ICON_PATH="$SCRIPT_LOCATION/assets/icon_autostart.png"
         AUTOSTART_FILE_PATH="$AUTOSTART_PATH/tvPlayer-startdialog.desktop"
     else
         AUTOSTART_SCRIPT_NAME="tvPlayer"
-        EXEC_AUTOSTART_COMMAND="sudo python3 $SCRIPT_LOCATION/tvPlayer.py"
+        EXEC_AUTOSTART_COMMAND="bash $SCRIPT_LOCATION/start.sh"
         FULL_ICON_PATH="$SCRIPT_LOCATION/assets/icon.png"
         AUTOSTART_FILE_PATH="$AUTOSTART_PATH/tvPlayer.desktop"
     fi

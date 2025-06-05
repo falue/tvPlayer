@@ -22,7 +22,7 @@ Control it with a wireless keyboard and your actress ort actor can press what th
 ![screencapture.gif](assets/screencapture.gif)
 
 # Hardware
-Tested successfully on Raspberry 4 (Debian bullseye).
+Tested successfully on Raspberry 4 (Debian ***11*** *bullseye* 64bit - *12 bookworm* did NOT work out of the box).
 
 Raspberry pi 3 (Debian Bookworm 32bit) did ***not*** work. Very stuttery but very plausibly i'm doin something wrong.
 
@@ -105,9 +105,11 @@ If you want "black" to show up, use `rgb(1,1,1)`.
 | RIGHT           | next channel                             | aka "next file" on USB drive (alphabetically) |
 | [number]        | go to channel nr [number]                |      |
 | UP              | jump +5 seconds                          |      |
-| SHIFT+UP        | pause and jump one frame forwards        |      |
+| CTRL + UP       | jump +60 seconds                         |      |
+| SHIFT + UP      | pause and jump one frame forwards        |      |
 | DOWN            | jump -5 seconds                          |      |
-| SHIFT+DOWN      | pause and jump one frame backwards       |      |
+| CTRL + DOWN     | jump -60 seconds                         |      |
+| SHIFT + DOWN    | pause and jump one frame backwards       |      |
 | p *or* space    | toggle play / pause                      |      |
 | ESC             | toggle fullscreen                        |      |
 | q               | shutdown raspberry pi                    |      |
