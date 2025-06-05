@@ -79,9 +79,7 @@ def mqtt_incoming(data):
     elif cmd == "toggle_fullscreen":
         toggle_fullscreen()
 
-    elif cmd == "close_program":
-        close_program()
-    elif cmd == "jump":   # USE ME
+    elif cmd == "jump":
         jump(float(value))
     elif cmd == "seek":  
         if value < 0.05 and value > -0.05:
@@ -148,9 +146,13 @@ def mqtt_incoming(data):
     elif cmd == "shutdown":
         time.sleep(1)  # Wait for user interface to load shutdown.html
         shutdown()
+    elif cmd == "restart":
+        restart_program("Restarting as demanded by user")
     elif cmd == "reboot":
         time.sleep(1)  # Wait for user interface to load reboot.html
         reboot()
+    elif cmd == "close_program":
+        close_program()
 
     elif cmd == "go_to_channel":
         go_to_channel(int(value))
@@ -1259,8 +1261,8 @@ def main():
         pygame.display.update()
         time.sleep(0.1)
 
-def restart_program():
-    print("Restarting program due to critical error...")
+def restart_program(msg="Restarting program due to critical error..."):
+    print(msg)
     python = sys.executable
     os.execl(python, python, *sys.argv)
 
