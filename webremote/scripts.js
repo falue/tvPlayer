@@ -276,6 +276,7 @@ function handleState(data) {
 }
 
 function handleFillColor(data) {
+  // FIXME: DOES NOT PROPERLY WORK YET
   let display = gebi("display");
   if(data.show) {
     isShowingFillColor = true;
