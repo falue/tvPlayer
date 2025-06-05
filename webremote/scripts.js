@@ -242,7 +242,7 @@ function handleState(data) {
         if(!blockTimerUpdate) {
           timeline.value=data.position;
           timeline.max=data.duration;
-          gebi("timecode").innerHTML = `${secondsToTimecode(data.position)}/${secondsToTimecode(data.duration)}`;
+          gebi("timecode").innerHTML = `${secondsToTimecode(data.position, {"showFrames": false})}/${secondsToTimecode(data.duration, {"showFrames": false})}`;
         }
       } else {
         hide("timeline", "seeking", "speed", "speedNoteRow", "togglePlayBtn", "abLoop");
@@ -308,7 +308,7 @@ function splitFileName(path) {
   };
 }
 
-function secondsToTimecode(seconds, fps = 25) {
+function secondsToTimecode(seconds, { fps = 25, showFrames = true } = {}) {
   const totalSeconds = Math.floor(seconds);
   const frames = Math.round((seconds - totalSeconds) * fps);
 
@@ -316,17 +316,20 @@ function secondsToTimecode(seconds, fps = 25) {
   const minutes = Math.floor((totalSeconds % 3600) / 60)
     .toString()
     .padStart(2, "0");
-  const secs = (totalSeconds % 60).toString().padStart(2, "0");
+  let secs = (totalSeconds % 60).toString().padStart(2, "0");
   const frameStr = frames.toString().padStart(2, "0");
+  
+  if (showFrames) {
+    secs = `${secs}.${frameStr}`;
+  }
 
   if (hours > 0) {
-    return `${hours
-      .toString()
-      .padStart(2, "0")}:${minutes}:${secs}.${frameStr}`;
+    return `${hours.toString().padStart(2, "0")}:${minutes}:${secs}`;
   } else {
-    return `${minutes}:${secs}.${frameStr}`;
+    return `${minutes}:${secs}`;
   }
 }
+
 
 function startPan(e, axis, value) {
   if (e) e.preventDefault(); // prevent touch scrolling
