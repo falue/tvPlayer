@@ -3,23 +3,34 @@ This is basically a media player.
 
 Power it and it will play the first image or video on the USB stick.
 
-With some keyboard strokes you "change the channel", now you have an interactive TV station.
+You can control the playback by keyboard or via a locally served website from your mobile device.
+Change aspect ratios, colors and playback speed, "change the channel"; now you have an interactive TV station and your actor or actress always watches what is in the script.
 
 Fill a USB stick with video (or *image!*) files; plug it in; have a fake TV.
 Channel number is shown when switching them, white noise is shown when nothing is available and the volume bar is there for you when you expect it. Both can be turned off on-the-fly.
-
-Control it with a wireless keyboard and your actress ort actor can press what they want, you'll be sure they find their program as *per the script*.
 
 # What you can do
 - You can set inpoints for each video, so when you switch channels, it starts directly at the key moment, like when the journalist says, "*...some minor accident today in the hospital of Dunwich was contained and we have nothing to worry about. Now to the weather..*"
 - You can turn the TV fake-off ("blackout").
 - You can switch video-fitting-mode from contain to stretch to cover, to get rid of potential letterboxes.
+- Control saturation/brightness/contrast
+- Control playback speed
+- Set inpoints on each video, so the video plays from that point whenever you select the video
+- Loop: Set in- and outpoints to be looped
+- Zoom and pan video
 - You can turn off the fancy effects. 
 - The files do not auto-progress from one to another. Each video loops itself until you "switch the channel" (play the next file on the USB device).
 - Change the brightness of the video to match exposure times of the camera.
 - If everythings lost, theres a [green screen](assets/greenscreen/) button
+- Control the playback with the webremote from your mobile device
 
 ![screencapture.gif](assets/screencapture.gif)
+
+# Webremote
+Once booted, connect your mobile device to the SSID `tvPlayer` and visit `http://10.3.141.1:8080`.
+
+![webremote_snippet.png](assets/webremote_snippet.png)
+> See full screenshot [here](assets/webremote.png)
 
 # Hardware
 Tested successfully on Raspberry 4 (Debian bullseye).
@@ -30,7 +41,7 @@ Combine it with a [HDMI-to-RCA](https://www.amazon.de/QGECEN-Cinch-Adapter-Konve
 
 ## Get this up and running
 1. Clone this repo `git clone https://github.com/falue/tvPlayer`
-2. run the install script `sudo bash install.sh` to:
+2. run the install script `sudo bash install.sh` to: *THIS IS NOT YET FINALIZED*
     - apt-get update
     - install dependencies (Packages: *mpv*, *socat*, *wmctrl*; Python: *pygame*, *natsort*)
     - auto-run `python3 autostart.py` on autostart[*]
@@ -39,6 +50,7 @@ Combine it with a [HDMI-to-RCA](https://www.amazon.de/QGECEN-Cinch-Adapter-Konve
 3. Set **audio output** to HDMI (right click on audio in toolbar, choose HDMI)
 4. disable pop up window "**removable medium is inserted**": Open any folder > `Edit` > `Preferences` > `Volume Management` > uncheck `Show available options for removable media when they are inserted`
 5. Insert USB, start watching TV.
+6. Connect your mobile device to the SSID `tvPlayer` and visit `http://10.3.141.1:8080`.
 
 > [*] The `autostart.py` script asks if you want to close all other autostarting windows and after a 12s timeout, it starts the main script `tvPlayer.py`. This is because other windows can overlap the tvPlayer and hinder the fullscreen mode. So without a keyboard and doing anything, the player goes to fullscreen on startup.
 
@@ -72,10 +84,9 @@ Filetypes for images: `.jpg`, `.jpeg`, `.png`, `.gif`, `.tiff`, `.bmp`.
 > *NOTICE:* `.png` does ***not*** work with color mode: "*indexed colors*"!
 
 ## USB drive format
-Works with `FAT32`.
-`EXFAT` has worked before and does now, but you have to run the thing with sudo all the way.
+Works with `FAT32` and `EXFAT` formatted USB drives.
 
-Not tested any other.
+Does not work with MAC formatted drives.
 
 ## Filenames, TV channel order and AV channel
 The order of the files on the USB device lead the order of the TV channels.
