@@ -290,6 +290,12 @@
                 <div class="buttonNote closed" id="note-temp" title="CPU Temperature">-</div>
             </div>
             <div class="button-row">
+                <div class="buttonNote closed" title="tvPlayer version & last updated">
+                <span id="installed_hash" title="NOT a git commit hash - this is a sha256 from the zip">-</span><br>
+                <span id="installed_at" class="small">-</span>
+                </div>
+            </div>
+            <div class="button-row">
                 <button onclick="sendCommand({'cmd': 'shutdown'}); window.location.href = 'shutdown.html'">
                     Shutdown
                     <img src="assets/icons/power.svg">
