@@ -1303,11 +1303,22 @@ if __name__ == '__main__':
     try:
         main()
     except Exception as e:
-        # If crash: Run the script again because I learnt nothing
         print("\nProgram interrupted by user or crashed.")
-        print("Main program error: ", e)
+        print("Main program error:", e)
         traceback.print_exc()
-        mqtt_handler.send("general", "error", {"error": e, "traceback": traceback.format_exc()})  # FIXME: Does not work
-        # restart_program()  ## TODO FINALLY !!
-    finally:
-        close_program()
+
+        try:
+            print("[DEBUG] Attempting to send MQTT error message...")
+            mqtt_handler.send("general", "error", {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            })
+            time.sleep(0.5)  # give it time to send
+        except Exception as send_err:
+            print("[ERROR] Failed to send MQTT error message:", send_err)
+
+        try:
+            print("[DEBUG] Attempting to restart program...")
+            restart_program()
+        except Exception as restart_err:
+            print("[ERROR] Failed to restart program:", restart_err)

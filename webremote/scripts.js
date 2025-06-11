@@ -60,7 +60,7 @@ function init() {
 
       } else if (data.command == "error") {
         logging(data.payload);
-        alert(`Oh snap, the tvPlayer crashed.\n\nError:\n${data.payload.error}\n\nTraceback:\n${data.payload.traceback}`);
+        alert(`Oh snap, the tvPlayer crashed.\nTrying to restart program.\n\nIf this persists, reboot the tvPlayer!\n\nError:\n${data.payload.error}\n\nTraceback:\n${data.payload.traceback}`);
 
       } else if (data.command == "fillcolor") {
         handleFillColor(data.payload);
