@@ -91,7 +91,7 @@ def mqtt_incoming(data):
     elif cmd == "prev_channel":
         prev_channel()
 
-    elif cmd == "adjust_volume":
+    elif cmd == "volume":
         adjust_volume(int(value))
 
     elif cmd == "toggle_black_screen":
@@ -105,14 +105,14 @@ def mqtt_incoming(data):
     elif cmd == "pan":
         pan(*value)
 
-    elif cmd == "adjust_video_brightness":
+    elif cmd == "brightness":
         adjust_video_brightness(int(value))
-    elif cmd == "adjust_video_contrast":
+    elif cmd == "contrast":
         adjust_video_contrast(int(value))
-    elif cmd == "adjust_video_saturation":
+    elif cmd == "saturation":
         adjust_video_saturation(int(value))
 
-    elif cmd == "adjust_video_speed":
+    elif cmd == "speed":
         if value == "reset":
             adjust_video_speed(value)
         else:

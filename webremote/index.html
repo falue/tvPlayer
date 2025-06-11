@@ -101,7 +101,7 @@
                 >
                     <img src="assets/icons/speedometer-slow.svg"><sup>-</sup>
                 </button>
-                <button onclick="setToWait('note-speed'); sendCommand({'cmd': 'adjust_video_speed', 'value': 'reset'}, false, true)" style="width:250%">
+                <button onclick="setToWait('note-speed'); sendCommand({'cmd': 'speed', 'value': 'reset'}, false, true)" style="width:250%">
                     <sup style="opacity: 0;">reset</sup> <img src="assets/icons/speedometer-medium.svg"> <sup>reset</sup>
                 </button>
                 <button 
@@ -226,7 +226,7 @@
                 </button>
             </div>
             <div class="button-row">
-                <div class="buttonNote" id="note-zoom" title="zoom">100</div>
+                <div class="buttonNote" id="note-zoom" title="zoom">100%</div>
             </div>
             <div class="button-row">
                 <button 
@@ -248,25 +248,31 @@
                 </button>
             </div>
             <div class="button-row">
-                <div class="buttonNote" id="note-pan" title="pan">X 0.0 / Y 0.0</div>
+                <div class="buttonNote" title="pan">
+                    <img src="assets/icons/arrow-left-right.svg" style="height:.8em; vertical-align: middle;">
+                    <span id="note-pan-x">0.0</span>
+                    <span>&nbsp;</span>
+                    <span id="note-pan-y">0.0</span>
+                    <img src="assets/icons/arrow-up-down.svg" style="height:.8em; vertical-align: middle;">
+                </div>
             </div>
             <div class="button-row">
                 <button
                     data-trigger 
                     data-func="pan" 
-                    data-args='["x", -1]'
+                    data-args='[-1, "x"]'
                 >Move Left</button>
-                <button onclick="setToWait('note-pan'); sendCommand({'cmd': 'pan', 'value': ['reset', 'x']}, false, true)">
+                <button onclick="setToWait('note-pan-x'); sendCommand({'cmd': 'pan', 'value': ['reset', 'x']}, false, true)">
                     Reset <img src="assets/icons/arrow-left-right.svg">
                 </button>
                 <button
                     data-trigger 
                     data-func="pan" 
-                    data-args='["x", 1]'
+                    data-args='[1, "x"]'
                 >Move Right</button>
             </div>
             <div class="button-row">
-                <button onclick="setToWait('note-pan'); sendCommand({'cmd': 'pan_reset'}, false, true)">
+                <button onclick="setToWait('note-pan-x'); setToWait('note-pan-y'); sendCommand({'cmd': 'pan_reset'}, false, true)">
                     Reset <img src="assets/icons/arrow-all.svg">
                 </button>
             </div>
@@ -274,15 +280,15 @@
                 <button
                     data-trigger 
                     data-func="pan" 
-                    data-args='["y", -1]'
+                    data-args='[-1, "y"]'
                 >Move Up</button>
-                <button onclick="setToWait('note-pan'); sendCommand({'cmd': 'pan', 'value': ['reset', 'y']}, false, true)">
+                <button onclick="setToWait('note-pan-y'); sendCommand({'cmd': 'pan', 'value': ['reset', 'y']}, false, true)">
                     Reset <img src="assets/icons/arrow-up-down.svg">
                 </button>
                 <button
                     data-trigger 
                     data-func="pan" 
-                    data-args='["y", 1]'
+                    data-args='[1, "y"]'
                 >Move Down</button>
             </div>
         </div>
@@ -304,7 +310,7 @@
                 </button>
             </div>
             <div class="button-row">
-                <div class="buttonNote" id="note-volume" title="volume">100</div>
+                <div class="buttonNote" id="note-volume" title="volume">100%</div>
             </div>
             <div class="button-row">
                 <button

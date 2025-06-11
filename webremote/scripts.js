@@ -177,9 +177,10 @@ function handleSettings(data) {
     gebi('note-cycle_white_noise').innerHTML = `<img src="assets/screens/noise${settings.white_noise_index}.png">`;
 
     // GENERAL
-    gebi('note-zoom').innerHTML = ((settings.zoom_level+1)*100).toFixed(0);  // 0 = normal
-    gebi('note-pan').innerHTML = `X ${(settings.pan_offsets.x*100).toFixed(1)} / Y ${(settings.pan_offsets.y*100).toFixed(1)}`;  // 0.0/0.0
-    gebi('note-volume').innerHTML = settings.volume;  // 0 to 100
+    gebi('note-zoom').innerHTML = ((settings.zoom_level+1)*100).toFixed(0)+"%";  // 0 = normal
+    gebi('note-pan-x').innerHTML = (settings.pan_offsets.x*100).toFixed(1);
+    gebi('note-pan-y').innerHTML = (settings.pan_offsets.y*100).toFixed(1);
+    gebi('note-volume').innerHTML = settings.volume+"%";  // 0 to 100
     
     // PER VIDEO FILE
     let fileSettings = data.settings.file_dependent_settings;
@@ -361,20 +362,6 @@ function secondsToTimecode(seconds, { fps = 25, showFrames = true } = {}) {
   }
 }
 
-
-function startPan(e, axis, value) {
-  if (e) e.preventDefault(); // prevent touch scrolling
-  setToWait('note-pan'); 
-  sendCommand({ cmd: 'pan', value: [value, axis] }, false, true);
-  panInterval = setInterval(() => {
-    sendCommand({ cmd: 'pan', value: [value, axis] }, false, true);
-  }, 75);
-}
-
-function stopPan() {
-  clearInterval(panInterval);
-}
-
 function logging(text) {
   console.log(text);
   const consoleDiv = document.getElementById("console");
@@ -446,7 +433,7 @@ function setupTriggers() {
     const label = "note-" + funcName;
     const interval = 75;
 
-    const trigger = continuousTrigger(funcMap[funcName], Array.isArray(args) ? args : [args], interval, label);
+    const trigger = continuousTrigger(funcMap[funcName], Array.isArray(args) ? args : [args], interval, gebi(label) ? label : '');
 
     ['mousedown', 'touchstart'].forEach(type => el.addEventListener(type, trigger.start));
     ['mouseup', 'mouseleave', 'touchend'].forEach(type => el.addEventListener(type, trigger.stop));
