@@ -433,7 +433,7 @@ function continuousTrigger(fn, args = [], interval = 75, label = '') {
 const funcMap = new Proxy({}, {
   get: (_, funcName) => (...args) => {
     const value = args.length === 1 ? args[0] : args;
-    console.log({ cmd: funcName, value }, false, true);
+    // console.log({ cmd: funcName, value }, false, true);
     sendCommand({ cmd: funcName, value }, false, true);
   }
 });
