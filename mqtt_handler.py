@@ -16,14 +16,23 @@ def on_connect(client, userdata, flags, rc, properties=None):
 
 def on_message(client, userdata, msg):
     try:
-        data = json.loads(msg.payload.decode())
+        payload_str = msg.payload.decode(errors="replace").strip()
+        if not payload_str:
+            raise ValueError("Empty payload")
+        data = json.loads(payload_str)
         print("[MQTT] Received:", data)
+    except Exception as e:
+        print("[MQTT] JSON decode error:", repr(msg.payload))
+        print("[MQTT] Error parsing message:", e)
+        return
+
+    try:
         if on_command_callback:
             on_command_callback(data)
     except Exception as e:
-        print(msg.payload.decode())
-        print("[MQTT] Error parsing message:", e)
-
+        import traceback
+        print("[MQTT] Error in command callback:")
+        traceback.print_exc()
 
 def send(topic="general", command="", payload=None):
     if client:
