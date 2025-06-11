@@ -104,19 +104,25 @@ rm -- "$0"
     os.chmod(script_path, 0o755)
     subprocess.Popen(["bash", str(script_path)])
 
+def restart_tvplayer():
+    print("[USB UPDATE] Launching tvPlayer.py manually...")
+    subprocess.Popen(["python3", str(script_dir / "tvPlayer.py")], env={"DISPLAY": ":0"})
+
 def main():
     kill_other_tvplayer_instances()
     try:
         zip_path = find_update_zip_on_usb()
         if not zip_path:
-            print("[USB UPDATE] No matching ZIP found.")
+            print("[USB UPDATE] No matching ZIP found, restarting.")
+            restart_tvplayer()
             return
 
         new_hash = hash_file(zip_path)
         current_hash = get_zip_hash()
 
         if new_hash == current_hash:
-            print("[USB UPDATE] ZIP already installed. Skipping.")
+            print("[USB UPDATE] ZIP already installed. Skipping & restarting.")
+            restart_tvplayer()
             return
 
         print("[USB UPDATE] New ZIP detected, updating.")
@@ -127,6 +133,7 @@ def main():
 
     except Exception as e:
         print(f"[ERROR] Update failed: {e}")
+        restart_tvplayer()
 
 if __name__ == "__main__":
     main()
