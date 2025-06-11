@@ -59,6 +59,8 @@ current_green_index = 0
 last_mpv_state_sent = 0
 zoom_level = 0.0
 _save_timer = None  # timer for saving after mqtt msg
+quit_program_scheduled = False
+restart_program_scheduled = False
 
 file_settings = {}
 SETTINGS_FILE = "settings.json"
@@ -68,6 +70,7 @@ def mqtt_init():
     mqtt_handler.start()
 
 def mqtt_incoming(data):
+    global quit_program_scheduled, restart_program_scheduled
     # print("[tvPlayer] Command from MQTT:", data)
 
     cmd = data.get("command")
@@ -149,7 +152,7 @@ def mqtt_incoming(data):
         time.sleep(1)  # Wait for user interface to load shutdown.html
         shutdown()
     elif cmd == "restart":
-        restart_program("Restarting as demanded by user")
+        restart_program_scheduled = True
     elif cmd == "reboot":
         time.sleep(1)  # Wait for user interface to load reboot.html
         reboot()
@@ -157,7 +160,7 @@ def mqtt_incoming(data):
         subprocess.Popen(["python3", f"{script_dir}/usb_update_checker.py"])
         sys.exit(0)
     elif cmd == "close_program":
-        close_program()
+        quit_program_scheduled = True
 
     elif cmd == "go_to_channel":
         go_to_channel(int(value))
@@ -699,7 +702,7 @@ def cycle_green_screen(direction):
     mqtt_handler.send("general", "fillcolor", {"type": "green", "index": current_green_index, "show": True})
 
 def check_keypresses():
-    global tv_channel
+    global tv_channel, quit_program_scheduled
     for event in pygame.event.get():
         save_after_input = True
         """ if event.type == pygame.ACTIVEEVENT:
@@ -709,8 +712,7 @@ def check_keypresses():
 
         if event.type == pygame.QUIT:
             print("Window closed - trigger pygame to quit")
-            pygame.quit()
-            sys.exit()  # Exit the program when the window is closed
+            quit_program_scheduled = True
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_UP and pygame.key.get_mods() & pygame.KMOD_SHIFT:
                 print("keypress [SHIFT]+[UP] seek +0.04s")
@@ -746,7 +748,7 @@ def check_keypresses():
                 toggle_fullscreen()
             elif event.key == pygame.K_q and pygame.key.get_mods() & pygame.KMOD_SHIFT:
                 print("keypress [SHIFT]+[q] close program")
-                close_program()
+                quit_program_scheduled = True
             elif event.key == pygame.K_q:
                 print("keypress [q] shutdwon computer")
                 shutdown()
@@ -1203,10 +1205,24 @@ def update_in_outpoints():
 def close_program():
     print("Close the program..")
     # GPIO.output(LED_PIN, GPIO.LOW)  # Turn off LED - maybe not so it glows until pi is shut down properly?
+    #try:
     GPIO.output(LED_PIN, GPIO.LOW)  # Turn LED OFF before exit
+    #except RuntimeError as e:
+    #    print("[WARN] Could not turn LED off — GPIO not initialized:", e)
     GPIO.cleanup()  # Reset GPIO pins
-    print("..goodbye!")
     pygame.quit()  # Closes the Pygame window
+
+    # needs to kill server.py aswell? however, that script kills older versions of itself
+
+    # Kill MPV if still running
+    if mpv_process and mpv_process.poll() is None:
+        try:
+            mpv_process.kill()
+            mpv_process.wait(timeout=2)
+        except Exception as e:
+            print("Failed to kill mpv:", e)
+
+    print("..goodbye!")
     sys.exit()     # Exits the Python program
 
 def shutdown():
@@ -1292,9 +1308,18 @@ def main():
                 print("No files available - show blank screen")
 
         pygame.display.update()
+
+        if quit_program_scheduled:
+            print("triggered quit_program_scheduled !!!")
+            close_program()
+
+        if restart_program_scheduled:
+            restart_program("Restarting as demanded by user")
+
         time.sleep(0.1)
 
 def restart_program(msg="Restarting program due to critical error..."):
+    # close_program()  # memory leaks if not close_program() but oh well
     print(msg)
     python = sys.executable
     os.execl(python, python, *sys.argv)
