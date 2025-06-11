@@ -108,6 +108,15 @@ You can edit the pngs and convert them to `.bgra` files. Change the variable `in
 Complete black pixels will become transparent.
 If you want "black" to show up, use `rgb(1,1,1)`.
 
+# Update system
+To update the system:
+
+1. Download this file on your computer: [https://github.com/falue/tvPlayer/archive/refs/heads/main.zip](https://github.com/falue/tvPlayer/archive/refs/heads/main.zip)
+2. Put it on any USB drive and stick it in the tvPlayer. Don't change the file name (`main.zip`).
+3. Reboot the tvPlayer.
+4. check if update is applied on the webremote: On the very bottom, check if the "tvPlayer Version & Last udpated" is updated.
+
+
 # Keyboard controls
 
 | Keypress        | Action                                   | Note |

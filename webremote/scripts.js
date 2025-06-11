@@ -389,8 +389,8 @@ function showValidFiles() {
 }
 
 async function displayVersionUpdateDate() {
-  const data = await (await fetch('./version.json')).json();
-  gebi('installed_hash').textContent = data.installed_hash.slice(0, 7);
+  const data = await (await fetch('./update_metadata.json')).json();
+  gebi('zip_hash').textContent = data.zip_hash.slice(0, 7);
 
   const d = new Date(data.installed_at).toLocaleString('de-CH', {
     timeZone: 'Europe/Zurich',

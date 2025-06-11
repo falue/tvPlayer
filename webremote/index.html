@@ -291,7 +291,7 @@
             </div>
             <div class="button-row">
                 <div class="buttonNote closed" title="tvPlayer version & last updated">
-                <span id="installed_hash" title="NOT a git commit hash - this is a sha256 from the zip">-</span><br>
+                <span id="zip_hash" title="NOT a git commit hash - this is a sha256 from the zip">-</span><br>
                 <span id="installed_at" class="small">-</span>
                 </div>
             </div>
@@ -303,6 +303,10 @@
                 <button onclick="sendCommand({'cmd': 'reboot'}); window.location.href = 'reboot.html'">
                     Reboot
                     <img src="assets/icons/restart.svg">
+                </button>
+                <button onclick="alert('Be sure to add main.zip to the connected USB drive before proceeding.\n\nGet it here:\nhttps://github.com/falue/tvPlayer/archive/refs/heads/main.zip'); sendCommand({'cmd': 'update'});  window.location.href = 'update.html'">
+                    Update from USB
+                    <img src="assets/icons/usb-update.svg">
                 </button>
             </div>
         </div>
