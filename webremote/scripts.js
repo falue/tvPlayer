@@ -389,7 +389,7 @@ function showValidFiles() {
 }
 
 async function displayVersionUpdateDate() {
-  const data = await (await fetch('./update_metadata.json')).json();
+  const data = await fetch('./update_metadata.json?v=' + Date.now()).then(res => res.json());
   gebi('zip_hash').textContent = data.zip_hash.slice(0, 7);
 
   const d = new Date(data.installed_at).toLocaleString('de-CH', {
