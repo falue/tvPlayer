@@ -14,7 +14,7 @@ script_dir = Path(__file__).resolve().parent
 ZIP_TARGET = script_dir / "update.zip"
 EXTRACT_TO = script_dir / "update_tmp"
 USB_MOUNT_DIR = os.path.join("/media", os.getlogin())
-ZIP_PATTERN = "main.zip"
+ZIP_PATTERN = "tvPlayer-main.zip"
 VERSION_FILE = script_dir / "webremote" / "update_metadata.json"
 
 # Kill other tvPlayer-related Python processes except self
