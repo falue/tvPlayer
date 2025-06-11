@@ -75,6 +75,7 @@ function init() {
   });
 
   displayVersionUpdateDate();
+  setupTriggers();
 }
 
 function maybeAlertUnavailable() {
@@ -412,6 +413,44 @@ async function displayVersionUpdateDate() {
 
   const [date, time] = d.split(', ');
   gebi('installed_at').textContent = `${date} - ${time}`;
+}
+
+// Generic continuous trigger
+function continuousTrigger(fn, args = [], interval = 75, label = '') {
+  let activeInterval = null;
+  return {
+    start: (e) => {
+      if (e) e.preventDefault();
+      if (label) setToWait(label);
+      fn(...args);
+      activeInterval = setInterval(() => fn(...args), interval);
+    },
+    stop: () => clearInterval(activeInterval)
+  };
+}
+
+// Fully generic funcMap using Proxy
+const funcMap = new Proxy({}, {
+  get: (_, funcName) => (...args) => {
+    const value = args.length === 1 ? args[0] : args;
+    console.log({ cmd: funcName, value }, false, true);
+    sendCommand({ cmd: funcName, value }, false, true);
+  }
+});
+
+// Automatically initialize all trigger buttons
+function setupTriggers() {
+  document.querySelectorAll('[data-trigger]').forEach(el => {
+    const funcName = el.dataset.func;
+    const args = JSON.parse(el.dataset.args);
+    const label = "note-" + funcName;
+    const interval = 75;
+
+    const trigger = continuousTrigger(funcMap[funcName], Array.isArray(args) ? args : [args], interval, label);
+
+    ['mousedown', 'touchstart'].forEach(type => el.addEventListener(type, trigger.start));
+    ['mouseup', 'mouseleave', 'touchend'].forEach(type => el.addEventListener(type, trigger.stop));
+  });
 }
 
 function hide(id) {
