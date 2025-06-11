@@ -220,6 +220,11 @@ button {
     user-select: none;
 }
 
+button.reset, button.important {
+    /* filter: invert(1) hue-rotate(180deg); */
+    background-color: #6b00b3;
+}
+
 button[disabled] {
     filter: saturate(0.125);
     cursor: default;
@@ -404,7 +409,8 @@ img.wait {
     button {
         padding: 15px 5px;
         font-size: 14px;
-        min-width: 0;
+        min-width: 0 !important;
+        width:100% !important;
         flex-grow: 1;
     }
 }
