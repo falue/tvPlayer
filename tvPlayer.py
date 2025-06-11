@@ -9,6 +9,7 @@ from natsort import natsorted
 import random
 import RPi.GPIO as GPIO
 import mqtt_handler
+import traceback
 
 # Customizing
 show_tv_gui = True  # show number of channels top right and volume bar
@@ -1282,7 +1283,8 @@ if __name__ == '__main__':
     except Exception as e:
         # If crash: Run the script again because I learnt nothing
         print("\nProgram interrupted by user or crashed.")
-        print("Error: ", e)
+        print("Main program error: ", e)
+        traceback.print_exc()
         mqtt_handler.send("general", "error", {"error": e})
         # restart_program()  ## TODO FINALLY !!
     finally:
