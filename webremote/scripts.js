@@ -151,7 +151,7 @@ function showState() {
   if(raspi_available) {
     alert("The system is currently up and running");
   } else {
-    alert("The system is currently not available. (Re-) start the tvPlayer or go closer until circle turns green.\n\nAlso re-check if you're in the correct wifi! Should be: 'tvPlayer'!");
+    alert("The system is currently not available. (Re-) start the tvPlayer or go closer until the icon turns green.\n\nAlso re-check if you're in the correct wifi! Should be: 'tvPlayer'!");
   }
 }
 
