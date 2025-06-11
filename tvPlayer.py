@@ -58,6 +58,7 @@ active_overlays = {}  # Dictionary to store active overlay threads
 current_green_index = 0
 last_mpv_state_sent = 0
 zoom_level = 0.0
+_save_timer = None  # timer for saving after mqtt msg
 
 file_settings = {}
 SETTINGS_FILE = "settings.json"
@@ -73,8 +74,8 @@ def mqtt_incoming(data):
     value = data.get("value", 0)
 
     if cmd == "give_settings":
-        # Triggers collection of settings including filelist and sends it to web by mqtt
-        save_settings()
+        # Collect settings and send it by mqtt
+        send_settings()
     elif cmd == "toggle_play":
         toggle_play()
     elif cmd == "toggle_fullscreen":
@@ -164,6 +165,9 @@ def mqtt_incoming(data):
     else:
         print("[tvPlayer] Unknown command:", cmd)
 
+    # Save after 1s of no inputs
+    debounce_save_settings()
+
 def load_settings():
     """
     Load settings from a JSON file and apply them to globals.
@@ -211,11 +215,34 @@ def load_settings():
     print("Settings loaded.")
     mqtt_handler.send("settings", "Settings loaded", {"settings": data, "filelist": filelist})
 
+def debounce_save_settings():
+    # Save after 1s of no inputs
+    global _save_timer
+    if _save_timer:
+        _save_timer.cancel()
+    _save_timer = threading.Timer(1.0, save_settings)
+    _save_timer.start()
 
 def save_settings():
     """
     Save the current settings to a JSON file, preserving settings for files not currently in the filelist.
     """
+    data = collect_settings()
+
+    # Save updated settings back to the file
+    with open(os.path.join(script_dir, SETTINGS_FILE), "w") as f:
+        json.dump(data, f, indent=4)
+
+    print(f"Current state & settings saved to {SETTINGS_FILE}.")
+    send_settings(data)
+
+def send_settings(data=False):
+    if not data:
+        data = collect_settings()
+    mqtt_handler.send("settings", "Settings saved", {"settings": data, "filelist": filelist})
+
+
+def collect_settings():
     global filelist, file_settings
 
     # Load existing settings from file, if any
@@ -250,12 +277,7 @@ def save_settings():
             "video_speeds": video_speeds[i],
         }
 
-    # Save updated settings back to the file
-    with open(os.path.join(script_dir, SETTINGS_FILE), "w") as f:
-        json.dump(data, f, indent=4)
-
-    print(f"Settings saved to {SETTINGS_FILE}.")
-    mqtt_handler.send("settings", "Settings saved", {"settings": data, "filelist": filelist})
+    return data
 
 def server_init():
     # Wireless access point controlled self-sufficiently with RaspAP
@@ -882,8 +904,8 @@ def check_buttons():
                 time.sleep(0.05)
 
 def send_mpv_state():
-    # Ttrigger settings to have current data about the playing file on web
-    save_settings()
+    # Collect settings and send it by mqtt
+    send_settings()
     mqtt_handler.send("general", "state", {
         "isPlaying": not get_mpv_property("pause"), 
         "currentFile": current_file, 
