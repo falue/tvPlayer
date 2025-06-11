@@ -1307,7 +1307,7 @@ if __name__ == '__main__':
         print("\nProgram interrupted by user or crashed.")
         print("Main program error: ", e)
         traceback.print_exc()
-        mqtt_handler.send("general", "error", {"error": e})
+        mqtt_handler.send("general", "error", {"error": e, "traceback": traceback.format_exc()})  # FIXME: Does not work
         # restart_program()  ## TODO FINALLY !!
     finally:
         close_program()
