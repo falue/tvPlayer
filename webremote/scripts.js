@@ -10,6 +10,8 @@ let currentFile = {};
 let blockTimerUpdate = false;
 let isShowingFillColor = false;
 let tvChannel = 0;
+const ALERT_THROTTLE_MS = 6000; // 6seconds
+let lastAlertTime = 0;
 
 function init() {
   logging("start!");
@@ -75,9 +77,17 @@ function init() {
   displayVersionUpdateDate();
 }
 
+function maybeAlertUnavailable() {
+  const now = Date.now();
+  if (now - lastAlertTime > ALERT_THROTTLE_MS) {
+    alert("Cannot connect to tvPlayer. Go closer.");
+    lastAlertTime = now;
+  }
+}
+
 function sendCommand(data, ignore_availability=false, giveFeedback=false) {
   if (!raspi_available && !ignore_availability) {
-    alert("Cannot connect to tvPlayer. Go closer.");
+    maybeAlertUnavailable();
     return;
   }
   client.publish(
