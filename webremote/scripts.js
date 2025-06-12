@@ -371,8 +371,8 @@ function secondsToTimecode(seconds, { fps = 25, showFrames = true } = {}) {
   }
 }
 
-function logging(text) {
-  console.log(text);
+function logging(text, showInDevConsole=true) {
+  if(showInDevConsole) console.log(text);
   const consoleDiv = document.getElementById("console");
 
   const newLine = document.createElement("div");
