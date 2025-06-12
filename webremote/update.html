@@ -28,7 +28,7 @@
                     setTimeout(async () => {
                         let updatedHash = (await fetchMetadata()).zip_hash;
                         if(currentHash == updatedHash) {
-                            span.innerHTML = `<br><br>Update "${updatedHash.slice(0, 7)}" already installed or no 'tvPlayer-main.zip' file found on USB drive.<br><br>Download this file: <a href="https://github.com/falue/tvPlayer/archive/refs/heads/main.zip">https://github.com/falue/tvPlayer/archive/refs/heads/main.zip</a> and put it on a USB drive.<br><br><a href="index.html?update=true"><button>Click here to try again</button></a> <br><br> <a href="index.html"><button>Click here to return</button></a>`;
+                            span.innerHTML = `<br><br>Update "${updatedHash.slice(0, 7)}" already installed or no 'tvPlayer-main.zip' file found on USB drive.<br><br>Download this file: <a href="https://github.com/falue/tvPlayer/archive/refs/heads/main.zip" style="word-break: break-word;">https://github.com/falue/tvPlayer/archive/refs/heads/main.zip</a> and put it on a USB drive.<br><br><a href="index.html?update=true"><button>Click here to try again</button></a> <br><br> <a href="index.html"><button>Click here to return</button></a>`;
                         } else {
                             span.innerHTML = `<br><br>Update "${updatedHash.slice(0, 7)}" was applied.<br><br><a href='index.html'><button>Click here to return</button></a>`;
                         }
