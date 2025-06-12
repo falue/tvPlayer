@@ -16,7 +16,7 @@
         async function startCountdown() {
             let currentHash = (await fetchMetadata()).zip_hash;
             const span = document.getElementById("countdown");
-            let seconds = 21
+            let seconds = 16;
 
             const interval = setInterval(() => {
                 span.innerHTML = seconds;
