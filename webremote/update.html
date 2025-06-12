@@ -8,20 +8,30 @@
     <link rel="stylesheet" href="./styles.css?v=250530-B" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 
-    <script>
-        function startCountdown() {
-        const span = document.getElementById("countdown");
-        let seconds = 21;
+    <script defer>
+        async function fetchMetadata() {
+            return await (await fetch('./update_metadata.json?v=' + Date.now())).json();
+        }
 
-        const interval = setInterval(() => {
-            span.innerHTML = seconds;
-            seconds--;
+        async function startCountdown() {
+            let currentHash = (await fetchMetadata()).zip_hash;
+            const span = document.getElementById("countdown");
+            let seconds = 21
 
-            if (seconds < 0) {
-                clearInterval(interval);
-                    span.innerHTML = "<br><br>Almost there, one sec..";
-                    setTimeout(() => {
-                        span.innerHTML = "<br><br>Updates may or may not be applied.<br><br>Please click <a href='index.html'>here</a>";
+            const interval = setInterval(() => {
+                span.innerHTML = seconds;
+                seconds--;
+
+                if (seconds < 0) {
+                    clearInterval(interval);
+                    span.innerHTML = "<br><br>Almost there to return, one sec..";
+                    setTimeout(async () => {
+                        let updatedHash = (await fetchMetadata()).zip_hash;
+                        if(currentHash == updatedHash) {
+                            span.innerHTML = `<br><br>Update "${updatedHash.slice(0, 7)}" already installed or no 'tvPlayer-main.zip' file found on USB drive.<br><br>Download this file: <a href="https://github.com/falue/tvPlayer/archive/refs/heads/main.zip">https://github.com/falue/tvPlayer/archive/refs/heads/main.zip</a> and put it on a USB drive.<br><br><a href="index.html?update=true"><button>Click here to try again</button></a> <br><br> <a href="index.html"><button>Click here to return</button></a>`;
+                        } else {
+                            span.innerHTML = `<br><br>Update "${updatedHash.slice(0, 7)}" was applied.<br><br><a href='index.html'><button>Click here to return</button></a>`;
+                        }
                     }, 1000);
                 }
             }, 1000);
@@ -43,7 +53,7 @@
 
         <div class="control-group" style="min-height:444px;">
             <h2 style="width: 12em;">
-                System is looking for an update file on the USB drive, hold tight...
+                System is looking for an update file on the USB drive and tries to install it, hold tight...
                 <span id="countdown" class="grey"></span>
             </h2>
         </div>

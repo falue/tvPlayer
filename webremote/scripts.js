@@ -67,6 +67,15 @@ function init() {
       }
     }
   });
+
+  // If user retries update, catch it, send command again and redirect
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("update") === "true") {
+    console.log("Try update again, auto reddirecting..")
+    sendCommand({ cmd: "update" }, true);
+    window.location.href = "update.html";
+  }
+
   requestSettingsLoop();
 
   window.addEventListener("blur", () => {
