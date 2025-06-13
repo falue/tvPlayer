@@ -1314,7 +1314,7 @@ def ensure_valid_settings():
             json.dump(default, f, indent=2)
 
 def main():
-    global last_sent_settings
+    global last_sent_settings, fill_color_type
     time.sleep(2)  #
     print("--------------------------------------------------------------------------------")
     pygame_init()
