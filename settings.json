@@ -1,6 +1,6 @@
 {
     "general_settings": {
-        "white_noise_index": 0,
+        "zoom_level": 0.0,
         "pan_offsets": {
             "x": 0.0,
             "y": 0.0,
@@ -12,10 +12,15 @@
         "saturation": 0,
         "volume": 100,
         "tv_channel": 0,
-        "current_green_index": 1,
         "show_tv_gui": false,
         "show_whitenoise_channel_change": false,
-        "zoom_level": 0.0
+        "fill_color_type": "green",
+        "fill_color_index": {
+            "green": 0,
+            "black": 0,
+            "noise": 0
+        },
+        "fill_color_active": false
     },
     "file_dependent_settings": {
         "example_file.mp4": {

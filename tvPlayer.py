@@ -43,9 +43,10 @@ video_speeds = []
 ignored_devices = []
 mpv_process = None  # Global variable to track the running mpv process
 fitting_modes = ['contain', 'stretch', 'cover']  # List of fitting modes
-is_black_screen = False
-white_noise_files = ["white_noise_1.mp4","white_noise_2.mp4","white_noise_3.mp4","white_noise_4.mp4",]
-white_noise_index = 0
+fill_color_type = "green"  # default
+fill_color_index = {"green": 0, "black": 0, "noise": 0}
+fill_color_max_index = {"green": 19, "black": 0, "noise": 3}  # Amount of files in assets/fill_color -1
+fill_color_active = False
 current_file = ""
 pan_offsets = {'x': 0.0, 'y': 0.0, 'x-real': 0, 'y-real': 0}  # Global variables to track the pan offsets
 has_av_channel = False
@@ -55,8 +56,7 @@ contrast = 0  # -100 to 100, default 0
 saturation = 0  # -100 to 100, default 0
 volume = 100  # 0 to 100, 100 means max loudness
 active_overlays = {}  # Dictionary to store active overlay threads
-current_green_index = 0
-last_mpv_state_sent = 0
+last_sent_settings = 0
 zoom_level = 0.0
 _save_timer = None  # timer for saving after mqtt msg
 quit_program_scheduled = False
@@ -95,13 +95,10 @@ def mqtt_incoming(data):
     elif cmd == "prev_channel":
         prev_channel()
 
-    elif cmd == "volume":
-        adjust_volume(int(value))
-
-    elif cmd == "toggle_black_screen":
-        toggle_black_screen()
     elif cmd == "set_video_fitting":
         set_video_fitting()
+    elif cmd == "volume":
+        adjust_volume(int(value))
 
     elif cmd == "pan_reset":  # adjust in html
         pan("reset", "x")
@@ -122,13 +119,17 @@ def mqtt_incoming(data):
         else:
             adjust_video_speed(float(value))
 
+    # Fill colors
+    elif cmd == "toggle_black_screen":
+        toggle_fill_color("black")
     elif cmd == "cycle_green_screen":
-        cycle_green_screen(int(value))
-
-    elif cmd == "toggle_white_noise_on_channel_change":
-        toggle_white_noise_on_channel_change()
+        select_fill_color(int(value), "green")
+    elif cmd == "toggle_green_screen":
+        toggle_fill_color("green")
     elif cmd == "cycle_white_noise":
-        cycle_white_noise()
+        select_fill_color(int(value), "noise")
+    elif cmd == "toggle_white_noise":
+        toggle_fill_color("noise")
 
     elif cmd == "set_inpoint":
         set_inpoint(tv_channel)
@@ -141,6 +142,8 @@ def mqtt_incoming(data):
 
     elif cmd == "toggle_show_tv_gui":
         toggle_show_tv_gui()
+    elif cmd == "toggle_white_noise_on_channel_change":
+        toggle_white_noise_on_channel_change()
 
     elif cmd == "zoom":
         if float(value) == 0:
@@ -149,6 +152,7 @@ def mqtt_incoming(data):
             zoom(float(value))
 
     elif cmd == "shutdown":
+        toggle_fill_color("black")
         time.sleep(1)  # Wait for user interface to load shutdown.html
         shutdown()
     elif cmd == "restart":
@@ -176,7 +180,7 @@ def load_settings():
     Load settings from a JSON file and apply them to globals.
     For file-dependent settings, only load settings for the files in the given filelist.
     """
-    global white_noise_index, pan_offsets, brightness, contrast, saturation, volume, current_green_index, show_tv_gui, zoom_level
+    global pan_offsets, brightness, contrast, saturation, volume, show_tv_gui, zoom_level
     global file_settings, inpoints, video_fittings, video_speeds, tv_channel, show_whitenoise_channel_change
 
     if not os.path.exists(os.path.join(script_dir, SETTINGS_FILE)):
@@ -188,13 +192,14 @@ def load_settings():
 
     # Load general settings
     general_settings = data.get("general_settings", {})
-    white_noise_index = general_settings.get("white_noise_index", white_noise_index)
     pan_offsets = general_settings.get("pan_offsets", pan_offsets)
     brightness = general_settings.get("brightness", brightness)
     contrast = general_settings.get("contrast", contrast)
     saturation = general_settings.get("saturation", saturation)
     volume = general_settings.get("volume", volume)
-    current_green_index = general_settings.get("current_green_index", current_green_index)
+    fill_color_type = general_settings.get("fill_color_type", fill_color_type)
+    fill_color_index = general_settings.get("fill_color_index", fill_color_index)
+    fill_color_active = general_settings.get("fill_color_active", fill_color_active)
     tv_channel = general_settings.get("tv_channel", tv_channel)
     show_tv_gui = general_settings.get("show_tv_gui", show_tv_gui)
     show_whitenoise_channel_change = general_settings.get("show_whitenoise_channel_change", show_whitenoise_channel_change)
@@ -240,31 +245,56 @@ def save_settings():
     send_settings(data)
 
 def send_settings(data=False):
+    global last_sent_settings
     if not data:
         data = collect_settings()
-    mqtt_handler.send("settings", "Settings saved", {"settings": data, "filelist": filelist})
+
+    state = {
+        "isPlaying": not get_mpv_property("pause"), 
+        "fillColorActive": fill_color_active,  # already in general_settings?
+        "fillColorType": fill_color_type,  # already in general_settings?
+        "fillColorIndex": fill_color_index[fill_color_type],  # already in general_settings?
+        "currentFileName": current_file,
+        "currentFileSettings": data["file_dependent_settings"].get(current_file, {}),
+        "tvChannel": tv_channel, 
+        "position": get_current_video_position(),
+        "duration": get_mpv_property("duration")
+    }
+
+    mqtt_handler.send("settings", "Settings & current state", {"settings": data, "filelist": filelist, "state": state})
+    last_sent_settings = time.time()
 
 
 def collect_settings():
     global filelist, file_settings
 
     # Load existing settings from file, if any
-    if os.path.exists(os.path.join(script_dir, SETTINGS_FILE)):
-        with open(os.path.join(script_dir, SETTINGS_FILE), "r") as f:
-            data = json.load(f)
+    # Handles: Missing file, Empty file, Malformed JSON
+    settings_path = os.path.join(script_dir, SETTINGS_FILE)
+    if os.path.exists(settings_path):
+        try:
+            with open(settings_path, "r") as f:
+                content = f.read().strip()
+                if not content:
+                    raise ValueError("Empty file")
+                data = json.loads(content)
+        except (json.JSONDecodeError, ValueError) as e:
+            print(f"[WARN] Failed to load settings: {e}. Using fallback.")
+            data = {"general_settings": {}, "file_dependent_settings": {}}
     else:
         data = {"general_settings": {}, "file_dependent_settings": {}}
 
     # Update general settings
     data["general_settings"].update({
-        "white_noise_index": white_noise_index,
         "pan_offsets": pan_offsets,
         "brightness": brightness,
         "contrast": contrast,
         "saturation": saturation,
         "volume": volume,
         "tv_channel": tv_channel,
-        "current_green_index": current_green_index,
+        "fill_color_type": fill_color_type,
+        "fill_color_index": fill_color_index,
+        "fill_color_active": fill_color_active,
         "show_tv_gui": show_tv_gui,
         "show_whitenoise_channel_change": show_whitenoise_channel_change,
         "zoom_level": zoom_level,
@@ -349,7 +379,7 @@ def system_init():
         go_to_channel(tv_channel)
     else:
         print("No USB plugged in during startup")
-        show_white_noise()
+        show_no_signal()
 
     print("Wait for osd-dimensions")
     while get_mpv_property("osd-dimensions/w") == None:
@@ -515,19 +545,72 @@ def get_window_size():
     window_size = screen.get_size()
     window_width, window_height = int(window_size[0]), int(window_size[1])
 
-def show_white_noise():  # (duration)
-    global current_file
-    # Launch mpv to play the video if  not already playing
-    white_noise_path = os.path.join(script_dir, 'assets', 'white_noise', white_noise_files[white_noise_index])
-    if not current_file == white_noise_path:
-        # Set white noise to always stretch
-        speed_command = f'echo \'{{"command": ["set_property", "speed", "1.0"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
-        zoom_command = f'echo \'{{"command": ["set_property", "video-zoom", "{zoom_level}"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
-        aspect_command = f'echo \'{{"command": ["set_property", "keepaspect", "no"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
-        subprocess.call(speed_command, shell=True)
-        subprocess.call(zoom_command, shell=True)
-        subprocess.call(aspect_command, shell=True)
-        play_file(white_noise_path)
+def toggle_fill_color(type=False):
+    global fill_color_type, fill_color_active
+
+    # If its triggered by the same color and this is already showing, hide
+    is_the_same = fill_color_type == type  
+    # if called with no param, keep it the same for generalized uses
+    fill_color_type = type if type else fill_color_type
+
+    # Show or hide currently selected fill color (green/black or noise)
+    if fill_color_active and is_the_same:
+        print("is the same")
+        # hide current fill color
+        hide_fill_color()
+    else:
+        print("is NOT the same")
+        show_fill_color()
+        # show current fill color
+
+def select_fill_color(step, type):
+    global fill_color_type, fill_color_index
+    fill_color_type = type
+
+    # Cycle through all possible fill colors
+    if fill_color_active:
+        # show current + "step" fill color
+        fill_color_index[fill_color_type] += step
+        if fill_color_index[fill_color_type] < 0:
+            fill_color_index[fill_color_type] = fill_color_max_index[fill_color_type]
+        if fill_color_index[fill_color_type] > fill_color_max_index[fill_color_type]:
+            fill_color_index[fill_color_type] = 0
+    show_fill_color()
+
+def show_fill_color():
+    global fill_color_active
+    fill_color_active = True  # MUST BE SET TO False WHENEVER I CHANNEL NEXT / PREV / PLAY THIS CHANNEL THING
+    suffix = "mp4" if fill_color_type == 'noise' else "png"
+    fill_color_path = os.path.join(script_dir, 'assets', 'fill_colors', f"{fill_color_type}{fill_color_index[fill_color_type]+1}.{suffix}")
+
+    # Set fill colors always to stretch
+    speed_command = f'echo \'{{"command": ["set_property", "speed", "1.0"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
+    zoom_command = f'echo \'{{"command": ["set_property", "video-zoom", "{zoom_level}"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
+    aspect_command = f'echo \'{{"command": ["set_property", "keepaspect", "no"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
+    subprocess.call(speed_command, shell=True)
+    subprocess.call(zoom_command, shell=True)
+    subprocess.call(aspect_command, shell=True)
+
+    play_file(fill_color_path)
+
+def hide_fill_color():
+    global fill_color_active
+    fill_color_active = False
+    # Display previously played channel from inpoint
+    play_file(filelist[tv_channel], inpoints[tv_channel], outpoints[tv_channel])
+
+
+def show_no_signal():
+    # Show white noise in between channels or when no files on USB
+    white_noise_path = os.path.join(script_dir, 'assets', 'fill_colors', f"noise{fill_color_index['noise']+1}.mp4")
+    # Set white noise to always stretch
+    speed_command = f'echo \'{{"command": ["set_property", "speed", "1.0"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
+    zoom_command = f'echo \'{{"command": ["set_property", "video-zoom", "{zoom_level}"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
+    aspect_command = f'echo \'{{"command": ["set_property", "keepaspect", "no"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
+    subprocess.call(speed_command, shell=True)
+    subprocess.call(zoom_command, shell=True)
+    subprocess.call(aspect_command, shell=True)
+    play_file(white_noise_path)
 
 def zoom(value, absolute=False):
     global zoom_level, window_width, window_height
@@ -667,40 +750,6 @@ def adjust_volume(value):
     volume = max(0, min(100, volume + value))
     set_volume(volume)
 
-def toggle_black_screen():
-    global is_black_screen
-    if is_black_screen:
-        # Restore normal brightness
-        set_brightness(0)
-        play()
-        mqtt_handler.send("general", "fillcolor", {"type": "black", "show": False})
-    else:
-        # Set brightness to -100 to black out the screen
-        set_brightness(-100)
-        pause()
-        mqtt_handler.send("general", "fillcolor", {"type": "black", "show": True})
-    is_black_screen = not is_black_screen
-
-def cycle_green_screen(direction):
-    global current_green_index, current_file
-    max_green_templates = 19
-    # Only increase green index when already showing green
-    # if coming from another channel show the green thats was selected lastly
-    green_path = os.path.join(script_dir, 'assets', 'greenscreen', f'{current_green_index+1}.png')
-    if current_file == green_path:
-        if direction != 0:
-            # Switch to next/prev green img
-            current_green_index = (current_green_index + direction) % (max_green_templates + 1)
-            green_path = os.path.join(script_dir, 'assets', 'greenscreen', f'{current_green_index+1}.png')
-        else:
-            # Play last video file from inpoint
-            play_file(filelist[tv_channel], inpoints[tv_channel], outpoints[tv_channel])
-            mqtt_handler.send("general", "fillcolor", {"type": "green", "index": current_green_index, "show": False})
-            return
-    # Show green screen
-    play_file(green_path)
-    mqtt_handler.send("general", "fillcolor", {"type": "green", "index": current_green_index, "show": True})
-
 def check_keypresses():
     global tv_channel, quit_program_scheduled
     for event in pygame.event.get():
@@ -754,7 +803,8 @@ def check_keypresses():
                 shutdown()
             elif event.key == pygame.K_b:
                 print("keypress [b] toggle black screen")
-                toggle_black_screen()
+                # toggle_black_screen()
+                toggle_fill_color("black")
             elif (event.key == pygame.K_x or event.key == pygame.K_y) and pygame.key.get_mods() & pygame.KMOD_CTRL:
                 print("keypress [CTRL]+[x] or [CTRL]+[y] reset pan")
                 pan("reset", "x")
@@ -773,13 +823,13 @@ def check_keypresses():
                 pan(1, "y")
             elif event.key == pygame.K_g and pygame.key.get_mods() & pygame.KMOD_SHIFT:
                 print("keypress [SHIFT]+[g] Cycle green screen index+")
-                cycle_green_screen(1)
+                select_fill_color(1, "green")
             elif event.key == pygame.K_g and pygame.key.get_mods() & pygame.KMOD_CTRL:
                 print("keypress [CTRL]+[g] Cycle green screen index-")
-                cycle_green_screen(-1)
+                select_fill_color(-1, "green")
             elif event.key == pygame.K_g:
                 print("keypress [g] Toggle green screen")
-                cycle_green_screen(0)
+                toggle_fill_color("green")
             elif event.key == pygame.K_c:
                 print("keypress [c] Set video fitting")
                 set_video_fitting()
@@ -836,7 +886,8 @@ def check_keypresses():
                 toggle_show_tv_gui()
             elif event.key == pygame.K_w and pygame.key.get_mods() & pygame.KMOD_SHIFT:
                 print("keypress [SHIFT]+[w] cycle white noise index")
-                cycle_white_noise()
+                # FIXME: Cannot deselect noise with keyboard.
+                select_fill_color(1, "noise")
             elif event.key == pygame.K_w:
                 print("keypress [w] toggle white noise on channel change")
                 toggle_white_noise_on_channel_change()
@@ -890,12 +941,12 @@ def check_buttons():
                 ## seek(5)  # ?
                 print("seek(5)")
             elif i == 6:
-                ## toggle_black_screen()
-                print("toggle_black_screen()")
+                ## toggle_fill_color("black")
+                print('toggle_fill_color("black")')
             elif i == 7:
                 # set_inpoint(tv_channel)  # ?
-                ## cycle_green_screen(0)
-                print("cycle_green_screen(0)")
+                # select_fill_color(1, "green")
+                print('select_fill_color(1, "green")')
             elif i == 8:
                 # Extra physical btn
                 shutdown()
@@ -904,18 +955,6 @@ def check_buttons():
             while GPIO.input(pin) == GPIO.LOW:
                 print(f"Wait for user to release button {i+1}..")
                 time.sleep(0.05)
-
-def send_mpv_state():
-    # Collect settings and send it by mqtt
-    send_settings()
-    mqtt_handler.send("general", "state", {
-        "isPlaying": not get_mpv_property("pause"), 
-        "currentFile": current_file, 
-        "tvChannel": tv_channel, 
-        "position": get_current_video_position(),
-        "duration": get_mpv_property("duration")
-    })
-
 
 def prev_channel():
     global tv_channel
@@ -955,8 +994,8 @@ def go_to_channel(number):
         display_image(image_path, 1, window_width-315,50, 210,150, gui_display_duration)
 
     if show_whitenoise_channel_change:
-        print("show_white_noise in between")
-        show_white_noise()
+        print("show_no_signal in between")
+        show_no_signal()
         time.sleep(white_noise_duration)
 
     set_video_fitting(video_fittings[tv_channel])  # Set fit for this channel
@@ -964,7 +1003,10 @@ def go_to_channel(number):
     play_file(filelist[number], inpoints[number], outpoints[number])
 
 def play_file(file, inpoint=0.0, outpoint=0.0):
-    global mpv_process, current_file, ipc_socket_path
+    global mpv_process, current_file, ipc_socket_path, fill_color_active
+    if "assets/fill_colors" not in file:
+        fill_color_active = False
+
     if os.path.exists(ipc_socket_path):
         print(f"Swapping to new file: {os.path.basename(file)} at {inpoint} seconds.")
         # Use loadfile command to replace the video source without stopping mpv
@@ -976,7 +1018,7 @@ def play_file(file, inpoint=0.0, outpoint=0.0):
         if outpoint > 0:
             activate_ab_loop(inpoint, outpoint)
 
-    current_file = file
+    current_file = os.path.basename(file)  # file
     play()  # if paused, resume anyways
 
 def play():
@@ -1100,17 +1142,6 @@ def toggle_white_noise_on_channel_change():
     global show_whitenoise_channel_change
     show_whitenoise_channel_change = not show_whitenoise_channel_change
     print(f"White noise between channel change is {show_whitenoise_channel_change}")
-
-def cycle_white_noise():
-    global white_noise_index, show_whitenoise_channel_change
-    show_whitenoise_channel_change = True
-    white_noise_index += 1
-    if white_noise_index > len(white_noise_files)-1:
-        white_noise_index = 0
-    print("white_noise_index>", white_noise_index)
-    show_white_noise()
-    # FIXME needs to behave like greenscreen
-    mqtt_handler.send("general", "fillcolor", {"type": "noise", "index": white_noise_index, "show": True})
 
 # List of fitting modes
 def set_video_fitting(fitting_index=None):
@@ -1263,7 +1294,7 @@ def ensure_valid_settings():
             json.dump(default, f, indent=2)
 
 def main():
-    global last_mpv_state_sent
+    global last_sent_settings
     time.sleep(2)  #
     print("--------------------------------------------------------------------------------")
     pygame_init()
@@ -1278,9 +1309,9 @@ def main():
         get_window_size()
         check_buttons()
         check_keypresses()
-        if now - last_mpv_state_sent >= 1:
-            send_mpv_state()
-            last_mpv_state_sent = now
+        if now - last_sent_settings >= 1:
+            send_settings()
+            last_sent_settings = now
 
         # Update file list if USB is inserted or removed
         old_filelist = filelist.copy()
@@ -1303,9 +1334,10 @@ def main():
         if not filelist:
             if show_tv_gui:
                 print("No files - show white noise - wait for USB")
-                show_white_noise()
+                show_no_signal()
             else:
                 print("No files available - show blank screen")
+                toggle_fill_color("black")
 
         pygame.display.update()
 

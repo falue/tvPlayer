@@ -6,9 +6,10 @@ let settings = {};
 let lastThumbnail = "";
 let lastPlaystate = "";
 let lastSettings = "";
-let currentFile = {};
+let lastCurrentVideoState = ""
+let currentFile = "";
 let blockTimerUpdate = false;
-let isShowingFillColor = false;
+// let fill_color_active = false;
 let tvChannel = 0;
 const ALERT_THROTTLE_MS = 6000; // 6seconds
 let lastAlertTime = 0;
@@ -44,27 +45,25 @@ function init() {
   client.on("message", (topic, message) => {
     const data = JSON.parse(message.toString());
     if (topic === "tvPlayer/heartbeat") {
-      logging(`Received heartbeat`);
+      logging(`Received heartbeat`, false);
       handleHeartbeat(data.temp ? data.temp : false);
 
     } else if (topic === "tvPlayer/settings") {
-      logging(`Received settings`);
+      logging(`Received settings`, false);
       hasReceivedSettings = true;
       handleSettings(data.payload);
+      handleHeartbeat();  // Treat as heartbeat because it comes every second
 
     } else if (topic === "tvPlayer/command") {
-      logging(`Acknowledged command: <pre>${JSON.stringify(data)}</pre>`);
+      logging(`Acknowledged command: <pre>${JSON.stringify(data)}</pre>`, false);
 
     } else {
       logging(
-        `Received message on ${topic}: <pre>${JSON.stringify(data)}</pre>`
+        `Received message on ${topic}: <pre>${JSON.stringify(data)}</pre>`,
+        false
       );
       if (data.command == "createThumbnails") {
         gebi("filelist").innerHTML = "Creating thumbnails..";
-
-      } else if (data.command == "state") {
-        handleState(data.payload);
-        handleHeartbeat();  // Treat as heartbeat because it comes every second
 
       } else if (data.command == "error") {
         logging(data.payload);
@@ -165,9 +164,19 @@ function showState() {
 }
 
 function handleSettings(data) {
+  handleState(data.state, data.settings.general_settings.fill_color_active ? {
+    "fill_color_active": true,
+    "fill_color_index": data.settings.general_settings.fill_color_index,
+    "fill_color_type": data.settings.general_settings.fill_color_type
+  } : false)
+
+  // remove so lastSettings is not dependent on the state of ..state
+  delete data.state
+
   if (lastSettings != md5(JSON.stringify(data))) {
     // update currentfile
     lastSettings = md5(JSON.stringify(data));
+
     // SET SOME GUI ELEMENTS OF GENERAL_SETTINGS
     let settings = data.settings.general_settings;
     gebi('note-brightness').innerHTML = parseInt((settings.brightness+100)/2);  // Range from -100 - 100
@@ -190,31 +199,6 @@ function handleSettings(data) {
     gebi('note-pan-x').innerHTML = (settings.pan_offsets.x*100).toFixed(1);
     gebi('note-pan-y').innerHTML = (settings.pan_offsets.y*100).toFixed(1);
     gebi('note-volume').innerHTML = settings.volume+"%";  // 0 to 100
-    
-    // PER VIDEO FILE
-    let fileSettings = data.settings.file_dependent_settings;
-    if(fileSettings[currentFile.filename]) {
-      let thisVideo = fileSettings[currentFile.filename];
-      gebi('note-speed').innerHTML = `${thisVideo.video_speeds.toFixed(2)}&times;`;  // 1 = normal
-      let fitting_modes = ['contain', 'stretch', 'cover']
-      gebi('note-videoFitting').innerHTML = `<img src="assets/icons/fitting-${fitting_modes[thisVideo.video_fittings]}.svg"><br>${fitting_modes[thisVideo.video_fittings]}`
-      if(thisVideo.inpoints > 0) {
-        show('inpoint');
-        gebi('inpoint').style.left = `${(thisVideo.inpoints / parseFloat(gebi("timeline").max)) * 100}%`;
-        gebi('note-inpoint').innerHTML = secondsToTimecode(thisVideo.inpoints);
-      } else {
-        hide('inpoint');
-        gebi('note-inpoint').innerHTML = "-";
-      }
-      if(thisVideo.outpoints > 0) {
-        show('outpoint');
-        gebi('outpoint').style.left = `${(thisVideo.outpoints / parseFloat(gebi("timeline").max)) * 100}%`;
-        gebi('note-outpoint').innerHTML = secondsToTimecode(thisVideo.outpoints);
-      } else {
-        hide('outpoint');
-        gebi('note-outpoint').innerHTML = "-";
-      }
-    }
 
     // HANDLE FILE LIST
     const filelistContainer = gebi("filelist");
@@ -259,24 +243,24 @@ function handleSettings(data) {
   }
 }
 
-function handleState(data) {
-  // Check if data changed, if yes..
+function handleState(data, fillColor=false) {
+  // Check if data changed, if yes, update GUI
   if (lastPlaystate != md5(JSON.stringify(data))) {
     lastPlaystate = md5(JSON.stringify(data));
+    // console.log("handleState", data, fillColor);
+
     tvChannel = data.tvChannel;
     if (data.isPlaying) {
       gebi("playstate").src = "./assets/icons/pause.svg";
     } else {
       gebi("playstate").src = "./assets/icons/play.svg";
     }
-    if (data.currentFile.length > 0 && !isShowingFillColor) {
-      let name = splitFileName(data.currentFile);
-      data.basename = name.basename;
-      data.suffix = name.suffix;
-      data.filename = `${name.basename}.${name.suffix}`;
-      gebi("currentFile").innerHTML = `#${data.tvChannel + 1} - ${data.basename}<span class='grey'>.${data.suffix}</span>`;
+
+    if (data.currentFileName.length > 0 && !fillColor) {
+      let name = splitFileName(data.currentFileName);
+      gebi("currentFile").innerHTML = `#${data.tvChannel + 1} - ${name.basename}<span class='grey'>.${name.suffix}</span>`;
       let timeline = gebi("timeline");
-      if(data.duration>1){  // somehow, images have a duration of 1
+      if(data.duration > 1){  // somehow, images have a duration of 1
         show("timeline", "togglePlayBtn", "abLoop");
         showFlex("seeking", "speed", "speedNoteRow");
         if(!blockTimerUpdate) {
@@ -288,27 +272,65 @@ function handleState(data) {
         hide("timeline", "seeking", "speed", "speedNoteRow", "togglePlayBtn", "abLoop");
         gebi("timecode").innerHTML = "";
       }
-      gebi("display").style.backgroundImage = `url("thumbnails/${data.basename}.png")`;
+      gebi("display").style.backgroundImage = `url("thumbnails/${name.basename}.png")`;
+    } else if(fillColor) {
+      gebi("currentFile").innerHTML = `Showing a fill color with markers # ${(fillColor.fill_color_index[fillColor.fill_color_type])+1} in fullscreen.`;
+      gebi("display").style.backgroundImage = `url("assets/fill_colors/${fillColor.fill_color_type}${(fillColor.fill_color_index[fillColor.fill_color_type])+1}.png")`;
     } else {
       gebi("currentFile").innerHTML = "No current file. Insert USB with <a href='#' onclick='showValidFiles()'>valid video or image files</a>.";
       gebi("display").style.backgroundImage = ``;
     }
-    currentFile = data;
+
+    // Only update video-specific settings (fitting, inpoints, etc) this if they or the file changed
+    let thisVideo = data.currentFileSettings;
+    let currentCurrentVideoState = md5(data.currentFileName + JSON.stringify(data.currentFileSettings));
+    if(thisVideo && currentCurrentVideoState != lastCurrentVideoState) {
+      console.log("fitting, inpoints, etc changed")
+      lastCurrentVideoState = md5(data.currentFileName + JSON.stringify(data.currentFileSettings));
+
+      let fitting_modes = ['contain', 'stretch', 'cover']
+      if(Object.keys(thisVideo).length) {  // Greenscreen etc has no values here
+        gebi('note-speed').innerHTML = `${thisVideo.video_speeds.toFixed(2)}&times;`;  // 1 = normal
+        gebi('note-videoFitting').innerHTML = `<img src="assets/icons/fitting-${fitting_modes[thisVideo.video_fittings]}.svg"><br>${fitting_modes[thisVideo.video_fittings]}`
+      } else {
+        gebi('note-speed').innerHTML = `1.00&times;`;
+        gebi('note-videoFitting').innerHTML = `[no fitting modes for color overlays]`
+      }
+
+      if(thisVideo.inpoints && thisVideo.inpoints > 0) {
+        show('inpoint');
+        gebi('inpoint').style.left = `${(thisVideo.inpoints / parseFloat(gebi("timeline").max)) * 100}%`;
+        gebi('note-inpoint').innerHTML = secondsToTimecode(thisVideo.inpoints);
+      } else {
+        hide('inpoint');
+        gebi('note-inpoint').innerHTML = "-";
+      }
+      if(thisVideo.outpoints && thisVideo.outpoints > 0) {
+        show('outpoint');
+        gebi('outpoint').style.left = `${(thisVideo.outpoints / parseFloat(gebi("timeline").max)) * 100}%`;
+        gebi('note-outpoint').innerHTML = secondsToTimecode(thisVideo.outpoints);
+      } else {
+        hide('outpoint');
+        gebi('note-outpoint').innerHTML = "-";
+      }
+    }
+
+    currentFile = data.currentFileName;  /// ???? needed
   }
 }
 
-function handleFillColor(data) {
+/* function handleFillColor(data) {
   // FIXME: DOES NOT PROPERLY WORK YET
   let display = gebi("display");
   if(data.show) {
-    isShowingFillColor = true;
+    fill_color_active = true;
     lastThumbnail = display.style.backgroundImage;
     display.style.backgroundImage = `url('assets/screens/${data.type}${data.index ? data.index : ''}.png')`
   } else {
-    isShowingFillColor = false;
+    fill_color_active = false;
     display.style.backgroundImage = lastThumbnail;
   }
-}
+} */
 
 function setToWait(id) {
   if(gebi(id).src) {

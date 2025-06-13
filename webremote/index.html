@@ -11,10 +11,10 @@
     <link rel="icon" type="image/png" sizes="16x16" href="favicon/favicon-16x16.png">
     <link rel="manifest" href="favicon/site.webmanifest">
 
-    <link rel="stylesheet" href="./styles.css?v=250611b" />
-    <script src="./md5.min.js?v=250611b"></script>
-    <script src="./mqtt.min.js?v=250611b"></script>
-    <script src="./scripts.js?v=250611b" defer></script>
+    <link rel="stylesheet" href="./styles.css?v=250611c" />
+    <script src="./md5.min.js?v=250611c"></script>
+    <script src="./mqtt.min.js?v=250611c"></script>
+    <script src="./scripts.js?v=250611c" defer></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 </head> 
 
@@ -37,7 +37,7 @@
             <div style="padding:.5em; position: absolute; top:0; right:0" class="grey">
                 <img id="channel_number" src="./assets/channel_numbers/--.png" style="display:none; height:2.5em">
             </div>
-            <div style="user-select: none; pointer-events: none; padding:.5em; position: absolute; mix-blend-mode:exclusion; opacity: .6; font-size: .8em; bottom:0; right:0" class="grey">
+            <div class="previewOnly">
                 Image preview only
             </div>
         </div>
@@ -137,10 +137,10 @@
             </div>
             <div class="button-row">
                 <button onclick="setToWait('note-inpoint'); sendCommand({'cmd': 'clear_inpoint'}, false, true)"
-                    class="reset"
+                    class="reset dense"
                 >Clear A <img src="assets/icons/ray-start-arrow-close.svg"></button>
                 <button onclick="setToWait('note-outpoint'); sendCommand({'cmd': 'clear_outpoint'}, false, true)"
-                    class="reset"
+                    class="reset dense"
                 ><img src="assets/icons/ray-end-arrow-close.svg"> Clear B</button>
             </div>
         </div>
@@ -148,26 +148,35 @@
         <div class="control-group">
             <h2>Fill colors</h2>
             <div class="button-row">
-                <div class="buttonNote" id="note-toggle_black_screen" title="Black screen" style="opacity:0;">
-                    -
+                <div class="buttonNote" id="note-cycle_green_screen" title="Green Screen Style">
+                    <img src="assets/fill_colors/green1.png" title="Fill Color with markers # 1">
                 </div>
-                <div class="buttonNote" id="note-cycle_white_noise" title="Current White Noise Style">
-                    <img src="assets/screens/noise0.png">
+                <div class="buttonNote" id="note-toggle_black_screen" title="Black Screen">
+                    <img src="assets/fill_colors/black1.png" title="Fill Color: Black without markers">
                 </div>
-            </div>
-            <div class="button-row">
-                <button onclick="setToWait('note-toggle_black_screen'); sendCommand({'cmd': 'toggle_black_screen'}, false, true)">Show/Hide Black Screen</button>
-                <button onclick="setToWait('note-cycle_white_noise'); sendCommand({'cmd': 'cycle_white_noise'}, false, true)">Set Noise Style</button>
-            </div>
-            <div class="button-row">
-                <div class="buttonNote" id="note-cycle_green_screen" title="Current Green Screen Style">
-                    <img src="assets/screens/green0.png">
+                <div class="buttonNote" id="note-cycle_white_noise" title="White Noise Style">
+                    <img src="assets/fill_colors/noise1.png" title="Fill Color: Noise # 1 without markers">
                 </div>
             </div>
+
             <div class="button-row">
-                <button onclick="setToWait('note-cycle_green_screen'); sendCommand({'cmd': 'cycle_green_screen', 'value': -1}, false, true)">Green Style -</button>
-                <button onclick="setToWait('note-cycle_green_screen'); sendCommand({'cmd': 'cycle_green_screen', 'value': 0}, false, true)" style="width:250%">Show/Hide Green Screen</button>
-                <button onclick="setToWait('note-cycle_green_screen'); sendCommand({'cmd': 'cycle_green_screen', 'value': 1}, false, true)">Green Style +</button>
+                <button onclick="setToWait('note-cycle_green_screen'); sendCommand({'cmd': 'toggle_green_screen'}, false, true)">Show/Hide Green Screen</button>
+                <button onclick="sendCommand({'cmd': 'toggle_black_screen'}, false, true)">Show/Hide Black Screen</button>
+                <button onclick="setToWait('note-cycle_white_noise'); sendCommand({'cmd': 'toggle_white_noise'}, false, true)">Show/Hide White Noise</button>
+            </div>
+            <!-- <div class="button-row">
+                <button onclick="sendCommand({'cmd': 'show_current_fill_color'}, false, true)">Show current selection</button>
+            </div> -->
+            <div class="button-row">
+                <button class="dense" onclick="setToWait('note-cycle_green_screen'); sendCommand({'cmd': 'cycle_green_screen', 'value': -1}, false, true)"><img src="assets/icons/skip-previous.svg"> Style</button>
+                <button class="dense" onclick="setToWait('note-cycle_green_screen'); sendCommand({'cmd': 'cycle_green_screen', 'value': 1}, false, true)">Style <img src="assets/icons/skip-next.svg"></button>
+
+                <button class="dense" style="opacity:0" disabled>&nbsp;</button>
+                <button class="dense" style="opacity:0" disabled>&nbsp;</button>
+
+                <button class="dense" onclick="setToWait('note-cycle_white_noise'); sendCommand({'cmd': 'cycle_white_noise', 'value': -1}, false, true)"><img src="assets/icons/skip-previous.svg"> Style</button>
+                <button class="dense" onclick="setToWait('note-cycle_white_noise'); sendCommand({'cmd': 'cycle_white_noise', 'value': 1}, false, true)">Style <img src="assets/icons/skip-next.svg"></button>
+
             </div>
         </div>
 
