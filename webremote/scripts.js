@@ -153,8 +153,8 @@ function handleHeartbeat(temp=false) {
     raspi_available = false;
     setTimeout(() => {
       // Warn the user anyhow out of the blue after total 16s of loss of connection
-      alert("Connection lost after 20s. Go closer or turn tvPlayer on.");
-    }, 12000);
+      alert("Connection lost after 24s. Go closer or turn tvPlayer on.");
+    }, 16000);
   }, 8000);
 }
 
