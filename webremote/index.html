@@ -57,7 +57,7 @@
         <div class="control-group">
             <!-- MAIN CONTROL -->
             <div class="button-row">
-                <button onclick="sendCommand({'cmd': 'prev_channel'})">
+                <button onclick="sendCommand({'cmd': 'prev_channel'}, false, true)">
                     <img src="assets/icons/skip-previous.svg">
                 </button>
                 <button id="togglePlayBtn" onclick="setToWait('playstate'); sendCommand({'cmd': 'toggle_play'}, false, true)" style="width:250%"
@@ -65,7 +65,7 @@
                 >
                     <img src="assets/icons/play-pause.svg">
                 </button>
-                <button onclick="sendCommand({'cmd': 'next_channel'})">
+                <button onclick="sendCommand({'cmd': 'next_channel'}, false, true)">
                     <img src="assets/icons/skip-next.svg">
                 </button>
             </div>

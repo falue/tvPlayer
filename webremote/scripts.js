@@ -225,7 +225,7 @@ function handleSettings(data) {
       container.classList.add("button-row");
       const button = document.createElement("button");
       button.className = "filelistButton";
-      button.onclick = () => sendCommand({ cmd: "go_to_channel", value: index });
+      button.onclick = () => sendCommand({ cmd: "go_to_channel", value: index }, false, true);
 
       const img = document.createElement("img");
       img.className = "thumbnails";
