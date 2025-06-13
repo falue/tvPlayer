@@ -80,6 +80,11 @@ function init() {
     clearTimeout(raspi_available_timer);
   });
 
+  window.addEventListener("focus", () => {
+    logging("Window gained focus — clearing timeouts");
+    clearTimeout(raspi_available_timer);
+  });
+
   displayVersionUpdateDate();
   setupTriggers();
 }
