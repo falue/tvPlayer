@@ -615,8 +615,9 @@ def show_fill_color():
 def hide_fill_color():
     global fill_color_active
     fill_color_active = False
-    # Display previously played channel from inpoint
-    play_file(filelist[tv_channel], inpoints[tv_channel], outpoints[tv_channel])
+    # Display previously played channel from inpoint if any file available
+    if len(filelist) > 0:
+        play_file(filelist[tv_channel], inpoints[tv_channel], outpoints[tv_channel])
 
 
 def show_no_signal():
