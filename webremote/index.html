@@ -257,7 +257,9 @@
                 <button onclick="setToWait('note-zoom'); sendCommand({'cmd': 'zoom', 'value': 0}, false, true)" style="width:250%"
                     class="reset"
                 >
+                    <sup style="opacity: 0;">reset</sup>
                     <img src="assets/icons/magnify.svg">
+                    <sup>reset</sup>
                 </button>
                 <button 
                     data-trigger 
@@ -277,10 +279,7 @@
                 </div>
             </div>
             <div class="button-row">
-                <button onclick="setToWait('note-pan-x'); sendCommand({'cmd': 'pan', 'value': ['reset', 'x']}, false, true)"
-                    class="reset">
-                    Reset <img src="assets/icons/arrow-left-right.svg">
-                </button>
+                
                 <button
                     data-trigger 
                     data-func="pan" 
@@ -288,11 +287,6 @@
                     style="width:auto; min-width: 120px;"
                 >
                     <img src="assets/icons/arrow-up-bold.svg">
-                </button>
-                <button onclick="setToWait('note-pan-y'); sendCommand({'cmd': 'pan', 'value': ['reset', 'y']}, false, true)"
-                    class="reset"
-                >
-                    Reset <img src="assets/icons/arrow-up-down.svg">
                 </button>
             </div>
             <div class="button-row">
@@ -307,7 +301,9 @@
                 <button onclick="setToWait('note-pan-x'); setToWait('note-pan-y'); sendCommand({'cmd': 'pan_reset'}, false, true)"
                     class="reset"
                 >
-                    Reset <img src="assets/icons/arrow-all.svg">
+                    <sup style="opacity: 0;">reset</sup>
+                    <img src="assets/icons/arrow-all.svg">
+                    <sup>reset</sup>
                 </button>
                 <button
                     data-trigger 
@@ -326,6 +322,21 @@
                     style="width:auto; min-width: 120px;"
                 >
                     <img src="assets/icons/arrow-down-bold.svg">
+                </button>
+            </div>
+            <div class="button-row">
+                <button onclick="setToWait('note-pan-x'); sendCommand({'cmd': 'pan', 'value': ['reset', 'x']}, false, true)"
+                    style="width:auto; min-width: 120px;"
+                    class="reset dense">
+                    <img src="assets/icons/arrow-left-right.svg">
+                    Reset
+                </button>
+                <button onclick="setToWait('note-pan-y'); sendCommand({'cmd': 'pan', 'value': ['reset', 'y']}, false, true)"
+                    style="width:auto; min-width: 120px;"
+                    class="reset dense"
+                >
+                    Reset
+                    <img src="assets/icons/arrow-up-down.svg">
                 </button>
             </div>
         </div>
