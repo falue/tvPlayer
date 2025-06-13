@@ -182,6 +182,7 @@ def load_settings():
     """
     global pan_offsets, brightness, contrast, saturation, volume, show_tv_gui, zoom_level
     global file_settings, inpoints, video_fittings, video_speeds, tv_channel, show_whitenoise_channel_change
+    global fill_color_type, fill_color_index, fill_color_active
 
     if not os.path.exists(os.path.join(script_dir, SETTINGS_FILE)):
         print(f"Settings file {SETTINGS_FILE} not found. Using defaults.")
