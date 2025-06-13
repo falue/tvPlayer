@@ -23,7 +23,7 @@
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <img src="./assets/logo.png?v=250528-B" alt="Logo" style="height: 40px; margin-left:-8px">
             <div id="error"></div>
-            <div class="heartbeatContainer" onclick="showState()">
+            <div class="heartbeatContainer pointer" onclick="showState()">
                 <div>
                     <div id="heartbeat"></div>
                 </div>
@@ -121,6 +121,7 @@
             <div id="filelist" class="grey">
                 No <a href="#" onclick="showValidFiles()">valid files</a> on USB or no USB plugged.
             </div>
+            <div id="filelistIgnored" class="small grey pointer"></div>
 
             
         </div>

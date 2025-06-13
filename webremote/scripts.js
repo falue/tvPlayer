@@ -244,6 +244,12 @@ function handleSettings(data) {
       container.appendChild(button);
       filelistContainer.appendChild(container);
     });
+    if(data.settings.filelist_ignored.length) {
+      gebi("filelistIgnored").innerHTML = `${data.settings.filelist_ignored.length} ignored files or folders on USB (?)`;
+      gebi("filelistIgnored").onclick = () => alert(`Some files where ignored. Check the specifications if you need them to play:\n\n${data.settings.filelist_ignored.join('\n')}`);
+    } else {
+      gebi("filelistIgnored").innerHTML = ``;
+    }
   }
 }
 

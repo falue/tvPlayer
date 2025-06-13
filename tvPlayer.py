@@ -36,6 +36,7 @@ window_width = 0
 window_height = 0
 tv_channel = 0
 filelist = []
+filelist_ignored = []
 inpoints = []
 outpoints = []
 video_fittings = []
@@ -320,6 +321,8 @@ def collect_settings():
             "video_speeds": video_speeds[i],
         }
 
+    data["filelist_ignored"] = filelist_ignored
+
     return data
 
 def server_init():
@@ -423,8 +426,9 @@ def detect_usb_root():
     # print(f"script_dir detected: {script_dir}")
 
 def update_files_from_usb():
-    global filelist, video_fittings, video_speeds, has_av_channel, tv_channel_offset, tv_channel
+    global filelist, filelist_ignored, video_fittings, video_speeds, has_av_channel, tv_channel_offset, tv_channel
     filelist = []  # Resets always
+    filelist_ignored = []  # Resets always
     av_channel_path = ''
 
     if os.path.exists(usb_root):
@@ -439,12 +443,15 @@ def update_files_from_usb():
                                 av_channel_path = os.path.join(device_path, file)
                             else:
                                 filelist.append(os.path.join(device_path, file))
+                        elif not file.startswith('.'):
+                            filelist_ignored.append(file)
                 except PermissionError:
                     # Skip this device if it's no longer accessible
                     if device_path not in ignored_devices:
                         print(f"Permission denied while accessing: {device_path}. Ignoring this device.")
                         ignored_devices.append(device_path)
                     filelist = []
+                    filelist_ignored = []
                     video_fittings = []
                     video_speeds = []
                     has_av_channel = False
@@ -452,6 +459,7 @@ def update_files_from_usb():
                 except FileNotFoundError:
                     print(f"Device {device_path} was removed. Ignoring this device.")
                     filelist = []
+                    filelist_ignored = []
                     video_fittings = []
                     video_speeds = []
                     has_av_channel = False
@@ -459,6 +467,7 @@ def update_files_from_usb():
                 except Exception as e:
                     print(f"Another error occurred: {e}. Ignoring this device.")
                     filelist = []
+                    filelist_ignored = []
                     video_fittings = []
                     video_speeds = []
                     has_av_channel = False

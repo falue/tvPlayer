@@ -24,6 +24,10 @@ a:hover {
     font-size: .75em;
 }
 
+.pointer {
+    cursor: pointer;
+}
+
 .container {
     max-width: 600px;
     margin: 0 auto;
