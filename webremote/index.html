@@ -72,22 +72,22 @@
 
             <!-- SEEKING -->
             <div id="seeking" class="button-row">
-                <button onclick="sendCommand({'cmd': 'seek', 'value': -60})">
+                <button class="dense" style="white-space:nowrap" onclick="sendCommand({'cmd': 'seek', 'value': -60})">
                     <img src="assets/icons/rewind.svg"><sup class="small">-1m</sup>
                 </button>
-                <button onclick="sendCommand({'cmd': 'seek', 'value': -5})">
+                <button class="dense" style="white-space:nowrap" onclick="sendCommand({'cmd': 'seek', 'value': -5})">
                     <img src="assets/icons/step-backward-2.svg"><sup class="small">-5s</sup>
                 </button>
-                <button onclick="sendCommand({'cmd': 'seek', 'value': -0.04})">
+                <button class="dense" style="white-space:nowrap" onclick="sendCommand({'cmd': 'seek', 'value': -0.04})">
                     <img src="assets/icons/step-backward.svg"><sup class="small">-f</sup>
                 </button>
-                <button onclick="sendCommand({'cmd': 'seek', 'value': 0.04})">
+                <button class="dense" style="white-space:nowrap" onclick="sendCommand({'cmd': 'seek', 'value': 0.04})">
                     <img src="assets/icons/step-forward.svg"><sup class="small">+f</sup>
                 </button>
-                <button onclick="sendCommand({'cmd': 'seek', 'value': 5})">
+                <button class="dense" style="white-space:nowrap" onclick="sendCommand({'cmd': 'seek', 'value': 5})">
                     <img src="assets/icons/step-forward-2.svg"><sup class="small">+5s</sup>
                 </button>
-                <button onclick="sendCommand({'cmd': 'seek', 'value': 60})">
+                <button class="dense" style="white-space:nowrap" onclick="sendCommand({'cmd': 'seek', 'value': 60})">
                     <img src="assets/icons/fast-forward.svg"><sup class="small">+1m</sup>
                 </button>
             </div>
@@ -169,14 +169,14 @@
                 <button onclick="sendCommand({'cmd': 'show_current_fill_color'}, false, true)">Show current selection</button>
             </div> -->
             <div class="button-row">
-                <button class="dense" onclick="setToWait('note-cycle_green_screen'); sendCommand({'cmd': 'cycle_green_screen', 'value': -1}, false, true)"><img src="assets/icons/skip-previous.svg"> Style</button>
-                <button class="dense" onclick="setToWait('note-cycle_green_screen'); sendCommand({'cmd': 'cycle_green_screen', 'value': 1}, false, true)">Style <img src="assets/icons/skip-next.svg"></button>
+                <button class="dense" style="white-space:nowrap" onclick="setToWait('note-cycle_green_screen'); sendCommand({'cmd': 'cycle_green_screen', 'value': -1}, false, true)"><img src="assets/icons/skip-previous.svg"> Style</button>
+                <button class="dense" style="white-space:nowrap" onclick="setToWait('note-cycle_green_screen'); sendCommand({'cmd': 'cycle_green_screen', 'value': 1}, false, true)">Style <img src="assets/icons/skip-next.svg"></button>
 
                 <button class="dense" style="opacity:0" disabled>&nbsp;</button>
                 <button class="dense" style="opacity:0" disabled>&nbsp;</button>
 
-                <button class="dense" onclick="setToWait('note-cycle_white_noise'); sendCommand({'cmd': 'cycle_white_noise', 'value': -1}, false, true)"><img src="assets/icons/skip-previous.svg"> Style</button>
-                <button class="dense" onclick="setToWait('note-cycle_white_noise'); sendCommand({'cmd': 'cycle_white_noise', 'value': 1}, false, true)">Style <img src="assets/icons/skip-next.svg"></button>
+                <button class="dense" style="white-space:nowrap" onclick="setToWait('note-cycle_white_noise'); sendCommand({'cmd': 'cycle_white_noise', 'value': -1}, false, true)"><img src="assets/icons/skip-previous.svg"> Style</button>
+                <button class="dense" style="white-space:nowrap" onclick="setToWait('note-cycle_white_noise'); sendCommand({'cmd': 'cycle_white_noise', 'value': 1}, false, true)">Style <img src="assets/icons/skip-next.svg"></button>
 
             </div>
         </div>
@@ -286,7 +286,9 @@
                     data-func="pan" 
                     data-args='[-1, "y"]'
                     style="width:auto; min-width: 120px;"
-                >Move Up</button>
+                >
+                    <img src="assets/icons/arrow-up-bold.svg">
+                </button>
                 <button onclick="setToWait('note-pan-y'); sendCommand({'cmd': 'pan', 'value': ['reset', 'y']}, false, true)"
                     class="reset"
                 >
@@ -299,7 +301,9 @@
                     data-func="pan" 
                     data-args='[-1, "x"]'
                     style="width:auto; min-width: 120px;"
-                >Move Left</button>
+                >
+                    <img src="assets/icons/arrow-left-bold.svg">
+                </button>
                 <button onclick="setToWait('note-pan-x'); setToWait('note-pan-y'); sendCommand({'cmd': 'pan_reset'}, false, true)"
                     class="reset"
                 >
@@ -310,7 +314,9 @@
                     data-func="pan" 
                     data-args='[1, "x"]'
                     style="width:auto; min-width: 120px;"
-                >Move Right</button>
+                >
+                    <img src="assets/icons/arrow-right-bold.svg">
+                </button>
             </div>
             <div class="button-row">
                 <button
@@ -318,7 +324,9 @@
                     data-func="pan" 
                     data-args='[1, "y"]'
                     style="width:auto; min-width: 120px;"
-                >Move Down</button>
+                >
+                    <img src="assets/icons/arrow-down-bold.svg">
+                </button>
             </div>
         </div>
 
