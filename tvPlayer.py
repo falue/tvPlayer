@@ -1370,6 +1370,23 @@ def main():
 
         time.sleep(0.1)
 
+def save_crash_log(e, traceback_text):
+    # Generate filename like logs/25-06-13_20.33_crashlog.log
+    timestamp = time.strftime("%y-%m-%d_%H.%M")
+    log_dir = os.path.join(script_dir, "logs")
+    os.makedirs(log_dir, exist_ok=True)
+    log_filename = os.path.join(log_dir, f"{timestamp}_crashlog.log")
+
+    # Write to the crash log file
+    with open(log_filename, "w") as f:
+        f.write(f"Crash at {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+        f.write(f"Error: {str(e)}\n")
+        f.write("------------\n\n")
+        f.write(traceback_text)
+        f.write("\n\n------------")
+
+    print(f"[LOG] Crash log saved to {log_filename}")
+
 def restart_program(msg="Restarting program due to critical error..."):
     # close_program()  # memory leaks if not close_program() but oh well
     print(msg)
@@ -1382,13 +1399,15 @@ if __name__ == '__main__':
     except Exception as e:
         print("\nProgram interrupted by user or crashed.")
         print("Main program error:", e)
-        traceback.print_exc()
+        error_log = traceback.format_exc()
+        print(error_log)
+        save_crash_log(e, error_log)
 
         try:
             print("[DEBUG] Attempting to send MQTT error message...")
             mqtt_handler.send("general", "error", {
                 "error": str(e),
-                "traceback": traceback.format_exc()
+                "traceback": error_log
             })
             time.sleep(0.5)  # give it time to send
         except Exception as send_err:
