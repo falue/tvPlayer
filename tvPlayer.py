@@ -187,8 +187,17 @@ def load_settings():
         print(f"Settings file {SETTINGS_FILE} not found. Using defaults.")
         return
 
-    with open(os.path.join(script_dir, SETTINGS_FILE), "r") as f:
-        data = json.load(f)
+    # Handles: Missing file, Empty file, Malformed JSON
+    settings_path = os.path.join(script_dir, SETTINGS_FILE)
+    try:
+        with open(settings_path, "r") as f:
+            content = f.read().strip()
+            if not content:
+                raise ValueError("Empty file")
+            data = json.loads(content)
+    except (FileNotFoundError, json.JSONDecodeError, ValueError) as e:
+        print(f"[WARN] Failed to load settings: {e}. Using fallback.")
+        data = {"general_settings": {}, "file_dependent_settings": {}}
 
     # Load general settings
     general_settings = data.get("general_settings", {})
