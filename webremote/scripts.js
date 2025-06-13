@@ -191,8 +191,14 @@ function handleSettings(data) {
       hide('channel_number');
     }
     gebi('note-white_noise_on_channel_change').innerHTML = settings.show_whitenoise_channel_change ? "On" : "Off";
-    gebi('note-cycle_green_screen').innerHTML = `<img src="assets/screens/green${settings.current_green_index}.png">`;
-    gebi('note-cycle_white_noise').innerHTML = `<img src="assets/screens/noise${settings.white_noise_index}.png">`;
+
+    // Fill color previews
+    /* let enabled_green = settings.fill_color_active && settings.fill_color_type == 'green';
+    let enabled_noise = settings.fill_color_active && settings.fill_color_type == 'noise';
+    class="${enabled_green ? '' : 'disabled'}" 
+    class="${enabled_noise ? '' : 'disabled'}"  */
+    gebi('note-cycle_green_screen').innerHTML = `<img src="assets/fill_colors/green${settings.fill_color_index['green']+1}.png" title="Fill Color with markers # ${settings.fill_color_index['green']+1}">`;
+    gebi('note-cycle_white_noise').innerHTML = `<img src="assets/fill_colors/noise${settings.fill_color_index['noise']+1}.png" title="Fill Color: Noise # ${settings.fill_color_index['noise']+1} without markers">`;
 
     // GENERAL
     gebi('note-zoom').innerHTML = ((settings.zoom_level+1)*100).toFixed(0)+"%";  // 0 = normal
