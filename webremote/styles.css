@@ -83,7 +83,16 @@ a:hover {
     font-size: .8em;
     bottom:0;
     right:0;
-    text-shadow: 0 0 rgba(255,255,255,.5), 0 1px rgba(255,255,255,.5), 1px 0 rgba(255,255,255,.5), 0 -1px rgba(255,255,255,.5);
+    text-shadow:
+        1px 0 grey,
+        -1px 0 grey,
+        0 1px grey,
+        0 -1px grey,
+        -1px -1px grey,
+        1px -1px grey,
+        -1px 1px grey,
+        1px 1px grey
+    ;
     color: black;
 }
 
@@ -297,6 +306,10 @@ button img[src$=".svg"] {
 .buttonNote img {
     height: 3em;
     border-radius: 4px;
+}
+
+.allowUserSelect {
+    user-select:initial;
 }
 
 #filelist {

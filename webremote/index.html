@@ -170,14 +170,13 @@
             </div> -->
             <div class="button-row">
                 <button class="dense" style="white-space:nowrap" onclick="setToWait('note-cycle_green_screen'); sendCommand({'cmd': 'cycle_green_screen', 'value': -1}, false, true)"><img src="assets/icons/skip-previous.svg"> Style</button>
-                <button class="dense" style="white-space:nowrap" onclick="setToWait('note-cycle_green_screen'); sendCommand({'cmd': 'cycle_green_screen', 'value': 1}, false, true)">Style <img src="assets/icons/skip-next.svg"></button>
+                <button class="dense" style="white-space:nowrap; direction: rtl;" onclick="setToWait('note-cycle_green_screen'); sendCommand({'cmd': 'cycle_green_screen', 'value': 1}, false, true)"><img src="assets/icons/skip-next.svg"> Style</button>
 
                 <button class="dense" style="opacity:0" disabled>&nbsp;</button>
                 <button class="dense" style="opacity:0" disabled>&nbsp;</button>
 
                 <button class="dense" style="white-space:nowrap" onclick="setToWait('note-cycle_white_noise'); sendCommand({'cmd': 'cycle_white_noise', 'value': -1}, false, true)"><img src="assets/icons/skip-previous.svg"> Style</button>
-                <button class="dense" style="white-space:nowrap" onclick="setToWait('note-cycle_white_noise'); sendCommand({'cmd': 'cycle_white_noise', 'value': 1}, false, true)">Style <img src="assets/icons/skip-next.svg"></button>
-
+                <button class="dense" style="white-space:nowrap; direction: rtl;" onclick="setToWait('note-cycle_white_noise'); sendCommand({'cmd': 'cycle_white_noise', 'value': 1}, false, true)"><img src="assets/icons/skip-next.svg"> Style</button>
             </div>
         </div>
 
@@ -349,12 +348,14 @@
             </div>
             <div class="button-row">
                 <button onclick="setToWait('note-show_tv_gui'); sendCommand({'cmd': 'toggle_show_tv_gui'}, false, true)">
-                    Show/Hide TV channel numbers<br>
                     <img src="assets/icons/tv-gui.svg">
+                    <br>
+                    Show/Hide TV channel numbers
                 </button>
                 <button onclick="setToWait('note-white_noise_on_channel_change'); sendCommand({'cmd': 'toggle_white_noise_on_channel_change'}, false, true)">
-                    Show/Hide white noise between channel changes<br>
                     <img src="assets/icons/noise.svg">
+                    <br>
+                    Show/Hide white noise between channel changes
                 </button>
             </div>
             <div class="button-row">
@@ -384,9 +385,9 @@
                 <div class="buttonNote closed" id="note-temp" title="CPU Temperature">-</div>
             </div>
             <div class="button-row">
-                <div class="buttonNote closed" title="tvPlayer version & last updated">
-                <span id="zip_hash" title="NOT a git commit hash - this is a sha256 from the zip">-</span><br>
-                <span id="installed_at" class="small">-</span>
+                <div class="buttonNote closed allowUserSelect" title="tvPlayer version & last updated">
+                    <span id="zip_hash" title="NOT a git commit hash - this is a sha256 from the zip">-</span><br>
+                    <span id="installed_at" class="small">-</span>
                 </div>
             </div>
             <div class="button-row">
