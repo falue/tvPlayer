@@ -387,7 +387,9 @@ def system_init():
 
     load_settings()
 
-    if len(filelist) > 0:
+    if fill_color_active:
+        show_fill_color()
+    elif len(filelist) > 0:
         print("Show first channel / first file or the one that was saved")
         go_to_channel(tv_channel)
     else:
