@@ -66,6 +66,7 @@ restart_program_scheduled = False
 
 file_settings = {}
 SETTINGS_FILE = "settings.json"
+settings_lock = threading.Lock()
 
 def mqtt_init():
     mqtt_handler.set_command_handler(mqtt_incoming)
@@ -195,18 +196,19 @@ def load_settings():
     if not os.path.exists(os.path.join(script_dir, SETTINGS_FILE)):
         print(f"Settings file {SETTINGS_FILE} not found. Using defaults.")
         return
-
-    # Handles: Missing file, Empty file, Malformed JSON
+    
+    # Handles:Empty file, Malformed JSON
     settings_path = os.path.join(script_dir, SETTINGS_FILE)
-    try:
-        with open(settings_path, "r") as f:
-            content = f.read().strip()
-            if not content:
-                raise ValueError("Empty file")
-            data = json.loads(content)
-    except (FileNotFoundError, json.JSONDecodeError, ValueError) as e:
-        print(f"[WARN] Failed to load settings: {e}. Using fallback.")
-        data = {"general_settings": {}, "file_dependent_settings": {}}
+    with settings_lock:  # wait for the settings file to be accessible if needed
+        try:
+            with open(settings_path, "r") as f:
+                content = f.read().strip()
+                if not content:
+                    raise ValueError("Empty file")
+                data = json.loads(content)
+        except (json.JSONDecodeError, ValueError) as e:
+            print(f"[WARN] Failed to load settings: {e}. Using fallback.")
+            data = {"general_settings": {}, "file_dependent_settings": {}}
 
     # Load general settings
     general_settings = data.get("general_settings", {})
@@ -287,20 +289,21 @@ def collect_settings():
     global filelist, file_settings
 
     # Load existing settings from file, if any
-    # Handles: Missing file, Empty file, Malformed JSON
+    # Handles: Empty file, Malformed JSON
     settings_path = os.path.join(script_dir, SETTINGS_FILE)
-    if os.path.exists(settings_path):
-        try:
-            with open(settings_path, "r") as f:
-                content = f.read().strip()
-                if not content:
-                    raise ValueError("Empty file")
-                data = json.loads(content)
-        except (json.JSONDecodeError, ValueError) as e:
-            print(f"[WARN] Failed to load settings: {e}. Using fallback.")
+    with settings_lock:  # wait for the settings file to be accessible if needed
+        if os.path.exists(settings_path):
+            try:
+                with open(settings_path, "r") as f:
+                    content = f.read().strip()
+                    if not content:
+                        raise ValueError("Empty file")
+                    data = json.loads(content)
+            except (json.JSONDecodeError, ValueError) as e:
+                print(f"[WARN] Failed to load settings: {e}. Using fallback.")
+                data = {"general_settings": {}, "file_dependent_settings": {}}
+        else:
             data = {"general_settings": {}, "file_dependent_settings": {}}
-    else:
-        data = {"general_settings": {}, "file_dependent_settings": {}}
 
     # Update general settings
     data["general_settings"].update({
