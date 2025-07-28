@@ -56,6 +56,7 @@ brightness = 0  # -100 to 100, default 0
 contrast = 0  # -100 to 100, default 0
 saturation = 0  # -100 to 100, default 0
 volume = 100  # 0 to 100, 100 means max loudness
+muted = False
 active_overlays = {}  # Dictionary to store active overlay threads
 last_sent_settings = 0
 zoom_level = 0.0
@@ -98,8 +99,14 @@ def mqtt_incoming(data):
 
     elif cmd == "set_video_fitting":
         set_video_fitting()
+
     elif cmd == "volume":
         adjust_volume(int(value))
+    elif cmd == "toggle_mute":
+        if muted:
+            set_volume(volume)  # unmute to previous volume
+        else:
+            set_volume(0)  # mute!
 
     elif cmd == "pan_reset":  # adjust in html
         pan("reset", "x")
@@ -755,7 +762,8 @@ def pan(offset, axis):
     print(f"Panned video {axis} to {pan_offsets[axis]:.3f}")
 
 def set_volume(value):
-    global ipc_socket_path
+    global ipc_socket_path, muted
+    muted = value == 0
     if os.path.exists(ipc_socket_path):
         command = f'echo \'{{"command": ["set_property", "volume", {value}]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
         subprocess.call(command, shell=True)
