@@ -740,18 +740,20 @@ def pan(offset, axis):
     # Set pixel value for image re-positionning
     if axis == "x":
         video_width = get_mpv_property("width")
-        if not video_width:
+        osd_dimensions_w = get_mpv_property("osd-dimensions/w")
+        if not video_width or not osd_dimensions_w:
             print("problem getting width of video")
             return  # Ignore to not crash
-        scaling_factor = get_mpv_property("osd-dimensions/w") / video_width
+        scaling_factor = osd_dimensions_w / video_width
         real_x = pan_offsets[axis] * video_width * scaling_factor
         pan_offsets[f"{axis}-real"] = int(real_x)
     else:
         video_height = get_mpv_property("height")
-        if not video_height:
+        osd_dimensions_h = get_mpv_property("osd-dimensions/h")
+        if not video_height or not osd_dimensions_h:
             print("problem getting height of video")
             return  # Ignore to not crash
-        scaling_factor = get_mpv_property("osd-dimensions/h") / video_height
+        scaling_factor = osd_dimensions_h / video_height
         real_y = pan_offsets[axis] * video_height * scaling_factor
         pan_offsets[f"{axis}-real"] = int(real_y)
 
