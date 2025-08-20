@@ -500,6 +500,10 @@ def create_thumbnails(current_filelist):
         - If it's a video, extract a middle-frame PNG if not already in ./webremote/thumbnails
     """
     print("Create thumbnails from filelist..")
+    if(len(current_filelist) > 0) :
+        image_path = os.path.join(script_dir, 'assets', f'create_thumbnails.bgra')
+        display_image(image_path, 3, 50,50, 1600,150, 4.0)
+
     mqtt_handler.send("general", "createThumbnails")
 
     thumbnail_folder = os.path.join(script_dir, "webremote", "thumbnails")
