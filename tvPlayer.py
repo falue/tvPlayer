@@ -389,6 +389,7 @@ def system_init():
     ensure_valid_settings()
     print("Get filelist")
     update_files_from_usb()
+    show_no_signal()  # enable video for thumbnail creation images
     create_thumbnails(filelist)
     reset_in_outpoints_video_fitting()
     print(f"Initial filelist ({len(filelist)}):")
@@ -530,7 +531,7 @@ def create_thumbnails(current_filelist):
             continue
 
         image_path = os.path.join(script_dir, 'assets', 'channel_numbers', f'{i+1}.bgra')
-        display_image(image_path, 4, int(window_width/2)-105,int(window_height/2)-75, 210,150, 2)
+        display_image(image_path, 4, max(int(window_width/2)-105, 50),max(int(window_height/2)-75, 200), 210,150, 666)
 
         if filepath.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.tiff', '.bmp')):
             # Generate thumbnail from image using ImageMagick
@@ -569,6 +570,9 @@ def create_thumbnails(current_filelist):
             ])
 
     print("Thumbnail creation complete.")
+
+    image_path = os.path.join(script_dir, 'assets', 'channel_numbers', f'--.bgra')
+    display_image(image_path, 4, max(int(window_width/2)-105, 50),max(int(window_height/2)-75, 200), 210,150, 0.1)
 
 
 
