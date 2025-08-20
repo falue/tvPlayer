@@ -1373,10 +1373,14 @@ def main():
         if not filelist:
             if show_tv_gui:
                 print("No files - show white noise - wait for USB")
-                show_no_signal()
+                if not fill_color_active:
+                    print("trigger show_no_signal()")
+                    show_no_signal()
             else:
                 print("No files available - show blank screen")
-                toggle_fill_color("black")
+                if not fill_color_active:
+                    fill_color_type = "black"
+                    show_fill_color()  # FIXME: only once!
 
         pygame.display.update()
 
