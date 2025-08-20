@@ -324,11 +324,12 @@ def collect_settings():
     # Add new files or update old ones to file_dependent_settings
     for i, file in enumerate(filelist):
         filename = os.path.basename(file)
+        # sometimes this fails because one USB was not ejected properly and "video_fittings[i]: index out of range" happens
         data["file_dependent_settings"][filename] = {
-            "inpoints": inpoints[i],
-            "outpoints": outpoints[i],
-            "video_fittings": video_fittings[i],
-            "video_speeds": video_speeds[i],
+            "inpoints": inpoints[i] if i < len(inpoints) else 0,
+            "outpoints": outpoints[i] if i < len(outpoints) else 0,
+            "video_fittings": video_fittings[i] if i < len(video_fittings) else 0,
+            "video_speeds": video_speeds[i] if i < len(video_speeds) else 0,
         }
 
     data["filelist_ignored"] = filelist_ignored
