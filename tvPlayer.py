@@ -515,7 +515,7 @@ def create_thumbnails(current_filelist):
             os.remove(os.path.join(thumbnail_folder, f))
 
     # Step 2: generate new thumbnails
-    for filepath in current_filelist:
+    for i, filepath in enumerate(current_filelist):
         if not filepath.lower().endswith(allowed_fileendings):
             continue
 
@@ -527,6 +527,9 @@ def create_thumbnails(current_filelist):
 
         if os.path.exists(thumb_path):
             continue
+
+        image_path = os.path.join(script_dir, 'assets', 'channel_numbers', f'{i+1}.bgra')
+        display_image(image_path, 4, int(window_width/2)-105,int(window_height/2)-75, 210,150, 2)
 
         if filepath.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.tiff', '.bmp')):
             # Generate thumbnail from image using ImageMagick
