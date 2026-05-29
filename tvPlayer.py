@@ -324,6 +324,7 @@ def collect_settings():
     # Add new files or update old ones to file_dependent_settings
     for i, file in enumerate(filelist):
         filename = os.path.basename(file)
+        # FIXME
         # sometimes this fails because one USB was not ejected properly and "video_fittings[i]: index out of range" happens
         data["file_dependent_settings"][filename] = {
             "inpoints": inpoints[i] if i < len(inpoints) else 0,
@@ -440,59 +441,56 @@ def detect_usb_root():
     # print(f"script_dir detected: {script_dir}")
 
 def update_files_from_usb():
-    global filelist, filelist_ignored, video_fittings, video_speeds, has_av_channel, tv_channel_offset, tv_channel
-    filelist = []  # Resets always
-    filelist_ignored = []  # Resets always
+    global filelist, filelist_ignored, has_av_channel
+    # Build into local lists so that a transient error on one device does not
+    # wipe out files we already collected from other devices in the same scan.
+    new_filelist = []
+    new_filelist_ignored = []
+    new_has_av_channel = False
     av_channel_path = ''
 
     if os.path.exists(usb_root):
-        for device in os.listdir(usb_root):
+        try:
+            devices = os.listdir(usb_root)
+        except (FileNotFoundError, PermissionError, OSError) as e:
+            print(f"Could not list usb_root {usb_root}: {e}. Keeping previous filelist.")
+            return
+
+        for device in devices:
             device_path = os.path.join(usb_root, device)
             if os.path.isdir(device_path):
                 try:
                     for file in os.listdir(device_path):
                         if file.lower().endswith(allowed_fileendings) and not file.startswith('.'):
                             if file.lower().startswith("av."):
-                                has_av_channel = True
+                                new_has_av_channel = True
                                 av_channel_path = os.path.join(device_path, file)
                             else:
-                                filelist.append(os.path.join(device_path, file))
+                                new_filelist.append(os.path.join(device_path, file))
                         elif not file.startswith('.'):
-                            filelist_ignored.append(file)
+                            new_filelist_ignored.append(file)
                 except PermissionError:
-                    # Skip this device if it's no longer accessible
+                    # Skip just this device; keep files already collected from others.
                     if device_path not in ignored_devices:
                         print(f"Permission denied while accessing: {device_path}. Ignoring this device.")
                         ignored_devices.append(device_path)
-                    filelist = []
-                    filelist_ignored = []
-                    video_fittings = []
-                    video_speeds = []
-                    has_av_channel = False
                     continue
                 except FileNotFoundError:
                     print(f"Device {device_path} was removed. Ignoring this device.")
-                    filelist = []
-                    filelist_ignored = []
-                    video_fittings = []
-                    video_speeds = []
-                    has_av_channel = False
                     continue
                 except Exception as e:
-                    print(f"Another error occurred: {e}. Ignoring this device.")
-                    filelist = []
-                    filelist_ignored = []
-                    video_fittings = []
-                    video_speeds = []
-                    has_av_channel = False
+                    print(f"Another error occurred reading {device_path}: {e}. Ignoring this device.")
                     continue
         # Sort list naturally - 1.mp4, 2.mp4, 11.mp4 instead of 1.mp4, 11.mp4, 2.mp4
-        filelist = natsorted(filelist, key=lambda x: x.lower())  # case insensitive
+        new_filelist = natsorted(new_filelist, key=lambda x: x.lower())  # case insensitive
 
-        if has_av_channel:
-            filelist.append(av_channel_path)
-        else:
-            has_av_channel = False  # This makes no sense but its needed to show white noise when no USB is inserted
+        if new_has_av_channel:
+            new_filelist.append(av_channel_path)
+
+        # Commit results atomically only after a full successful scan.
+        filelist = new_filelist
+        filelist_ignored = new_filelist_ignored
+        has_av_channel = new_has_av_channel
 
 def create_thumbnails(current_filelist):
     """
@@ -933,7 +931,7 @@ def check_keypresses():
                 toggle_show_tv_gui()
             elif event.key == pygame.K_w and pygame.key.get_mods() & pygame.KMOD_SHIFT:
                 print("keypress [SHIFT]+[w] cycle white noise index")
-                # FIXME: Cannot deselect noise with keyboard.
+                # FIXME: Cannot deselect noise with keyboard
                 select_fill_color(1, "noise")
             elif event.key == pygame.K_w:
                 print("keypress [w] toggle white noise on channel change")
@@ -1060,13 +1058,21 @@ def play_file(file, inpoint=0.0, outpoint=0.0):
         command = f'echo \'{{"command": ["loadfile", "{file}", "replace", "start={inpoint}"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
         subprocess.call(command, shell=True)
         
-        # This works even though it should not
-        # Inpoint is set by "start={inpoint}" above, but why does it loop? 
+        # ab-loop properties persist across loadfile in mpv, so we must always
+        # set or clear them, otherwise a previous channel's outpoint can cause
+        # the new file to loop back after only 1-2 frames.
         if outpoint > 0:
             activate_ab_loop(inpoint, outpoint)
+        else:
+            clear_ab_loop()
+
+        # Ensure playback is resumed unconditionally after swapping files.
+        # Relying on a pause-state check can fail if mpv has not yet updated
+        # the property after loadfile, leading to a frozen first frame.
+        unpause_command = 'echo \'{"command": ["set_property", "pause", false]}\' | socat - UNIX-CONNECT:' + ipc_socket_path + ' > /dev/null 2>&1'
+        subprocess.call(unpause_command, shell=True)
 
     current_file = os.path.basename(file)  # file
-    play()  # if paused, resume anyways
 
 def play():
     global ipc_socket_path
@@ -1091,6 +1097,16 @@ def activate_ab_loop(inpoint, outpoint):
     subprocess.call(command_aba, shell=True)
     command_abb = f'echo \'{{"command": ["set_property", "ab-loop-b", {outpoint}]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
     subprocess.call(command_abb, shell=True)
+
+def clear_ab_loop():
+    # In mpv, "no" disables ab-loop endpoints. Must be sent for both a and b,
+    # otherwise a previously set outpoint keeps looping the new file.
+    if not os.path.exists(ipc_socket_path):
+        return
+    command_a = f'echo \'{{"command": ["set_property", "ab-loop-a", "no"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
+    subprocess.call(command_a, shell=True)
+    command_b = f'echo \'{{"command": ["set_property", "ab-loop-b", "no"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
+    subprocess.call(command_b, shell=True)
 
 def toggle_play():
     global ipc_socket_path
@@ -1373,7 +1389,7 @@ def main():
             create_thumbnails(filelist)
             print("inpoints and video fitting reset:")
             reset_in_outpoints_video_fitting()
-            load_settings()
+            load_settings()  # why tho?
             # start first video
             go_to_channel(0)
 

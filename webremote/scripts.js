@@ -264,6 +264,8 @@ function handleState(data, fillColor=false) {
     lastPlaystate = md5(JSON.stringify(data));
     // console.log("handleState", data, fillColor);
 
+    // FIXME: WHEN REPLUGGING USB:
+    // scripts.js?v=250611c:262 Uncaught (in promise) TypeError: Cannot read properties of undefined (reading 'tvChannel')
     tvChannel = data.tvChannel;
     if (data.isPlaying) {
       gebi("playstate").src = "./assets/icons/pause.svg";
