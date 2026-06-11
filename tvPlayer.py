@@ -10,6 +10,7 @@ import random
 import RPi.GPIO as GPIO
 import mqtt_handler
 import traceback
+import socket
 
 # Customizing
 show_tv_gui = True  # show number of channels top right and volume bar
@@ -69,10 +70,30 @@ SETTINGS_FILE = "settings.json"
 settings_lock = threading.Lock()
 
 def mqtt_init():
-    mqtt_handler.set_command_handler(mqtt_incoming)
+    mqtt_handler.set_command_handler(handle_command)
     mqtt_handler.start()
 
-def mqtt_incoming(data):
+def udp_init(port=9999):
+    """
+        Initialize UDP listener for commands
+        Test with
+        echo '{"command":"next_channel"}' | nc -u <pi-ip> 9999
+    """
+    def udp_listener():
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.bind(("0.0.0.0", port))
+        print(f"[UDP] Listening on port {port}")
+        while True:
+            try:
+                data, addr = sock.recvfrom(4096)
+                payload = json.loads(data.decode())
+                print(f"[UDP] From {addr}: {payload}")
+                handle_command(payload)
+            except Exception as e:
+                print(f"[UDP] Error: {e}")
+    threading.Thread(target=udp_listener, daemon=True).start()
+
+def handle_command(data):
     global quit_program_scheduled, restart_program_scheduled
     # print("[tvPlayer] Command from MQTT:", data)
 
@@ -1365,6 +1386,7 @@ def main():
     system_init()
     server_init()
     mqtt_init()
+    udp_init()
     gpio_init()
 
     while True:
