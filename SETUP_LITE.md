@@ -44,6 +44,19 @@ sudo apt update && sudo apt install -y \
   udisks2 lsof
 ```
 
+Enable WebSocket listener for the web remote (browsers can't use raw MQTT).
+Declaring `listener 1883` is required — Mosquitto 2.0+ disables the default port when any `listener` is added:
+```bash
+sudo tee /etc/mosquitto/conf.d/websockets.conf >/dev/null <<'EOF'
+listener 1883
+listener 9001
+protocol websockets
+allow_anonymous true
+EOF
+
+sudo systemctl restart mosquitto
+```
+
 ## USB Automount
 
 OS Lite has no file manager to trigger USB mounting. `udisks2` handles it, but needs a polkit rule to allow mounting without an active desktop session:
