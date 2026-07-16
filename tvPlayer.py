@@ -418,21 +418,14 @@ def evdev_init():
 
         # Find all input devices with key capability
         devices = []
-        all_paths = evdev.list_devices()
-        print(f"[EVDEV] Found {len(all_paths)} input devices")
-        for path in all_paths:
+        for path in evdev.list_devices():
             try:
                 dev = evdev.InputDevice(path)
-                caps = dev.capabilities()
-                if ecodes.EV_KEY in caps:
+                if ecodes.EV_KEY in dev.capabilities():
                     devices.append(dev)
                     print(f"[EVDEV] Monitoring: {dev.name} ({dev.path})")
-                else:
-                    print(f"[EVDEV] Skipping (no EV_KEY): {dev.name} ({dev.path})")
-            except PermissionError:
-                print(f"[EVDEV] Permission denied: {path}")
-            except Exception as e:
-                print(f"[EVDEV] Error opening {path}: {e}")
+            except Exception:
+                pass
 
         if not devices:
             print("[EVDEV] No keyboard devices found at startup, will keep scanning.")
