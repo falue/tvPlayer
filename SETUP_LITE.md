@@ -8,7 +8,7 @@ mpv renders directly via DRM/KMS on tty1.
 ## Flash & First Boot
 
 - Flash **Raspberry Pi OS Lite (64-bit, Bookworm)** via Raspberry Pi Imager
-- In Imager advanced settings: set hostname, enable SSH, configure WiFi, create user (e.g. `pi`)
+- In Imager advanced settings: set hostname, enable SSH, configure WiFi, create user (e.g. `dp`)
 - Boot, SSH in
 
 ---
@@ -16,7 +16,7 @@ mpv renders directly via DRM/KMS on tty1.
 ## User & Groups
 
 ```bash
-sudo usermod -aG video,input,gpio,render,audio pi
+sudo usermod -aG video,input,gpio,render,audio dp
 ```
 
 ---
@@ -27,7 +27,7 @@ Required for DRM/KMS access without a display manager.
 
 ```bash
 sudo raspi-config
-# System Options → Boot / Auto Login → Console Autologin
+# System Options → Auto Login → Console Autologin: Enable
 ```
 
 ---
@@ -40,11 +40,8 @@ sudo apt update && sudo apt install -y \
   python3-pip \
   git \
   ffmpeg imagemagick \
-  mosquitto mosquitto-clients \
-  hostapd dnsmasq
+  mosquitto mosquitto-clients
 ```
-
-> `hostapd` / `dnsmasq` only needed if keeping the WiFi hotspot (alternative to RaspAP).
 
 ---
 
@@ -64,25 +61,91 @@ pip install --break-system-packages python-mpv evdev natsort paho-mqtt flask RPi
 
 ---
 
-## Network / Hotspot
+## Network / Hotspot (RaspAP)
 
-Either:
-- Reinstall RaspAP: `curl -sL https://install.raspap.com | bash`
-- Or configure hostapd + dnsmasq manually for SSID `tvPlayer`
+Install RaspAP:
+```bash
+curl -sL https://install.raspap.com | bash
+```
+
+During the installer, choose:
+- **Complete installation** — yes
+- **Set default config for hostapd** — yes
+- **Enable HttpOnly for session cookies** — yes
+- **Enable control service** — yes
+- **Install Ad-blocking** — no
+- **Install OpenVPN** — no
+- **Install WireGuard** — no
+- **Install RestAPI** — no
+- **Enable VPN provider client** — no
+- **Enable TCP BBR congestion control** — yes
+
+After reboot, RaspAP creates a WiFi AP with default SSID `raspi-webgui`.
+
+### Fix: NetworkManager vs hostapd conflict
+
+If `wlan0` stays in `type managed` instead of `type AP`, NetworkManager is fighting hostapd for the interface. This happens when a saved Wi-Fi client profile auto-reconnects.
+
+**1. Disable autoconnect of the old Wi-Fi client profile:**
+```bash
+sudo nmcli connection modify netplan-wlan0-<SSID> connection.autoconnect no
+sudo nmcli connection down netplan-wlan0-<SSID>
+```
+
+**2. Tell NetworkManager to completely ignore wlan0:**
+```bash
+sudo mkdir -p /etc/NetworkManager/conf.d
+
+sudo tee /etc/NetworkManager/conf.d/10-unmanaged-wlan0.conf >/dev/null <<'EOF'
+[keyfile]
+unmanaged-devices=interface-name:wlan0
+EOF
+
+sudo systemctl restart NetworkManager
+```
+
+**3. Reset the interface and restart hostapd (one-time, not needed after reboot):**
+```bash
+sudo ip link set wlan0 down
+sudo ip addr flush dev wlan0
+sudo ip link set wlan0 up
+sudo systemctl restart hostapd
+```
+
+**4. Verify:**
+```bash
+iw dev
+```
+Expected: `type AP` and `ssid RaspAP` (not `type managed`).
+
+> After reboot, hostapd should automatically bring up `wlan0` as AP with IP `10.3.141.1`. Verify with a reboot.
+
+## Configure the RaspAP
+Configure via the RaspAP admin panel at `http://10.3.141.1` from another device. 
+> RaspAP admin panel login default: user `admin`, password `secret` — change pw to eg `digitalProps#8400`
+
+- **Hotspot → Basic**: SSID = `tvPlayer`, Security = WPA2
+- **Hotspot → Security**: set a password
+- **DHCP Server**: leave defaults (clients get `10.3.141.x`)
+
+The tvPlayer web remote will then be available at `http://10.3.141.1:8080` from any device connected to the `tvPlayer` WiFi.
+
 
 ---
 
 ## Systemd Service
 
+```
+sudo nano /etc/systemd/system/tvplayer.service
+```
 ```ini
-# /etc/systemd/system/tvplayer.service
 [Unit]
 Description=tvPlayer
 After=multi-user.target
 
 [Service]
-User=pi
-WorkingDirectory=/home/pi/tvPlayer
+User=dp
+WorkingDirectory=/home/dp/tvPlayer
 ExecStart=/usr/bin/python3 tvPlayer.py
 Restart=on-failure
 TTYPath=/dev/tty1
