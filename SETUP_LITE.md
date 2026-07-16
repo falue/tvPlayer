@@ -40,7 +40,25 @@ sudo apt update && sudo apt install -y \
   python3-pip \
   git \
   ffmpeg imagemagick \
-  mosquitto mosquitto-clients
+  mosquitto mosquitto-clients \
+  udisks2
+```
+
+## USB Automount
+
+OS Lite has no file manager to trigger USB mounting. `udisks2` handles it, but needs a polkit rule to allow mounting without an active desktop session:
+
+```bash
+sudo tee /etc/polkit-1/rules.d/10-udisks2-mount.rules >/dev/null <<'EOF'
+polkit.addRule(function(action, subject) {
+    if ((action.id == "org.freedesktop.udisks2.filesystem-mount" ||
+         action.id == "org.freedesktop.udisks2.filesystem-mount-other-seat" ||
+         action.id == "org.freedesktop.udisks2.filesystem-mount-system") &&
+        subject.user == "<YOUR_USERNAME>") {
+        return polkit.Result.YES;
+    }
+});
+EOF
 ```
 
 ---
