@@ -1,2 +1,6 @@
-pygame
+python-mpv
+evdev
 natsort
+paho-mqtt
+flask
+RPi.GPIO

@@ -1,6 +1,5 @@
 import os
 import sys
-import pygame  # pygame 1.9.6
 import subprocess
 import threading
 import json
@@ -11,6 +10,8 @@ import RPi.GPIO as GPIO
 import mqtt_handler
 import traceback
 import socket
+import mpv
+import select
 
 # Customizing
 show_tv_gui = True  # show number of channels top right and volume bar
@@ -33,8 +34,8 @@ LED_PIN = 18  # GPIO pin for LED
 BUTTON_PINS = [4, 17, 27, 22, 5, 6, 13, 19, 3]  # GPIO pins for buttons
 
 # Leave me be
-window_width = 0
-window_height = 0
+window_width = 1920
+window_height = 1080
 tv_channel = 0
 filelist = []
 filelist_ignored = []
@@ -43,7 +44,7 @@ outpoints = []
 video_fittings = []
 video_speeds = []
 ignored_devices = []
-mpv_process = None  # Global variable to track the running mpv process
+player = None  # python-mpv player instance
 fitting_modes = ['contain', 'stretch', 'cover']  # List of fitting modes
 fill_color_type = "green"  # default
 fill_color_index = {"green": 0, "black": 0, "noise": 0}
@@ -52,7 +53,6 @@ fill_color_active = False
 current_file = ""
 pan_offsets = {'x': 0.0, 'y': 0.0, 'x-real': 0, 'y-real': 0}  # Global variables to track the pan offsets
 has_av_channel = False
-ipc_socket_path = '/tmp/mpv_socket'
 brightness = 0  # -100 to 100, default 0
 contrast = 0  # -100 to 100, default 0
 saturation = 0  # -100 to 100, default 0
@@ -64,6 +64,7 @@ zoom_level = 0.0
 _save_timer = None  # timer for saving after mqtt msg
 quit_program_scheduled = False
 restart_program_scheduled = False
+evdev_thread = None
 
 file_settings = {}
 SETTINGS_FILE = "settings.json"
@@ -291,7 +292,7 @@ def send_settings(data=False):
         data = collect_settings()
 
     state = {
-        "isPlaying": not get_mpv_property("pause"), 
+        "isPlaying": get_mpv_property("pause") == False, 
         "fillColorActive": fill_color_active,  # already in general_settings?
         "fillColorType": fill_color_type,  # already in general_settings?
         "fillColorIndex": fill_color_index[fill_color_type],  # already in general_settings?
@@ -376,33 +377,201 @@ def gpio_init():
 
     print("GPIO Initialized: LED ON, Buttons Ready")
 
-def pygame_init():
-    global screen, window_id, ipc_socket_path
-    # Initialize pygame for keyboard input and fullscreen handling
-    pygame.init()
-    screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
-    pygame.display.set_caption('tvPlayer')
-    pygame.mouse.set_visible(False)  # Hide the mouse cursor
-
-    # Get the window ID to pass to mpv
-    window_info = pygame.display.get_wm_info()
-    window_id = window_info['window']  # Get the window ID for embedding mpv
-
-
 def player_init():
-    global mpv_process, window_id, ipc_socket_path
-    print("Starting mpv process in idle mode for the first time.")
-    
-    # Command to start mpv in idle mode (no file needed, stays ready for commands)
-    command = [
-        'mpv', '--idle', '--loop-file', '--fs', '--quiet',
-        '--no-input-terminal', '--input-ipc-server=' + ipc_socket_path, '--wid=' + str(window_id)
-    ]
-    # Execute the command and store the process
-    mpv_process = subprocess.Popen(command)
+    global player
+    print("Starting mpv player via python-mpv (vo=drm, no UI).")
 
-    print("Wait for the socket to be created before proceeding..")
-    time.sleep(3)
+    player = mpv.MPV(
+        vo='drm',
+        loop_file='inf',
+        idle=True,
+        # Disable all mpv UI elements
+        osc=False,
+        osd_level=0,
+        osd_bar=False,
+        input_default_bindings=False,
+        input_vo_keyboard=False,
+        # Quiet
+        terminal=False,
+        msg_level='all=no',
+    )
+
+    print("mpv player initialized.")
+
+
+def evdev_init():
+    """
+    Initialize evdev keyboard listener thread.
+    Reads all /dev/input/event* devices that have EV_KEY capability.
+    """
+    global evdev_thread
+
+    def evdev_listener():
+        try:
+            import evdev
+            from evdev import ecodes
+        except ImportError:
+            print("[EVDEV] evdev not installed, keyboard input disabled.")
+            return
+
+        # Find all input devices with key capability
+        devices = []
+        for path in evdev.list_devices():
+            dev = evdev.InputDevice(path)
+            caps = dev.capabilities()
+            if ecodes.EV_KEY in caps:
+                devices.append(dev)
+                print(f"[EVDEV] Monitoring: {dev.name} ({dev.path})")
+
+        if not devices:
+            print("[EVDEV] No keyboard devices found.")
+            return
+
+        # Track modifier state
+        shift_held = False
+        ctrl_held = False
+        SHIFT_KEYS = {ecodes.KEY_LEFTSHIFT, ecodes.KEY_RIGHTSHIFT}
+        CTRL_KEYS = {ecodes.KEY_LEFTCTRL, ecodes.KEY_RIGHTCTRL}
+
+        while True:
+            # Use select to wait for events from any device
+            r, _, _ = select.select(devices, [], [], 1.0)
+            for dev in r:
+                try:
+                    for event in dev.read():
+                        if event.type == ecodes.EV_KEY:
+                            # Update modifier state
+                            if event.code in SHIFT_KEYS:
+                                shift_held = event.value != 0  # 1=press, 2=repeat, 0=release
+                            elif event.code in CTRL_KEYS:
+                                ctrl_held = event.value != 0
+                            elif event.value == 1:  # key down (not repeat)
+                                handle_evdev_key(event.code, shift=shift_held, ctrl=ctrl_held)
+                except OSError:
+                    # Device disconnected
+                    devices.remove(dev)
+
+    evdev_thread = threading.Thread(target=evdev_listener, daemon=True)
+    evdev_thread.start()
+
+
+def handle_evdev_key(code, shift=False, ctrl=False):
+    """
+    Map evdev key codes to actions. Same mapping as the old pygame handler.
+    """
+    global quit_program_scheduled
+    try:
+        from evdev import ecodes
+    except ImportError:
+        return
+
+    save_after_input = True
+
+    if code == ecodes.KEY_UP and shift:
+        pause()
+        seek(0.04)
+    elif code == ecodes.KEY_DOWN and shift:
+        pause()
+        seek(-0.04)
+    elif code == ecodes.KEY_UP and ctrl:
+        seek(60)
+    elif code == ecodes.KEY_DOWN and ctrl:
+        seek(-60)
+    elif code == ecodes.KEY_UP:
+        seek(5)
+    elif code == ecodes.KEY_DOWN:
+        seek(-5)
+    elif code == ecodes.KEY_RIGHT:
+        next_channel()
+    elif code == ecodes.KEY_LEFT:
+        prev_channel()
+    elif code in (ecodes.KEY_SPACE, ecodes.KEY_P):
+        toggle_play()
+    elif code == ecodes.KEY_ESC:
+        pass  # no fullscreen toggle in DRM mode
+    elif code == ecodes.KEY_Q and shift:
+        quit_program_scheduled = True
+    elif code == ecodes.KEY_Q:
+        shutdown()
+    elif code == ecodes.KEY_B:
+        toggle_fill_color("black")
+    elif code == ecodes.KEY_X and ctrl:
+        pan("reset", "x")
+        pan("reset", "y")
+    elif code == ecodes.KEY_X and shift:
+        pan(-1, "x")
+    elif code == ecodes.KEY_X:
+        pan(1, "x")
+    elif code == ecodes.KEY_Y and ctrl:
+        pan("reset", "x")
+        pan("reset", "y")
+    elif code == ecodes.KEY_Y and shift:
+        pan(-1, "y")
+    elif code == ecodes.KEY_Y:
+        pan(1, "y")
+    elif code == ecodes.KEY_G and shift:
+        select_fill_color(1, "green")
+    elif code == ecodes.KEY_G and ctrl:
+        select_fill_color(-1, "green")
+    elif code == ecodes.KEY_G:
+        toggle_fill_color("green")
+    elif code == ecodes.KEY_C:
+        set_video_fitting()
+    elif code == ecodes.KEY_I and shift:
+        clear_inpoint(tv_channel)
+    elif code == ecodes.KEY_I:
+        set_inpoint(tv_channel)
+    elif code == ecodes.KEY_O and shift:
+        clear_outpoint(tv_channel)
+    elif code == ecodes.KEY_O:
+        set_outpoint(tv_channel)
+    elif code == ecodes.KEY_DOT and shift:
+        zoom(0.01)
+    elif code == ecodes.KEY_DOT and ctrl:
+        zoom(0, True)
+    elif code == ecodes.KEY_DOT:
+        zoom(-0.01)
+    elif code == ecodes.KEY_COMMA and shift:
+        adjust_video_brightness(5)
+    elif code == ecodes.KEY_COMMA:
+        adjust_video_brightness(-5)
+    elif code == ecodes.KEY_M and shift:
+        adjust_video_contrast(5)
+    elif code == ecodes.KEY_M:
+        adjust_video_contrast(-5)
+    elif code == ecodes.KEY_N and shift:
+        adjust_video_saturation(5)
+    elif code == ecodes.KEY_N:
+        adjust_video_saturation(-5)
+    elif code == ecodes.KEY_J:
+        adjust_video_speed(-0.1)
+    elif code == ecodes.KEY_K:
+        adjust_video_speed("reset")
+    elif code == ecodes.KEY_L:
+        adjust_video_speed(0.1)
+    elif code == ecodes.KEY_A:
+        toggle_show_tv_gui()
+    elif code == ecodes.KEY_W and shift:
+        select_fill_color(1, "noise")
+    elif code == ecodes.KEY_W:
+        toggle_white_noise_on_channel_change()
+    elif code == ecodes.KEY_MINUS or code == ecodes.KEY_KPMINUS:
+        adjust_volume(-10)
+    elif code == ecodes.KEY_EQUAL or code == ecodes.KEY_KPPLUS:
+        adjust_volume(10)
+    elif ecodes.KEY_1 <= code <= ecodes.KEY_9:
+        go_to_channel(code - ecodes.KEY_1)
+    elif code == ecodes.KEY_0:
+        go_to_channel(9)
+    elif ecodes.KEY_KP1 <= code <= ecodes.KEY_KP9:
+        go_to_channel(code - ecodes.KEY_KP1)
+    elif code == ecodes.KEY_KP0:
+        go_to_channel(9)
+    else:
+        save_after_input = False
+
+    if save_after_input:
+        debounce_save_settings()
 
 def system_init():
     global filelist, inpoints, window_width, window_height
@@ -431,13 +600,19 @@ def system_init():
         show_no_signal()
 
     print("Wait for osd-dimensions")
-    while get_mpv_property("osd-dimensions/w") == None:
+    for _ in range(40):  # up to 10s
+        osd_w = get_mpv_property("osd-dimensions/w")
+        if osd_w is not None and osd_w > 0:
+            break
         time.sleep(0.25)
 
     print("Wait for video width")
-    while get_mpv_property("width") == None:
+    for _ in range(40):  # up to 10s
+        vid_w = get_mpv_property("width")
+        if vid_w is not None and vid_w > 0:
+            break
         time.sleep(0.25)
-    
+
     # Set from load_settings()
     pan(pan_offsets["x"], "x")
     pan(pan_offsets["y"], "y")
@@ -603,9 +778,12 @@ def reset_in_outpoints_video_fitting():
     video_speeds = [1.0] * len(filelist)  # Create a list of zeros with the same length as filelist
 
 def get_window_size():
-    global screen, window_width, window_height
-    window_size = screen.get_size()
-    window_width, window_height = int(window_size[0]), int(window_size[1])
+    global window_width, window_height
+    # In DRM mode, get dimensions from mpv's osd-dimensions or fallback to defaults
+    w = get_mpv_property("osd-dimensions/w")
+    h = get_mpv_property("osd-dimensions/h")
+    if w and h and w > 0 and h > 0:
+        window_width, window_height = int(w), int(h)
 
 def toggle_fill_color(type=False):
     global fill_color_type, fill_color_active
@@ -646,12 +824,10 @@ def show_fill_color():
     fill_color_path = os.path.join(script_dir, 'assets', 'fill_colors', f"{fill_color_type}{fill_color_index[fill_color_type]+1}.{suffix}")
 
     # Set fill colors always to stretch
-    speed_command = f'echo \'{{"command": ["set_property", "speed", "1.0"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
-    zoom_command = f'echo \'{{"command": ["set_property", "video-zoom", "{zoom_level}"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
-    aspect_command = f'echo \'{{"command": ["set_property", "keepaspect", "no"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
-    subprocess.call(speed_command, shell=True)
-    subprocess.call(zoom_command, shell=True)
-    subprocess.call(aspect_command, shell=True)
+    if player:
+        player.speed = 1.0
+        player.video_zoom = zoom_level
+        player.keepaspect = False
 
     play_file(fill_color_path)
 
@@ -667,12 +843,10 @@ def show_no_signal():
     # Show white noise in between channels or when no files on USB
     white_noise_path = os.path.join(script_dir, 'assets', 'fill_colors', f"noise{fill_color_index['noise']+1}.mp4")
     # Set white noise to always stretch
-    speed_command = f'echo \'{{"command": ["set_property", "speed", "1.0"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
-    zoom_command = f'echo \'{{"command": ["set_property", "video-zoom", "{zoom_level}"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
-    aspect_command = f'echo \'{{"command": ["set_property", "keepaspect", "no"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
-    subprocess.call(speed_command, shell=True)
-    subprocess.call(zoom_command, shell=True)
-    subprocess.call(aspect_command, shell=True)
+    if player:
+        player.speed = 1.0
+        player.video_zoom = zoom_level
+        player.keepaspect = False
     play_file(white_noise_path)
 
 def zoom(value, absolute=False):
@@ -688,17 +862,13 @@ def zoom(value, absolute=False):
     print(f"Set zoom to {zoom_level}, scale_factor: ", scale_factor)
     window_width = int(window_width * scale_factor)   # Scale window size for use of relative positioning with iamges etc
     window_height = int(window_height * scale_factor) # Scale window size for use of relative positioning with iamges etc
-    zoom_command = f'echo \'{{"command": ["set_property", "video-zoom", "{zoom_level}"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
-    subprocess.call(zoom_command, shell=True)
+    if player:
+        player.video_zoom = zoom_level
 
 def set_brightness(value):
-    global ipc_socket_path
-    if os.path.exists(ipc_socket_path):
-        command = f'echo \'{{"command": ["set_property", "brightness", {value}]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
-        subprocess.call(command, shell=True)
+    if player:
+        player.brightness = value
         print(f"Set brightness to {value}")
-    else:
-        print("mpv IPC socket not found.")
 
 def adjust_video_brightness(value):
     global brightness
@@ -707,13 +877,9 @@ def adjust_video_brightness(value):
     set_brightness(brightness)
 
 def set_contrast(value):
-    global ipc_socket_path
-    if os.path.exists(ipc_socket_path):
-        command = f'echo \'{{"command": ["set_property", "contrast", {value}]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
-        subprocess.call(command, shell=True)
+    if player:
+        player.contrast = value
         print(f"Set contrast to {value}")
-    else:
-        print("mpv IPC socket not found.")
 
 def adjust_video_contrast(value):
     global contrast
@@ -722,13 +888,9 @@ def adjust_video_contrast(value):
     set_contrast(contrast)
 
 def set_saturation(value):
-    global ipc_socket_path
-    if os.path.exists(ipc_socket_path):
-        command = f'echo \'{{"command": ["set_property", "saturation", {value}]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
-        subprocess.call(command, shell=True)
+    if player:
+        player.saturation = value
         print(f"Set saturation to {value}")
-    else:
-        print("mpv IPC socket not found.")
 
 def adjust_video_saturation(value):
     global saturation
@@ -751,16 +913,12 @@ def adjust_video_speed(value):
     set_playback_speed(video_speeds[tv_channel])
 
 def set_playback_speed(value):
-    global ipc_socket_path
-    if os.path.exists(ipc_socket_path):
-        command = f'echo \'{{"command": ["set_property", "speed", {value}]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
-        subprocess.call(command, shell=True)
+    if player:
+        player.speed = value
         print(f"Set playback speed to {value}")
-    else:
-        print("mpv IPC socket not found.")
 
 def pan(offset, axis):
-    global pan_offsets, ipc_socket_path
+    global pan_offsets
 
     # Update the pan offset for the specified axis
     if offset == "reset":
@@ -792,23 +950,22 @@ def pan(offset, axis):
         pan_offsets[f"{axis}-real"] = int(real_y)
 
     # Send the pan command to MPV
-    pan_property = f"video-pan-{axis}"
-    command = f'echo \'{{"command": ["set_property", "{pan_property}", {pan_offsets[axis]}]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
-    subprocess.call(command, shell=True)
+    if player:
+        if axis == "x":
+            player.video_pan_x = pan_offsets[axis]
+        else:
+            player.video_pan_y = pan_offsets[axis]
     print(f"Panned video {axis} to {pan_offsets[axis]:.3f}")
 
 def set_volume(value):
-    global ipc_socket_path, muted
+    global muted
     muted = value == 0
-    if os.path.exists(ipc_socket_path):
-        command = f'echo \'{{"command": ["set_property", "volume", {value}]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
-        subprocess.call(command, shell=True)
+    if player:
+        player.volume = value
         print(f"Set volume to {value}")
         if show_tv_gui:
             image_path = os.path.join(script_dir, 'assets', 'volume_bars', f'volume_{value}.bgra')
             display_image(image_path, 2, int(window_width/2-800),window_height-225, 1600,150, 1.0)
-    else:
-        print("mpv IPC socket not found.")
 
 def adjust_volume(value):
     global volume
@@ -816,166 +973,6 @@ def adjust_volume(value):
     volume = max(0, min(100, volume + value))
     set_volume(volume)
 
-def check_keypresses():
-    global tv_channel, quit_program_scheduled
-    for event in pygame.event.get():
-        save_after_input = True
-        """ if event.type == pygame.ACTIVEEVENT:
-            if event.gain == 0:  # Focus lost
-                print("Focus lost. Should we attempt to regain focus...?")
-                #pygame.display.set_mode((0, 0), pygame.FULLSCREEN)  # Regain focus """
-
-        if event.type == pygame.QUIT:
-            print("Window closed - trigger pygame to quit")
-            quit_program_scheduled = True
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_UP and pygame.key.get_mods() & pygame.KMOD_SHIFT:
-                print("keypress [SHIFT]+[UP] seek +0.04s")
-                pause()
-                seek(.04)  # smaller than 0.2s: frame-by-frame
-            elif event.key == pygame.K_DOWN and pygame.key.get_mods() & pygame.KMOD_SHIFT:
-                print("keypress [SHIFT]+[DOWN] seek -0.04s")
-                pause()
-                seek(-.04)  # smaller than 0.2s: frame-by-frame
-            elif event.key == pygame.K_UP and pygame.key.get_mods() & pygame.KMOD_CTRL:
-                print("keypress [CTRL]+[UP] seek +60")
-                seek(60)
-            elif event.key == pygame.K_DOWN and pygame.key.get_mods() & pygame.KMOD_CTRL:
-                print("keypress [CTRL]+[DOWN] seek -60")
-                seek(-60)
-            elif event.key == pygame.K_UP:
-                print("keypress [UP] seek +5s")
-                seek(5)
-            elif event.key == pygame.K_DOWN:
-                print("keypress [DOWN] seek -5s")
-                seek(-5)
-            elif event.key == pygame.K_RIGHT:
-                print("keypress [RIGHT] next channel")
-                next_channel()
-            elif event.key == pygame.K_LEFT:
-                print("keypress [LEFT] prev channel")
-                prev_channel()
-            elif event.key == pygame.K_SPACE or event.key == pygame.K_p:
-                print("keypress [p] toggle play")
-                toggle_play()
-            elif event.key == pygame.K_ESCAPE:
-                print("keypress [ESC] toggle fullscreen")
-                toggle_fullscreen()
-            elif event.key == pygame.K_q and pygame.key.get_mods() & pygame.KMOD_SHIFT:
-                print("keypress [SHIFT]+[q] close program")
-                quit_program_scheduled = True
-            elif event.key == pygame.K_q:
-                print("keypress [q] shutdwon computer")
-                shutdown()
-            elif event.key == pygame.K_b:
-                print("keypress [b] toggle black screen")
-                # toggle_black_screen()
-                toggle_fill_color("black")
-            elif (event.key == pygame.K_x or event.key == pygame.K_y) and pygame.key.get_mods() & pygame.KMOD_CTRL:
-                print("keypress [CTRL]+[x] or [CTRL]+[y] reset pan")
-                pan("reset", "x")
-                pan("reset", "y")
-            elif event.key == pygame.K_x and pygame.key.get_mods() & pygame.KMOD_SHIFT:
-                print("keypress [SHIFT]+[x] pan left")
-                pan(-1, "x")
-            elif event.key == pygame.K_x:
-                print("keypress [x] pan right")
-                pan(1, "x")
-            elif event.key == pygame.K_y and pygame.key.get_mods() & pygame.KMOD_SHIFT:
-                print("keypress [SHIFT]+[y] pan up")
-                pan(-1, "y")
-            elif event.key == pygame.K_y:
-                print("keypress [y] pan down")
-                pan(1, "y")
-            elif event.key == pygame.K_g and pygame.key.get_mods() & pygame.KMOD_SHIFT:
-                print("keypress [SHIFT]+[g] Cycle green screen index+")
-                select_fill_color(1, "green")
-            elif event.key == pygame.K_g and pygame.key.get_mods() & pygame.KMOD_CTRL:
-                print("keypress [CTRL]+[g] Cycle green screen index-")
-                select_fill_color(-1, "green")
-            elif event.key == pygame.K_g:
-                print("keypress [g] Toggle green screen")
-                toggle_fill_color("green")
-            elif event.key == pygame.K_c:
-                print("keypress [c] Set video fitting")
-                set_video_fitting()
-            elif event.key == pygame.K_i and pygame.key.get_mods() & pygame.KMOD_SHIFT:
-                print("keypress [SHIFT]+[i] Clear inpoints")
-                clear_inpoint(tv_channel)
-            elif event.key == pygame.K_i:
-                print("keypress [i] set inpoint")
-                set_inpoint(tv_channel)
-            elif event.key == pygame.K_o and pygame.key.get_mods() & pygame.KMOD_SHIFT:
-                print("keypress [SHIFT]+[o] Clear outpoints")
-                clear_outpoint(tv_channel)
-            elif event.key == pygame.K_o:
-                print("keypress [o] set outpoint")
-                set_outpoint(tv_channel)
-            elif event.key == pygame.K_PERIOD and pygame.key.get_mods() & pygame.KMOD_SHIFT:
-                print("keypress [SHIFT]+[.] Zoom in")
-                zoom(0.01)
-            elif event.key == pygame.K_PERIOD and pygame.key.get_mods() & pygame.KMOD_CTRL:
-                print("keypress [CTRL]+[.] Zoom reset")
-                zoom(0, True)
-            elif event.key == pygame.K_PERIOD:
-                print("keypress [SHIFT]+[.] Zoom out")
-                zoom(-0.01)
-            elif event.key == pygame.K_COMMA and pygame.key.get_mods() & pygame.KMOD_SHIFT:
-                print("keypress [SHIFT]+[,] More brightness")
-                adjust_video_brightness(5)
-            elif event.key == pygame.K_COMMA:
-                print("keypress [,] Less brightness")
-                adjust_video_brightness(-5)
-            elif event.key == pygame.K_m and pygame.key.get_mods() & pygame.KMOD_SHIFT:
-                print("keypress [SHIFT]+[m] More contrast")
-                adjust_video_contrast(5)
-            elif event.key == pygame.K_m:
-                print("keypress [m] Less contrast")
-                adjust_video_contrast(-5)
-            elif event.key == pygame.K_n and pygame.key.get_mods() & pygame.KMOD_SHIFT:
-                print("keypress [SHIFT]+[n] More saturation")
-                adjust_video_saturation(5)
-            elif event.key == pygame.K_n:
-                print("keypress [n] Less saturation")
-                adjust_video_saturation(-5)
-            elif event.key == pygame.K_j:
-                print("keypress [j] Playback speed slower")
-                adjust_video_speed(-.1)
-            elif event.key == pygame.K_k:
-                print("keypress [k] Playback speed reset")
-                adjust_video_speed("reset")
-            elif event.key == pygame.K_l:
-                print("keypress [l] Playback speed faster")
-                adjust_video_speed(+.1)
-            elif event.key == pygame.K_a:
-                print("keypress [a] toggle TV GUI")
-                toggle_show_tv_gui()
-            elif event.key == pygame.K_w and pygame.key.get_mods() & pygame.KMOD_SHIFT:
-                print("keypress [SHIFT]+[w] cycle white noise index")
-                # FIXME: Cannot deselect noise with keyboard
-                select_fill_color(1, "noise")
-            elif event.key == pygame.K_w:
-                print("keypress [w] toggle white noise on channel change")
-                toggle_white_noise_on_channel_change()
-            elif event.key == pygame.K_MINUS or (event.key == pygame.K_SLASH and pygame.key.get_mods() & pygame.KMOD_SHIFT) or pygame.key.name(event.key) == "[-]":
-                print("keypress [-] Less volume")
-                adjust_volume(-10)
-            elif event.key == pygame.K_PLUS or (event.key == pygame.K_1 and pygame.key.get_mods() & pygame.KMOD_SHIFT) or pygame.key.name(event.key) == "[+]":
-                print("keypress [+] More volume")
-                adjust_volume(10)
-            elif pygame.K_0 <= event.key <= pygame.K_9:
-                print(f"keypress [number] {pygame.key.name(event.key)} go to channel")
-                go_to_channel(event.key - pygame.K_0 - 1)  # -1 because pressing 1 should play file on key 0 not file key nr 1
-            elif pygame.K_KP0 <= event.key <= pygame.K_KP9:
-                print(f"keypress [number@numpad] {event.key} go to channel")
-                go_to_channel(event.key - pygame.K_KP0 - 1)  # -1 because pressing 1 should play file on key 0 not file key nr 1
-            else:
-                print("other key: "+ pygame.key.name(event.key))
-                save_after_input = False
-
-            # Save on any valid keypress
-            if save_after_input:
-                save_settings()
 
 def check_buttons():
     """
@@ -1069,16 +1066,15 @@ def go_to_channel(number):
     play_file(filelist[number], inpoints[number], outpoints[number])
 
 def play_file(file, inpoint=0.0, outpoint=0.0):
-    global mpv_process, current_file, ipc_socket_path, fill_color_active
+    global current_file, fill_color_active
     if "assets/fill_colors" not in file:
         fill_color_active = False
 
-    if os.path.exists(ipc_socket_path):
+    if player:
         print(f"Swapping to new file: {os.path.basename(file)} at {inpoint} seconds.")
         # Use loadfile command to replace the video source without stopping mpv
-        command = f'echo \'{{"command": ["loadfile", "{file}", "replace", "start={inpoint}"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
-        subprocess.call(command, shell=True)
-        
+        player.command('loadfile', file, 'replace', f'start={inpoint}')
+
         # ab-loop properties persist across loadfile in mpv, so we must always
         # set or clear them, otherwise a previous channel's outpoint can cause
         # the new file to loop back after only 1-2 frames.
@@ -1090,77 +1086,57 @@ def play_file(file, inpoint=0.0, outpoint=0.0):
         # Ensure playback is resumed unconditionally after swapping files.
         # Relying on a pause-state check can fail if mpv has not yet updated
         # the property after loadfile, leading to a frozen first frame.
-        unpause_command = 'echo \'{"command": ["set_property", "pause", false]}\' | socat - UNIX-CONNECT:' + ipc_socket_path + ' > /dev/null 2>&1'
-        subprocess.call(unpause_command, shell=True)
+        player.pause = False
 
     current_file = os.path.basename(file)  # file
 
 def play():
-    global ipc_socket_path
-    is_paused = get_mpv_property("pause")
-    if is_paused is not None and is_paused:
-        command = 'echo \'{"command": ["set_property", "pause", false]}\' | socat - UNIX-CONNECT:' + ipc_socket_path + ' > /dev/null 2>&1'
-        subprocess.call(command, shell=True)
-        print("Video playing.")
+    if player:
+        is_paused = player.pause
+        if is_paused:
+            player.pause = False
+            print("Video playing.")
 
 def pause():
-    global ipc_socket_path
-    if os.path.exists(ipc_socket_path):
-        command = 'echo \'{"command": ["set_property", "pause", true]}\' | socat - UNIX-CONNECT:' + ipc_socket_path + ' > /dev/null 2>&1'
-        subprocess.call(command, shell=True)
+    if player:
+        player.pause = True
         print("Video paused.")
-    else:
-        print("mpv IPC socket not found.")
 
 def activate_ab_loop(inpoint, outpoint):
     print("activate loop from ", inpoint, " to ", outpoint)
-    command_aba = f'echo \'{{"command": ["set_property", "ab-loop-a", {inpoint}]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
-    subprocess.call(command_aba, shell=True)
-    command_abb = f'echo \'{{"command": ["set_property", "ab-loop-b", {outpoint}]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
-    subprocess.call(command_abb, shell=True)
+    if player:
+        player.ab_loop_a = inpoint
+        player.ab_loop_b = outpoint
 
 def clear_ab_loop():
     # In mpv, "no" disables ab-loop endpoints. Must be sent for both a and b,
     # otherwise a previously set outpoint keeps looping the new file.
-    if not os.path.exists(ipc_socket_path):
-        return
-    command_a = f'echo \'{{"command": ["set_property", "ab-loop-a", "no"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
-    subprocess.call(command_a, shell=True)
-    command_b = f'echo \'{{"command": ["set_property", "ab-loop-b", "no"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
-    subprocess.call(command_b, shell=True)
+    if player:
+        player.ab_loop_a = 'no'
+        player.ab_loop_b = 'no'
 
 def toggle_play():
-    global ipc_socket_path
-    if os.path.exists(ipc_socket_path):
-        # Send the pause command to the running mpv instance via IPC
-        command = 'echo \'{"command": ["cycle", "pause"]}\' | socat - UNIX-CONNECT:' + ipc_socket_path + ' > /dev/null 2>&1'
-        subprocess.call(command, shell=True)
-    else:
-        print("mpv IPC socket not found.")
+    if player:
+        player.cycle('pause')
 
 def toggle_fullscreen():
-    pygame.display.toggle_fullscreen()
+    pass  # In DRM mode, always fullscreen — no-op
 
 def seek(seconds):
-    global ipc_socket_path
-    if os.path.exists(ipc_socket_path):
-        # Create the command to send a seek command to the running mpv instance via IPC
+    if player:
         if seconds < .2 and seconds > 0:
             # seek frame by frame forwards
-            command = 'echo \'{"command": ["frame-step"]}\' | socat - UNIX-CONNECT:' + ipc_socket_path + ' > /dev/null 2>&1'
+            player.frame_step()
         elif seconds < 0 and seconds > -.2:
             # seek frame by frame backwards
-            command = 'echo \'{"command": ["frame-back-step"]}\' | socat - UNIX-CONNECT:' + ipc_socket_path + ' > /dev/null 2>&1'
+            player.frame_back_step()
         else:
-            command = f'echo \'{{"command": ["seek", {seconds}, "relative"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
-        subprocess.call(command, shell=True)
+            player.seek(seconds, reference='relative')
         print(f"Seeking {seconds} seconds")
-    else:
-        print("mpv IPC socket not found.")
 
 def jump(seconds):
-    command = f'echo \'{{"command": ["seek", {seconds}, "absolute"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
-    subprocess.call(command, shell=True)
+    if player:
+        player.seek(seconds, reference='absolute')
 
 def set_inpoint(channel):
     global inpoints
@@ -1195,20 +1171,14 @@ def clear_outpoint(channel):
     activate_ab_loop(inpoints[channel], get_mpv_property("duration"))
 
 def get_mpv_property(property_name):
-    global ipc_socket_path
     # run "mpv --list-properties" on raspi to see list of properties
-    if os.path.exists(ipc_socket_path):
-        # Construct the command to get the property from mpv
-        command = f'echo \'{{"command": ["get_property", "{property_name}"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path}'
-        try:
-            result = subprocess.check_output(command, shell=True).decode('utf-8').strip()
-            response = json.loads(result)
-            return response.get("data", None)
-        except (subprocess.CalledProcessError, json.JSONDecodeError):
-            print(f"Failed to get property {property_name} from mpv.")
-            return None
-    else:
-        print("mpv IPC socket not found.")
+    if not player:
+        return None
+    try:
+        # Use command interface for reliable raw property name access
+        # This handles hyphens and slashes (e.g. "osd-dimensions/w")
+        return player.command('get_property', property_name)
+    except Exception:
         return None
 
 def get_current_video_position():
@@ -1229,7 +1199,7 @@ def toggle_white_noise_on_channel_change():
 
 # List of fitting modes
 def set_video_fitting(fitting_index=None):
-    global tv_channel, window_height, ipc_socket_path
+    global tv_channel, window_height
 
     if fitting_index is None:  # If no fitting_index is specified, cycle through the modes
         print((video_fittings[tv_channel] + 1) % len(fitting_modes))
@@ -1239,35 +1209,31 @@ def set_video_fitting(fitting_index=None):
         video_fittings[tv_channel] = fitting_index
         new_mode = fitting_modes[fitting_index]
 
-    if os.path.exists(ipc_socket_path):
+    if player:
         if new_mode == 'contain':
-            keepaspect = "yes"
-            panscan = 0  # Default, no cropping (black bars remain to preserve aspect ratio).
+            player.keepaspect = True
+            player.panscan = 0.0
         elif new_mode == 'stretch':
-            keepaspect = "no"
-            panscan = 0  # Default, no cropping (black bars remain to preserve aspect ratio).
+            player.keepaspect = False
+            player.panscan = 0.0
         elif new_mode == 'cover':
-            keepaspect = "yes"
-            panscan = 1  # Crops enough to completely fill the screen (removes all black bars).
-            
-        panscan_command = f'echo \'{{"command": ["set_property", "panscan", "{panscan}"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
-        subprocess.call(panscan_command, shell=True)
-        aspect_command = f'echo \'{{"command": ["set_property", "keepaspect", "{keepaspect}"]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
-        subprocess.call(aspect_command, shell=True)
-        print(f"Video fitting set to: {new_mode} with pan-scan {panscan}")
-    else:
-        print("mpv IPC socket not found.")
+            player.keepaspect = True
+            player.panscan = 1.0
+        print(f"Video fitting set to: {new_mode}")
 
 
 def display_image(image_path, overlay_id, x, y, width, height, display_duration=2.0):
-    global active_overlays, ipc_socket_path
+    global active_overlays
     # image_path = os.path.join(script_dir, 'assets', 'channel_numbers', f'{number}.bgra')
 
     # Ensure the file exists
     if not os.path.exists(image_path):
         print(f"Image file not found: {image_path}")
         return
-    
+
+    if not player:
+        return
+
     # Correction for panned video
     x += pan_offsets["x-real"]
     y += pan_offsets["y-real"]
@@ -1288,10 +1254,9 @@ def display_image(image_path, overlay_id, x, y, width, height, display_duration=
         x = int((x * scale_factor) - offset_x)
         y = int((y * scale_factor) - offset_y)
 
-    # Overlay-add command
+    # Overlay-add command via python-mpv
     stride = width * 4  # BGRA has 4 bytes per pixel
-    command = f'echo \'{{"command": ["overlay-add", {overlay_id}, {x}, {y}, "{image_path}", 0, "bgra", {width}, {height}, {stride}]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
-    subprocess.call(command, shell=True)
+    player.command("overlay-add", overlay_id, x, y, image_path, 0, "bgra", width, height, stride)
 
     # Cancel any existing overlay removal thread for this overlay_id
     if overlay_id in active_overlays:
@@ -1299,11 +1264,12 @@ def display_image(image_path, overlay_id, x, y, width, height, display_duration=
 
     # Function to remove overlay after the duration
     def remove_overlay():
-        time.sleep(display_duration)
-        remove_command = f'echo \'{{"command": ["overlay-remove", {overlay_id}]}}\' | socat - UNIX-CONNECT:{ipc_socket_path} > /dev/null 2>&1'
-        subprocess.call(remove_command, shell=True)
-        print(f"Removed overlay ID {overlay_id}")
-    
+        try:
+            player.command("overlay-remove", overlay_id)
+            print(f"Removed overlay ID {overlay_id}")
+        except Exception:
+            pass
+
     # Start a new thread to remove the overlay and store it
     thread = threading.Timer(display_duration, remove_overlay)
     thread.start()
@@ -1318,24 +1284,20 @@ def update_in_outpoints():
     outpoints = [0] * len(filelist)
 
 def close_program():
+    global player
     print("Close the program..")
-    # GPIO.output(LED_PIN, GPIO.LOW)  # Turn off LED - maybe not so it glows until pi is shut down properly?
-    #try:
     GPIO.output(LED_PIN, GPIO.LOW)  # Turn LED OFF before exit
-    #except RuntimeError as e:
-    #    print("[WARN] Could not turn LED off — GPIO not initialized:", e)
     GPIO.cleanup()  # Reset GPIO pins
-    pygame.quit()  # Closes the Pygame window
 
     # needs to kill server.py aswell? however, that script kills older versions of itself
 
-    # Kill MPV if still running
-    if mpv_process and mpv_process.poll() is None:
+    # Terminate mpv player
+    if player:
         try:
-            mpv_process.kill()
-            mpv_process.wait(timeout=2)
+            player.terminate()
         except Exception as e:
-            print("Failed to kill mpv:", e)
+            print("Failed to terminate mpv:", e)
+        player = None
 
     print("..goodbye!")
     sys.exit()     # Exits the Python program
@@ -1381,19 +1343,18 @@ def main():
     global last_sent_settings, fill_color_type
     time.sleep(2)  #
     print("--------------------------------------------------------------------------------")
-    pygame_init()
     player_init()
     system_init()
     server_init()
     mqtt_init()
     udp_init()
     gpio_init()
+    evdev_init()
 
     while True:
         now = time.time()
         get_window_size()
         check_buttons()
-        check_keypresses()
         if now - last_sent_settings >= 1:
             send_settings()
             last_sent_settings = now
@@ -1427,8 +1388,6 @@ def main():
                 if not fill_color_active:
                     fill_color_type = "black"
                     show_fill_color()  # FIXME: only once!
-
-        pygame.display.update()
 
         if quit_program_scheduled:
             print("triggered quit_program_scheduled !!!")
