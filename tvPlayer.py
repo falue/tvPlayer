@@ -1072,8 +1072,9 @@ def play_file(file, inpoint=0.0, outpoint=0.0):
 
     if player:
         print(f"Swapping to new file: {os.path.basename(file)} at {inpoint} seconds.")
-        # Use loadfile command to replace the video source without stopping mpv
-        player.command('loadfile', file, 'replace', f'start={inpoint}')
+        # Set start position before loading (mpv applies 'start' to the next loaded file)
+        player['start'] = str(inpoint) if inpoint > 0 else '0'
+        player.command('loadfile', file, 'replace')
 
         # ab-loop properties persist across loadfile in mpv, so we must always
         # set or clear them, otherwise a previous channel's outpoint can cause
