@@ -635,8 +635,42 @@ def detect_usb_root():
     # Print the detected USB root for debugging purposes
     # print(f"USB root detected: {usb_root}")
 
+def automount_usb():
+    """Mount any unmounted USB partitions via udisksctl (headless has no file manager to do it)."""
+    try:
+        result = subprocess.run(
+            ['lsblk', '-rno', 'NAME,TYPE,MOUNTPOINT'],
+            capture_output=True, text=True, timeout=5
+        )
+        for line in result.stdout.strip().split('\n'):
+            parts = line.split(' ')
+            if len(parts) >= 2:
+                name, dtype = parts[0], parts[1]
+                mountpoint = parts[2] if len(parts) > 2 else ''
+                # Mount unmounted USB partitions (sd* devices)
+                if dtype == 'part' and name.startswith('sd') and not mountpoint:
+                    dev_path = f'/dev/{name}'
+                    print(f"[USB] Auto-mounting {dev_path}")
+                    subprocess.run(
+                        ['udisksctl', 'mount', '-b', dev_path, '--no-user-interaction'],
+                        capture_output=True, timeout=10
+                    )
+    except Exception as e:
+        print(f"[USB] automount error: {e}")
+
+_last_usb_check = 0
+
 def update_files_from_usb():
-    global filelist, filelist_ignored, has_av_channel
+    global filelist, filelist_ignored, has_av_channel, _last_usb_check
+    # Only check every 3 seconds — no point scanning files more often than drives appear
+    now = time.time()
+    if now - _last_usb_check < 3:
+        return
+    _last_usb_check = now
+
+    # Mount any unmounted USB drives (headless has no automount)
+    automount_usb()
+
     # Build into local lists so that a transient error on one device does not
     # wipe out files we already collected from other devices in the same scan.
     new_filelist = []
