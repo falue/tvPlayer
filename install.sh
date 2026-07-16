@@ -1,5 +1,8 @@
 #!/bin/bash
 
+echo "This script is not updated yet to use for no-desktop environment."
+exit 1
+
 # Check if the script is run as root (with sudo)
 if [ "$EUID" -ne 0 ]; then
   echo "This script must be run as root. Please run it using sudo."
