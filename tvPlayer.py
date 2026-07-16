@@ -418,24 +418,53 @@ def evdev_init():
 
         # Find all input devices with key capability
         devices = []
-        for path in evdev.list_devices():
-            dev = evdev.InputDevice(path)
-            caps = dev.capabilities()
-            if ecodes.EV_KEY in caps:
-                devices.append(dev)
-                print(f"[EVDEV] Monitoring: {dev.name} ({dev.path})")
+        all_paths = evdev.list_devices()
+        print(f"[EVDEV] Found {len(all_paths)} input devices")
+        for path in all_paths:
+            try:
+                dev = evdev.InputDevice(path)
+                caps = dev.capabilities()
+                if ecodes.EV_KEY in caps:
+                    devices.append(dev)
+                    print(f"[EVDEV] Monitoring: {dev.name} ({dev.path})")
+                else:
+                    print(f"[EVDEV] Skipping (no EV_KEY): {dev.name} ({dev.path})")
+            except PermissionError:
+                print(f"[EVDEV] Permission denied: {path}")
+            except Exception as e:
+                print(f"[EVDEV] Error opening {path}: {e}")
 
         if not devices:
-            print("[EVDEV] No keyboard devices found.")
-            return
+            print("[EVDEV] No keyboard devices found at startup, will keep scanning.")
 
         # Track modifier state
         shift_held = False
         ctrl_held = False
         SHIFT_KEYS = {ecodes.KEY_LEFTSHIFT, ecodes.KEY_RIGHTSHIFT}
         CTRL_KEYS = {ecodes.KEY_LEFTCTRL, ecodes.KEY_RIGHTCTRL}
+        known_paths = {dev.path for dev in devices}
+        last_rescan = time.time()
 
         while True:
+            # Rescan for hotplugged devices every 3 seconds
+            now = time.time()
+            if now - last_rescan >= 3:
+                last_rescan = now
+                for path in evdev.list_devices():
+                    if path not in known_paths:
+                        try:
+                            dev = evdev.InputDevice(path)
+                            if ecodes.EV_KEY in dev.capabilities():
+                                devices.append(dev)
+                                known_paths.add(path)
+                                print(f"[EVDEV] Hotplugged: {dev.name} ({dev.path})")
+                        except Exception:
+                            pass
+
+            if not devices:
+                time.sleep(1)
+                continue
+
             # Use select to wait for events from any device
             r, _, _ = select.select(devices, [], [], 1.0)
             for dev in r:
@@ -451,7 +480,9 @@ def evdev_init():
                                 handle_evdev_key(event.code, shift=shift_held, ctrl=ctrl_held)
                 except OSError:
                     # Device disconnected
+                    known_paths.discard(dev.path)
                     devices.remove(dev)
+                    print(f"[EVDEV] Disconnected: {dev.path}")
 
     evdev_thread = threading.Thread(target=evdev_listener, daemon=True)
     evdev_thread.start()
