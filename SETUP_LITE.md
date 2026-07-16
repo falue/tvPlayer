@@ -41,7 +41,7 @@ sudo apt update && sudo apt install -y \
   git \
   ffmpeg imagemagick \
   mosquitto mosquitto-clients \
-  udisks2
+  udisks2 lsof
 ```
 
 ## USB Automount
