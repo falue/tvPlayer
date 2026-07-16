@@ -4,6 +4,7 @@ import subprocess
 import threading
 import json
 import time
+import pwd
 from natsort import natsorted
 import random
 import RPi.GPIO as GPIO
@@ -69,6 +70,7 @@ evdev_thread = None
 file_settings = {}
 SETTINGS_FILE = "settings.json"
 settings_lock = threading.Lock()
+script_dir = os.path.dirname(os.path.abspath(__file__))
 
 def mqtt_init():
     mqtt_handler.set_command_handler(handle_command)
@@ -625,16 +627,13 @@ def system_init():
     print("System initialized.\n")
 
 def detect_usb_root():
-    global usb_root, script_dir
+    global usb_root
     # Automatically detect the user's home directory, find USB device
-    usb_root = os.path.join('/media', os.getlogin())
+    username = pwd.getpwuid(os.getuid()).pw_name
+    usb_root = os.path.join('/media', username)
 
     # Print the detected USB root for debugging purposes
     # print(f"USB root detected: {usb_root}")
-
-    # Get the directory where the script is located
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    # print(f"script_dir detected: {script_dir}")
 
 def update_files_from_usb():
     global filelist, filelist_ignored, has_av_channel

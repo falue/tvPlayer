@@ -146,10 +146,11 @@ After=multi-user.target
 [Service]
 User=dp
 WorkingDirectory=/home/dp/tvPlayer
-ExecStart=/usr/bin/python3 tvPlayer.py
+ExecStart=/usr/bin/python3 -u tvPlayer.py
 Restart=on-failure
-TTYPath=/dev/tty1
-StandardInput=tty
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
 
 [Install]
 WantedBy=multi-user.target

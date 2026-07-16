@@ -3,13 +3,11 @@ Description=tvPlayer - Video Channel Player
 After=multi-user.target
 
 [Service]
-User=pi
-WorkingDirectory=/home/pi/tvPlayer
-ExecStart=/usr/bin/python3 tvPlayer.py
+User=dp
+WorkingDirectory=/home/dp/tvPlayer
+ExecStart=/usr/bin/python3 -u tvPlayer.py
 Restart=on-failure
 RestartSec=3
-TTYPath=/dev/tty1
-StandardInput=tty
 StandardOutput=journal
 StandardError=journal
 
