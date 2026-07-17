@@ -873,13 +873,11 @@ def select_fill_color(step, type):
     fill_color_type = type
 
     # Cycle through all possible fill colors
-    if fill_color_active:
-        # show current + "step" fill color
-        fill_color_index[fill_color_type] += step
-        if fill_color_index[fill_color_type] < 0:
-            fill_color_index[fill_color_type] = fill_color_max_index[fill_color_type]
-        if fill_color_index[fill_color_type] > fill_color_max_index[fill_color_type]:
-            fill_color_index[fill_color_type] = 0
+    fill_color_index[fill_color_type] += step
+    if fill_color_index[fill_color_type] < 0:
+        fill_color_index[fill_color_type] = fill_color_max_index[fill_color_type]
+    if fill_color_index[fill_color_type] > fill_color_max_index[fill_color_type]:
+        fill_color_index[fill_color_type] = 0
     show_fill_color()
 
 def show_fill_color():
