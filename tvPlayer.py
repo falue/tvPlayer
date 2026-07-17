@@ -922,9 +922,19 @@ def zoom(value, absolute=False):
     if player:
         player.video_zoom = zoom_level
 
+def _apply_video_eq():
+    """Apply brightness/contrast/saturation via lavfi eq filter (works with any VO including drm)."""
+    if not player:
+        return
+    # eq filter ranges: brightness -1.0..1.0, contrast -1000..1000 (1.0=normal), saturation 0..3.0 (1.0=normal)
+    b = brightness / 100.0              # -100..100 -> -1.0..1.0
+    c = 1.0 + (contrast / 100.0)        # -100..100 -> 0.0..2.0
+    s = 1.0 + (saturation / 100.0)      # -100..100 -> 0.0..2.0
+    player.vf = f'lavfi=[eq=brightness={b:.2f}:contrast={c:.2f}:saturation={s:.2f}]'
+
 def set_brightness(value):
     if player:
-        player.brightness = value
+        _apply_video_eq()
         print(f"Set brightness to {value}")
 
 def adjust_video_brightness(value):
@@ -935,7 +945,7 @@ def adjust_video_brightness(value):
 
 def set_contrast(value):
     if player:
-        player.contrast = value
+        _apply_video_eq()
         print(f"Set contrast to {value}")
 
 def adjust_video_contrast(value):
@@ -946,7 +956,7 @@ def adjust_video_contrast(value):
 
 def set_saturation(value):
     if player:
-        player.saturation = value
+        _apply_video_eq()
         print(f"Set saturation to {value}")
 
 def adjust_video_saturation(value):
@@ -990,6 +1000,7 @@ def pan(offset, axis):
     if axis == "x":
         video_width = get_mpv_property("width")
         osd_dimensions_w = get_mpv_property("osd-dimensions/w")
+        print(f"[PAN DEBUG] width={video_width}, osd-dimensions/w={osd_dimensions_w}")
         if video_width is None or osd_dimensions_w is None or video_width == 0:
             print("problem getting width of video")
             return  # Ignore to not crash
@@ -999,6 +1010,7 @@ def pan(offset, axis):
     else:
         video_height = get_mpv_property("height")
         osd_dimensions_h = get_mpv_property("osd-dimensions/h")
+        print(f"[PAN DEBUG] height={video_height}, osd-dimensions/h={osd_dimensions_h}")
         if video_height is None or osd_dimensions_h is None or video_height == 0:
             print("problem getting height of video")
             return  # Ignore to not crash
