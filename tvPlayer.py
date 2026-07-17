@@ -211,6 +211,7 @@ def handle_command(data):
         time.sleep(1)  # Wait for user interface to load reboot.html
         reboot()
     elif cmd == "update":
+        print("[tvPlayer] Update initiated..")
         subprocess.Popen(["python3", f"{script_dir}/usb_update_checker.py"])
         sys.exit(0)
     elif cmd == "close_program":
