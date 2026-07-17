@@ -87,12 +87,12 @@ def udp_init(port=53534):
     def udp_listener():
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.bind(("0.0.0.0", port))
-        print(f"[UDP] Listening on port {port}")
+        print(f"[UDP] Listening on port {port}", flush=True)
         try:
             local_ip = subprocess.check_output(['hostname', '-I']).decode().strip().split()[0]
         except Exception:
             local_ip = "unknown"
-        print(f"[UDP] IP of this device is {local_ip}")
+        print(f"[UDP] IP of this device is {local_ip}", flush=True)
         while True:
             try:
                 data, addr = sock.recvfrom(4096)
