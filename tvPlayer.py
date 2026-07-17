@@ -78,11 +78,11 @@ def mqtt_init():
     mqtt_handler.set_command_handler(handle_command)
     mqtt_handler.start()
 
-def udp_init(port=9999):
+def udp_init(port=53534):
     """
         Initialize UDP listener for commands
         Test with
-        echo '{"command":"next_channel"}' | nc -u <pi-ip> 9999
+        echo '{"command":"next_channel"}' | nc -u <pi-ip> 53534
     """
     def udp_listener():
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
