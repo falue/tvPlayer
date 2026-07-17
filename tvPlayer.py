@@ -95,6 +95,7 @@ def udp_init(port=53534):
         except Exception:
             device_hostname = "tvPlayer"
         print(f"[UDP] Listening on port {port} (hostname={device_hostname}, ip={local_ip})", flush=True)
+        
         while True:
             try:
                 data, addr = sock.recvfrom(4096)
@@ -109,6 +110,7 @@ def udp_init(port=53534):
                     print(f"[UDP] Ignored message for '{msg_hostname}' (we are '{device_hostname}')")
                     continue
                 value = msg_command.split(":")[-1] if ":" in msg_command else 0
+                msg_command = msg_command.split(":")[0] if ":" in msg_command else msg_command
                 print(f"[UDP] From {addr}: {msg_command}, value: {value}")
                 handle_command({"command": msg_command, "value": value})
             except Exception as e:
