@@ -11,6 +11,7 @@ let currentFile = "";
 let blockTimerUpdate = false;
 // let fill_color_active = false;
 let tvChannel = 0;
+let thumbnailMtimes = {};
 const ALERT_THROTTLE_MS = 6000; // 6seconds
 let lastAlertTime = 0;
 
@@ -220,11 +221,14 @@ function handleSettings(data) {
       return;
     }
 
+    thumbnailMtimes = {};
     data.filelist.forEach((filepath, index) => {
       const filename = filepath.split("/").pop();
       const dotIndex = filename.lastIndexOf(".");
       const basename = filename.slice(0, dotIndex);
       const suffix = filename.slice(dotIndex + 1);
+      const mtime = data.filelist_mtimes ? data.filelist_mtimes[index] : 0;
+      thumbnailMtimes[filename] = mtime;
 
       const container = document.createElement("div");
       container.classList.add("button-row");
@@ -234,7 +238,7 @@ function handleSettings(data) {
 
       const img = document.createElement("img");
       img.className = "thumbnails";
-      img.src = `./thumbnails/${basename}.png`;
+      img.src = `./thumbnails/${basename}_${mtime}.png`;
 
       const label = document.createTextNode(`#${index + 1}: ${basename}`);
       const span = document.createElement("span");
@@ -289,7 +293,8 @@ function handleState(data, fillColor=false) {
         hide("timeline", "seeking", "speed", "speedNoteRow", "togglePlayBtn", "abLoop");
         gebi("timecode").innerHTML = "";
       }
-      gebi("display").style.backgroundImage = `url("thumbnails/${name.basename}.png")`;
+      const mtime = thumbnailMtimes[data.currentFileName] || 0;
+      gebi("display").style.backgroundImage = `url("thumbnails/${name.basename}_${mtime}.png")`;
     } else if(fillColor) {
       gebi("currentFile").innerHTML = `Showing a fill color with markers # ${(fillColor.fill_color_index[fillColor.fill_color_type])+1} in fullscreen.`;
       gebi("display").style.backgroundImage = `url("assets/fill_colors/${fillColor.fill_color_type}${(fillColor.fill_color_index[fillColor.fill_color_type])+1}.png")`;

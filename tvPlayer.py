@@ -311,7 +311,13 @@ def send_settings(data=False):
         "duration": get_mpv_property("duration")
     }
 
-    mqtt_handler.send("settings", "Settings & current state", {"settings": data, "filelist": filelist, "state": state})
+    filelist_mtimes = []
+    for f in filelist:
+        try:
+            filelist_mtimes.append(int(os.path.getmtime(f)))
+        except Exception:
+            filelist_mtimes.append(0)
+    mqtt_handler.send("settings", "Settings & current state", {"settings": data, "filelist": filelist, "filelist_mtimes": filelist_mtimes, "state": state})
     last_sent_settings = time.time()
 
 
@@ -768,9 +774,18 @@ def create_thumbnails(current_filelist):
     thumbnail_folder = os.path.join(script_dir, "webremote", "thumbnails")
     os.makedirs(thumbnail_folder, exist_ok=True)
 
-    # Step 1: remove existing thumbnails
+    # Step 1: build set of expected thumbnail filenames
+    expected_thumbs = set()
+    for filepath in current_filelist:
+        if not filepath.lower().endswith(allowed_fileendings) or not os.path.exists(filepath):
+            continue
+        basename = os.path.splitext(os.path.basename(filepath))[0]
+        mtime = int(os.path.getmtime(filepath))
+        expected_thumbs.add(f"{basename}_{mtime}.png")
+
+    # Remove thumbnails not matching any expected filename
     for f in os.listdir(thumbnail_folder):
-        if f.endswith(".png"):
+        if f.endswith(".png") and f not in expected_thumbs:
             os.remove(os.path.join(thumbnail_folder, f))
 
     # Step 2: generate new thumbnails
@@ -782,7 +797,8 @@ def create_thumbnails(current_filelist):
             continue
 
         basename = os.path.splitext(os.path.basename(filepath))[0]
-        thumb_path = os.path.join(thumbnail_folder, f"{basename}.png")
+        mtime = int(os.path.getmtime(filepath))
+        thumb_path = os.path.join(thumbnail_folder, f"{basename}_{mtime}.png")
 
         if os.path.exists(thumb_path):
             continue
