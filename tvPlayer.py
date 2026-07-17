@@ -108,8 +108,9 @@ def udp_init(port=53534):
                 if msg_hostname != device_hostname:
                     print(f"[UDP] Ignored message for '{msg_hostname}' (we are '{device_hostname}')")
                     continue
-                print(f"[UDP] From {addr}: {msg_command}")
-                handle_command({"command": msg_command})
+                value = msg_command.split(":")[-1] if ":" in msg_command else 0
+                print(f"[UDP] From {addr}: {msg_command}, value: {value}")
+                handle_command({"command": msg_command, "value": value})
             except Exception as e:
                 print(f"[UDP] Error: {e}")
     threading.Thread(target=udp_listener, daemon=True).start()

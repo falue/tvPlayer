@@ -32,6 +32,17 @@ Once booted, connect your mobile device to the SSID `tvPlayer` and visit `http:/
 ![webremote_snippet.png](assets/webremote_snippet.png)
 > See full screenshot [here](assets/webremote.png)
 
+# UDP
+Send UDP commands to control the player:
+```
+echo -n "tvPlayer_go_to_channel:3" | nc -u -w1 192.168.1.153 53534
+```
+Whereas `tvPlayer` matches the hostname of the device.
+`go_to_channel` is an example command. See the `handle_command()` function to see which commands are available.
+`:3` is the value `3` for the command (optional; colon is separator).
+`53534` is the default port.
+
+
 # Hardware
 Tested successfully on Raspberry 4 (Debian bullseye).
 
