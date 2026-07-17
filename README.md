@@ -44,26 +44,17 @@ Whereas `tvPlayer` matches the hostname of the device.
 
 
 # Hardware
-Tested successfully on Raspberry 4 (Debian bullseye).
+Tested successfully on Raspberry Pi 4 (Debian Bookworm 64-bit Lite).
 
-Raspberry pi 3 (Debian Bookworm 32bit) did ***not*** work. Very stuttery but very plausibly i'm doin something wrong.
+Raspberry Pi 3 (Debian Bookworm 32bit) may ***not*** work.
 
 Combine it with a [HDMI-to-RCA](https://www.amazon.de/QGECEN-Cinch-Adapter-Konverter-Kabel/dp/B09JVHHXMV/) adapter **and** a [RCA-to-RF](https://aliexpress.com/item/1005002132207554.html) adapter to display on an old TV. Even sound works!
 
 ## Get this up and running
 1. Clone this repo `git clone https://github.com/falue/tvPlayer`
-2. run the install script `sudo bash install.sh` to: *THIS IS NOT YET FINALIZED*
-    - apt-get update
-    - install dependencies (Packages: *mpv*, *socat*, *wmctrl*; Python: *pygame*, *natsort*)
-    - auto-run `python3 autostart.py` on autostart[*]
-    - ~~disable window "removable medium is inserted"~~ [BUG!]
-    - create a desktop shortcut to the program
-3. Set **audio output** to HDMI (right click on audio in toolbar, choose HDMI)
-4. disable pop up window "**removable medium is inserted**": Open any folder > `Edit` > `Preferences` > `Volume Management` > uncheck `Show available options for removable media when they are inserted`
-5. Insert USB, start watching TV.
-6. Connect your mobile device to the SSID `tvPlayer` and visit `http://10.3.141.1:8080`.
-
-> [*] The `autostart.py` script asks if you want to close all other autostarting windows and after a 12s timeout, it starts the main script `tvPlayer.py`. This is because other windows can overlap the tvPlayer and hinder the fullscreen mode. So without a keyboard and doing anything, the player goes to fullscreen on startup.
+2. Follow the setup guide in [SETUP_LITE.md](SETUP_LITE.md)
+3. Insert USB, start watching TV.
+4. Connect your mobile device to the SSID `tvPlayer` and visit `http://10.3.141.1:8080` or send UDP commands.
 
 # File handling
 ## MPV player: Playable media
@@ -109,15 +100,11 @@ If you want to change the order, rename the files approprietly.
 > *TIP:* If any file name starts with `AV.`(mp4 or any other) its always the channel "zero" and the channel number is shown as **"AV"**.
 
 ## Channel number and volume bar styling
-If you want to change the appearance of the channel numbers or the volume bar, you have to update the `.bgra` files in `/channel_numbers` and `/volume_bars`.
+If you want to change the appearance of the channel numbers or the volume bar, update the `.png` files in `assets/channel_numbers/` and `assets/volume_bars/`.
 
-You can edit the pngs and convert them to `.bgra` files. Change the variable `input_folder` in it first, and then run bash script `python3 png_to_bgra.py` to convert the files.
+Images use PNG alpha transparency.
 
-> *Note*: For simplicity, keep the image sizes the same as they are hard coded. Otherwise you have make changes to the script (change the parameters of both `display_image(...)` instances)
-
-### Transparency
-Complete black pixels will become transparent.
-If you want "black" to show up, use `rgb(1,1,1)`.
+> *Note*: For simplicity, keep the image sizes the same as they are hard coded. Otherwise you have to make changes to the script (change the parameters of both `display_image(...)` instances)
 
 # Update system
 To update the system:
@@ -165,8 +152,8 @@ To update the system:
 | y               | pan video downwards                     |      |
 | Y (SHIFT+y)     | pan video upwards                       |      |
 | CTRL + x (or CTRL + y) | reset pan                        |      |
-| .               | zoom out                                | Bug: Does not scale channel number, volume images properly |
-| SHIFT + .       | zoom in                                 | Bug: Does not scale channel number, volume images properly |
+| .               | zoom out                                |      |
+| SHIFT + .       | zoom in                                 |      |
 | CTRL + .        | zoom reset                              |      |
 | ,               | reduce video brightness by 5%           |      |
 | SHIFT + ,       | increase video brightness by 5%         |      |
