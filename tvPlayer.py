@@ -13,6 +13,8 @@ import traceback
 import socket
 import mpv
 import select
+import tempfile
+from PIL import Image
 
 # Customizing
 show_tv_gui = True  # show number of channels top right and volume bar
@@ -754,7 +756,7 @@ def create_thumbnails(current_filelist):
     """
     print("Create thumbnails from filelist..")
     if(len(current_filelist) > 0) :
-        image_path = os.path.join(script_dir, 'assets', f'create_thumbnails.bgra')
+        image_path = os.path.join(script_dir, 'assets', f'create_thumbnails.png')
         display_image(image_path, 3, 50,50, 1600,150, 4.0)
 
     mqtt_handler.send("general", "createThumbnails")
@@ -781,7 +783,7 @@ def create_thumbnails(current_filelist):
         if os.path.exists(thumb_path):
             continue
 
-        image_path = os.path.join(script_dir, 'assets', 'channel_numbers', f'{i+1}.bgra')
+        image_path = os.path.join(script_dir, 'assets', 'channel_numbers', f'{i+1}.png')
         display_image(image_path, 4, max(int(window_width/2)-105, 50),max(int(window_height/2)-75, 200), 210,150, 666)
 
         if filepath.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.tiff', '.bmp')):
@@ -822,7 +824,7 @@ def create_thumbnails(current_filelist):
 
     print("Thumbnail creation complete.")
 
-    image_path = os.path.join(script_dir, 'assets', 'channel_numbers', f'--.bgra')
+    image_path = os.path.join(script_dir, 'assets', 'channel_numbers', f'--.png')
     display_image(image_path, 4, max(int(window_width/2)-105, 50),max(int(window_height/2)-75, 200), 210,150, 0.1)
 
 
@@ -1028,7 +1030,7 @@ def set_volume(value):
         player.volume = value
         print(f"Set volume to {value}")
         if show_tv_gui:
-            image_path = os.path.join(script_dir, 'assets', 'volume_bars', f'volume_{value}.bgra')
+            image_path = os.path.join(script_dir, 'assets', 'volume_bars', f'volume_{value}.png')
             display_image(image_path, 2, int(window_width/2-800),window_height-225, 1600,150, 1.0)
 
 def adjust_volume(value):
@@ -1117,7 +1119,7 @@ def go_to_channel(number):
         channel_to_display = tv_channel + tv_channel_offset
         if has_av_channel and tv_channel == len(filelist)-1:
             channel_to_display = "av"
-        image_path = os.path.join(script_dir, 'assets', 'channel_numbers', f'{channel_to_display}.bgra')
+        image_path = os.path.join(script_dir, 'assets', 'channel_numbers', f'{channel_to_display}.png')
         display_image(image_path, 1, window_width-315,50, 210,150, gui_display_duration)
 
     if show_whitenoise_channel_change:
@@ -1292,7 +1294,6 @@ def set_video_fitting(fitting_index=None):
 
 def display_image(image_path, overlay_id, x, y, width, height, display_duration=2.0):
     global active_overlays
-    # image_path = os.path.join(script_dir, 'assets', 'channel_numbers', f'{number}.bgra')
 
     # Ensure the file exists
     if not os.path.exists(image_path):
@@ -1307,24 +1308,40 @@ def display_image(image_path, overlay_id, x, y, width, height, display_duration=
     y += pan_offsets["y-real"]
 
     # Correct for zoomed video
-    # Calculate original and scaled centers
     if zoom_level != 0.0:
-        # ...zoom_level from -3.0 to +3.0
         scale_factor = 2 ** zoom_level  # Zoom by mpv is logarithmic
         center_x = window_width / 2
         center_y = window_height / 2
-        scaled_center_x = center_x * scale_factor
-        scaled_center_y = center_y * scale_factor
-        # Calculate offsets to recenter
-        offset_x = scaled_center_x - center_x
-        offset_y = scaled_center_y - center_y
-        # Apply zoom and recenter
-        x = int((x * scale_factor) - offset_x)
-        y = int((y * scale_factor) - offset_y)
+        # Scale position and recenter
+        x = int((x * scale_factor) - (center_x * scale_factor - center_x))
+        y = int((y * scale_factor) - (center_y * scale_factor - center_y))
+        # Scale the image dimensions too
+        width = int(width * scale_factor)
+        height = int(height * scale_factor)
 
-    # Overlay-add command via python-mpv
+    # Load PNG, resize for zoom, convert to raw BGRA for mpv overlay-add
+    try:
+        img = Image.open(image_path).convert('RGBA')
+
+        # Resize to target dimensions (handles zoom scaling)
+        if img.size != (width, height) and width > 0 and height > 0:
+            img = img.resize((width, height), Image.LANCZOS)
+
+        # Convert RGBA to BGRA byte order for mpv overlay-add
+        r, g, b, a = img.split()
+        raw_data = Image.merge('RGBA', (b, g, r, a)).tobytes()
+    except Exception as e:
+        print(f"[OVERLAY] Failed to process {image_path}: {e}")
+        return
+
+    # Write raw BGRA to a temp file (mpv overlay-add needs a file path)
+    tmp = tempfile.NamedTemporaryFile(suffix='.bgra', delete=False)
+    tmp.write(raw_data)
+    tmp.close()
+    tmp_path = tmp.name
+
     stride = width * 4  # BGRA has 4 bytes per pixel
-    player.command("overlay-add", overlay_id, x, y, image_path, 0, "bgra", width, height, stride)
+    player.command("overlay-add", overlay_id, x, y, tmp_path, 0, "bgra", width, height, stride)
 
     # Cancel any existing overlay removal thread for this overlay_id
     if overlay_id in active_overlays:
@@ -1334,7 +1351,10 @@ def display_image(image_path, overlay_id, x, y, width, height, display_duration=
     def remove_overlay():
         try:
             player.command("overlay-remove", overlay_id)
-            print(f"Removed overlay ID {overlay_id}")
+        except Exception:
+            pass
+        try:
+            os.unlink(tmp_path)
         except Exception:
             pass
 
@@ -1343,7 +1363,7 @@ def display_image(image_path, overlay_id, x, y, width, height, display_duration=
     thread.start()
     active_overlays[overlay_id] = thread
 
-    print(f"Displaying image: {os.path.basename(image_path)} (@ID:{overlay_id}) at x={x} y={y} for {display_duration} seconds")
+    print(f"Displaying image: {os.path.basename(image_path)} (@ID:{overlay_id}) at x={x} y={y} {width}x{height} for {display_duration}s")
 
 
 def update_in_outpoints():

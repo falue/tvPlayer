@@ -85,7 +85,7 @@ git clone https://github.com/falue/tvPlayer.git
 ## Python Dependencies
 
 ```bash
-pip install --break-system-packages python-mpv evdev natsort paho-mqtt flask RPi.GPIO
+pip install --break-system-packages python-mpv evdev natsort paho-mqtt flask RPi.GPIO Pillow
 ```
 
 > `--break-system-packages` is required on Bookworm+ (PEP 668). Safe here since this is a single-purpose device.

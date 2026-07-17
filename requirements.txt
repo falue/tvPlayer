@@ -4,3 +4,4 @@ natsort
 paho-mqtt
 flask
 RPi.GPIO
+Pillow
