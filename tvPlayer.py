@@ -89,10 +89,7 @@ def udp_init(port=53534):
         sock.bind(("0.0.0.0", port))
         print(f"[UDP] Listening on port {port}")
         try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            s.connect(("8.8.8.8", 80))
-            local_ip = s.getsockname()[0]
-            s.close()
+            local_ip = subprocess.check_output(['hostname', '-I']).decode().strip().split()[0]
         except Exception:
             local_ip = "unknown"
         print(f"[UDP] IP of this device is {local_ip}")
@@ -645,14 +642,14 @@ def system_init():
         print("No USB plugged in during startup")
         show_no_signal()
 
-    print("Wait for osd-dimensions")
+    print("Wait for mpv to be ready (osd-dimensions)..")
     for _ in range(40):  # up to 10s
         osd_w = get_mpv_property("osd-dimensions/w")
         if osd_w is not None and osd_w > 0:
             break
         time.sleep(0.25)
 
-    print("Wait for video width")
+    print("Wait for mpv to be ready (video width)..")
     for _ in range(40):  # up to 10s
         vid_w = get_mpv_property("width")
         if vid_w is not None and vid_w > 0:
