@@ -656,19 +656,23 @@ def system_init():
         print("No USB plugged in during startup")
         show_no_signal()
 
-    print("Wait for mpv to be ready (osd-dimensions)..")
+    print("Wait for mpv to be ready (osd-dimensions)")
     for _ in range(40):  # up to 10s
         osd_w = get_mpv_property("osd-dimensions/w")
         if osd_w is not None and osd_w > 0:
             break
+        print(".", end="", flush=True)
         time.sleep(0.25)
+    print()
 
-    print("Wait for mpv to be ready (video width)..")
+    print("Wait for mpv to be ready (video width)")
     for _ in range(40):  # up to 10s
         vid_w = get_mpv_property("width")
         if vid_w is not None and vid_w > 0:
             break
+        print(".", end="", flush=True)
         time.sleep(0.25)
+    print()
 
     # Set from load_settings()
     pan(pan_offsets["x"], "x")
