@@ -74,6 +74,23 @@ polkit.addRule(function(action, subject) {
 EOF
 ```
 
+## Optionals
+### Hide kernel messages
+Edit:
+```
+sudo nano /boot/firmware/cmdline.txt
+```
+Append (all on one line):
+```
+quiet loglevel=0 systemd.show_status=0 rd.systemd.show_status=0 vt.global_cursor_default=0 logo.nologo splash
+```
+
+### Custom splash image
+```
+sudo apt install plymouth plymouth-themes
+```
+And see here for installation: `assets/splashscreen/README.md`
+
 ---
 
 ## Clone repo

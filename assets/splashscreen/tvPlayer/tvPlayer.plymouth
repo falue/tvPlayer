@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=tvPlayer
+Description=Simple tvPlayer Splash image
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/tvPlayer
+ScriptFile=/usr/share/plymouth/themes/tvPlayer/tvPlayer.script
