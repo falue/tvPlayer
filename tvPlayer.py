@@ -1440,7 +1440,8 @@ def ensure_valid_settings():
             json.dump(default, f, indent=2)
 
 def main():
-    global last_sent_settings, fill_color_type
+    global last_sent_settings, fill_color_type, no_signal_shown
+    no_signal_shown = False
     time.sleep(2)  #
     print("--------------------------------------------------------------------------------")
     player_init()
@@ -1476,18 +1477,20 @@ def main():
             # start first video
             go_to_channel(0)
 
-        # If no files found, show white noise or blank screen
-        if not filelist:
+        # If no files found, show white noise or blank screen (once)
+        if not filelist and not no_signal_shown:
+            no_signal_shown = True
             if show_tv_gui:
                 print("No files - show white noise - wait for USB")
                 if not fill_color_active:
-                    print("trigger show_no_signal()")
                     show_no_signal()
             else:
                 print("No files available - show blank screen")
                 if not fill_color_active:
                     fill_color_type = "black"
-                    show_fill_color()  # FIXME: only once!
+                    show_fill_color()
+        elif filelist:
+            no_signal_shown = False
 
         if quit_program_scheduled:
             print("triggered quit_program_scheduled !!!")
