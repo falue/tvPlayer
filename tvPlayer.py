@@ -881,7 +881,7 @@ def select_fill_color(step, type):
     show_fill_color()
 
 def show_fill_color():
-    global fill_color_active
+    global fill_color_active, current_file
     fill_color_active = True  # MUST BE SET TO False WHENEVER I CHANNEL NEXT / PREV / PLAY THIS CHANNEL THING
     suffix = "mp4" if fill_color_type == 'noise' else "png"
     fill_color_path = os.path.join(script_dir, 'assets', 'fill_colors', f"{fill_color_type}{fill_color_index[fill_color_type]+1}.{suffix}")
@@ -892,7 +892,20 @@ def show_fill_color():
         player.video_zoom = zoom_level
         player.keepaspect = False
 
-    play_file(fill_color_path)
+    # Static images (PNG): loadfile replace doesn't refresh on vo=drm,
+    # so append to playlist, switch, and remove the old entry.
+    if player and suffix != "mp4":
+        player['image-display-duration'] = 'inf'
+        player.command('loadfile', fill_color_path, 'append')
+        player.command('playlist-next', 'force')
+        try:
+            player.command('playlist-remove', 0)
+        except Exception:
+            pass
+        player.pause = False
+        current_file = os.path.basename(fill_color_path)
+    else:
+        play_file(fill_color_path)
 
 def hide_fill_color():
     global fill_color_active
@@ -1151,12 +1164,6 @@ def play_file(file, inpoint=0.0, outpoint=0.0):
         # Set start position before loading (mpv applies 'start' to the next loaded file)
         player['start'] = str(inpoint) if inpoint > 0 else '0'
         player.command('loadfile', file, 'replace')
-        # Force mpv to re-render when swapping between static images (PNG/JPG)
-        if file.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp')):
-            try:
-                player.command('seek', 0, 'absolute')
-            except Exception:
-                pass
 
         # ab-loop properties persist across loadfile in mpv, so we must always
         # set or clear them, otherwise a previous channel's outpoint can cause
