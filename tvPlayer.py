@@ -990,7 +990,7 @@ def pan(offset, axis):
     if axis == "x":
         video_width = get_mpv_property("width")
         osd_dimensions_w = get_mpv_property("osd-dimensions/w")
-        if not video_width or not osd_dimensions_w:
+        if video_width is None or osd_dimensions_w is None or video_width == 0:
             print("problem getting width of video")
             return  # Ignore to not crash
         scaling_factor = osd_dimensions_w / video_width
@@ -999,7 +999,7 @@ def pan(offset, axis):
     else:
         video_height = get_mpv_property("height")
         osd_dimensions_h = get_mpv_property("osd-dimensions/h")
-        if not video_height or not osd_dimensions_h:
+        if video_height is None or osd_dimensions_h is None or video_height == 0:
             print("problem getting height of video")
             return  # Ignore to not crash
         scaling_factor = osd_dimensions_h / video_height
