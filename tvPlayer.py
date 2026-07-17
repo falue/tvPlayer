@@ -180,6 +180,9 @@ def handle_command(data):
     elif cmd == "toggle_white_noise_on_channel_change":
         toggle_white_noise_on_channel_change()
 
+    elif cmd == "reset_colors":
+        reset_colors()
+
     elif cmd == "zoom":
         if float(value) == 0:
             zoom(0, True)
@@ -966,6 +969,14 @@ def adjust_video_saturation(value):
     # Clamp saturation between -100 (full greyscale) and 100 (max vibrance)
     saturation = max(-100, min(100, saturation + value))
     set_saturation(saturation)
+
+def reset_colors():
+    global brightness, contrast, saturation
+    brightness = 0
+    contrast = 0
+    saturation = 0
+    _apply_video_eq()
+    print("Reset brightness, contrast, saturation to 0")
 
 def adjust_video_speed(value):
     global video_speeds
