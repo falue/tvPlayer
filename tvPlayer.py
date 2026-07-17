@@ -81,24 +81,35 @@ def mqtt_init():
 def udp_init(port=53534):
     """
         Initialize UDP listener for commands
-        Test with
-        echo '{"command":"next_channel"}' | nc -u <pi-ip> 53534
+        Plain text format: echo -n "<hostname>_<command>" | nc -u -w1 <pi-ip> 53534
     """
     def udp_listener():
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.bind(("0.0.0.0", port))
-        print(f"[UDP] Listening on port {port}", flush=True)
         try:
             local_ip = subprocess.check_output(['hostname', '-I']).decode().strip().split()[0]
         except Exception:
             local_ip = "unknown"
-        print(f"[UDP] IP of this device is {local_ip}", flush=True)
+        try:
+            device_hostname = socket.gethostname()
+        except Exception:
+            device_hostname = "tvPlayer"
+        print(f"[UDP] Listening on port {port} (hostname={device_hostname}, ip={local_ip})", flush=True)
         while True:
             try:
                 data, addr = sock.recvfrom(4096)
-                payload = json.loads(data.decode())
-                print(f"[UDP] From {addr}: {payload}")
-                handle_command(payload)
+                msg = data.decode().strip()
+                sep = msg.find("_")
+                if sep == -1:
+                    print(f"[UDP] Ignored malformed message from {addr}: {msg}")
+                    continue
+                msg_hostname = msg[:sep]
+                msg_command = msg[sep+1:]
+                if msg_hostname != device_hostname:
+                    print(f"[UDP] Ignored message for '{msg_hostname}' (we are '{device_hostname}')")
+                    continue
+                print(f"[UDP] From {addr}: {msg_command}")
+                handle_command({"command": msg_command})
             except Exception as e:
                 print(f"[UDP] Error: {e}")
     threading.Thread(target=udp_listener, daemon=True).start()

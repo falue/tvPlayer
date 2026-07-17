@@ -8,7 +8,7 @@ mpv renders directly via DRM/KMS on tty1.
 ## Flash & First Boot
 
 - Flash **Raspberry Pi OS Lite (64-bit, Bookworm)** via Raspberry Pi Imager
-- In Imager advanced settings: set hostname, enable SSH, configure WiFi, create user (e.g. `dp`)
+- In Imager advanced settings: set hostname (*used for UDP adressing*!), enable SSH, configure WiFi, create user (e.g. `dp`)
 - Boot, SSH in
 
 ---
