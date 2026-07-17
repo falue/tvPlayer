@@ -1325,7 +1325,10 @@ def display_image(image_path, overlay_id, x, y, width, height, display_duration=
 
         # Resize to target dimensions (handles zoom scaling)
         if img.size != (width, height) and width > 0 and height > 0:
+            # Use premultiplied alpha to avoid fringing/halo around transparent edges
+            img = img.convert('RGBa')
             img = img.resize((width, height), Image.LANCZOS)
+            img = img.convert('RGBA')
 
         # Convert RGBA to BGRA byte order for mpv overlay-add
         r, g, b, a = img.split()
