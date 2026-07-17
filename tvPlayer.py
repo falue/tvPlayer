@@ -100,12 +100,14 @@ def udp_init(port=53534):
                 sep = msg.find("tvPlayer_")
                 if sep == -1:
                     print(f"[UDP] Ignored malformed message from {addr}: {msg} (msg should start with 'tvPlayer_')")
+                    sock.sendto(b"tvPlayer Ignored malformed message (msg should start with 'tvPlayer_')", (addr[0], 53545))
                     continue
                 msg_command = msg[sep+9:]
                 value = msg_command.split(":")[-1] if ":" in msg_command else 0
                 msg_command = msg_command.split(":")[0] if ":" in msg_command else msg_command
                 print(f"[UDP] From {addr}: {msg_command}, value: {value}")
                 handle_command({"command": msg_command, "value": value})
+                sock.sendto(b"tvPlayer_acknowledged", (addr[0], 53545))
             except Exception as e:
                 print(f"[UDP] Error: {e}")
     threading.Thread(target=udp_listener, daemon=True).start()
