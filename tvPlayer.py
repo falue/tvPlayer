@@ -836,9 +836,9 @@ def reset_in_outpoints_video_fitting():
 
 def get_window_size():
     global window_width, window_height
-    # In DRM mode, get dimensions from mpv's osd-dimensions or fallback to defaults
-    w = get_mpv_property("osd-dimensions/w")
-    h = get_mpv_property("osd-dimensions/h")
+    # In DRM mode, osd-dimensions is unavailable; try dwidth/dheight or fallback to defaults (1920x1080)
+    w = get_mpv_property("dwidth") or get_mpv_property("osd-dimensions/w")
+    h = get_mpv_property("dheight") or get_mpv_property("osd-dimensions/h")
     if w and h and w > 0 and h > 0:
         window_width, window_height = int(w), int(h)
 
@@ -996,25 +996,21 @@ def pan(offset, axis):
         # video-pan-y = -0.25: Shifts the video vertically by one-quarter of the displayed video height upwards.
         pan_offsets[axis] += offset*0.0025
 
-    # Set pixel value for image re-positionning
+    # Set pixel value for image re-positionning (use screen size since osd-dimensions is unavailable with vo=drm)
     if axis == "x":
         video_width = get_mpv_property("width")
-        osd_dimensions_w = get_mpv_property("osd-dimensions/w")
-        print(f"[PAN DEBUG] width={video_width}, osd-dimensions/w={osd_dimensions_w}")
-        if video_width is None or osd_dimensions_w is None or video_width == 0:
+        if video_width is None or video_width == 0:
             print("problem getting width of video")
             return  # Ignore to not crash
-        scaling_factor = osd_dimensions_w / video_width
+        scaling_factor = window_width / video_width
         real_x = pan_offsets[axis] * video_width * scaling_factor
         pan_offsets[f"{axis}-real"] = int(real_x)
     else:
         video_height = get_mpv_property("height")
-        osd_dimensions_h = get_mpv_property("osd-dimensions/h")
-        print(f"[PAN DEBUG] height={video_height}, osd-dimensions/h={osd_dimensions_h}")
-        if video_height is None or osd_dimensions_h is None or video_height == 0:
+        if video_height is None or video_height == 0:
             print("problem getting height of video")
             return  # Ignore to not crash
-        scaling_factor = osd_dimensions_h / video_height
+        scaling_factor = window_height / video_height
         real_y = pan_offsets[axis] * video_height * scaling_factor
         pan_offsets[f"{axis}-real"] = int(real_y)
 
