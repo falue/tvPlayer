@@ -151,13 +151,19 @@
         <div class="control-group">
             <h2>Fill colors</h2>
             <div class="button-row">
-                <div class="buttonNote" id="note-cycle_green_screen" title="Green Screen Style">
+                <div
+                    onclick="setToWait('note-cycle_green_screen'); sendCommand({'cmd': 'toggle_green_screen'}, false, true)"
+                    class="buttonNote" id="note-cycle_green_screen" title="Green Screen Style" >
                     <img src="assets/fill_colors/green1.png" title="Fill Color with markers # 1">
                 </div>
-                <div class="buttonNote" id="note-toggle_black_screen" title="Black Screen">
+                <div
+                    onclick="sendCommand({'cmd': 'toggle_black_screen'}, false, true)"
+                    class="buttonNote" id="note-toggle_black_screen" title="Black Screen">
                     <img src="assets/fill_colors/black1.png" title="Fill Color: Black without markers">
                 </div>
-                <div class="buttonNote" id="note-cycle_white_noise" title="White Noise Style">
+                <div
+                    onclick="setToWait('note-cycle_white_noise'); sendCommand({'cmd': 'toggle_white_noise'}, false, true)"
+                    class="buttonNote" id="note-cycle_white_noise" title="White Noise Style">
                     <img src="assets/fill_colors/noise1.png" title="Fill Color: Noise # 1 without markers">
                 </div>
             </div>
