@@ -836,9 +836,11 @@ def reset_in_outpoints_video_fitting():
 
 def get_window_size():
     global window_width, window_height
-    # In DRM mode, osd-dimensions is unavailable; try dwidth/dheight or fallback to defaults (1920x1080)
-    w = get_mpv_property("dwidth") or get_mpv_property("osd-dimensions/w")
-    h = get_mpv_property("dheight") or get_mpv_property("osd-dimensions/h")
+    # Try display-width/height (monitor resolution, works with vo=drm),
+    # then osd-dimensions (works with vo=gpu), otherwise keep defaults (1920x1080).
+    # NOTE: do NOT use dwidth/dheight — those return the video's display size, not the screen.
+    w = get_mpv_property("display-width") or get_mpv_property("osd-dimensions/w")
+    h = get_mpv_property("display-height") or get_mpv_property("osd-dimensions/h")
     if w and h and w > 0 and h > 0:
         window_width, window_height = int(w), int(h)
 
@@ -907,7 +909,7 @@ def show_no_signal():
     play_file(white_noise_path)
 
 def zoom(value, absolute=False):
-    global zoom_level, window_width, window_height
+    global zoom_level
 
     if absolute:
         zoom_level = value
@@ -915,10 +917,7 @@ def zoom(value, absolute=False):
         # Clamp zoom_level between -1.0 (very small) and 2.0 (very big)
         increment = value * (1 + abs(zoom_level))
         zoom_level = max(-3.0, min(3.0, zoom_level + increment))
-    scale_factor = 2 ** zoom_level
-    print(f"Set zoom to {zoom_level}, scale_factor: ", scale_factor)
-    window_width = int(window_width * scale_factor)   # Scale window size for use of relative positioning with iamges etc
-    window_height = int(window_height * scale_factor) # Scale window size for use of relative positioning with iamges etc
+    print(f"Set zoom to {zoom_level}, scale_factor: {2 ** zoom_level:.4f}")
     if player:
         player.video_zoom = zoom_level
 
