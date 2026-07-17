@@ -88,6 +88,7 @@ def udp_init(port=53534):
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.bind(("0.0.0.0", port))
         print(f"[UDP] Listening on port {port}")
+        print(f"[UDP] IP of this device is {socket.gethostbyname(socket.gethostname())}")
         while True:
             try:
                 data, addr = sock.recvfrom(4096)
