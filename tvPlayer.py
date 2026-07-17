@@ -379,7 +379,7 @@ def collect_settings():
             "inpoints": inpoints[i] if i < len(inpoints) else 0,
             "outpoints": outpoints[i] if i < len(outpoints) else 0,
             "video_fittings": video_fittings[i] if i < len(video_fittings) else 0,
-            "video_speeds": video_speeds[i] if i < len(video_speeds) else 0,
+            "video_speeds": video_speeds[i] if i < len(video_speeds) else 1.0,
         }
 
     data["filelist_ignored"] = filelist_ignored
@@ -1025,6 +1025,8 @@ def adjust_video_speed(value):
 
 def set_playback_speed(value):
     if player:
+        if not value or value <= 0:
+            value = 1.0
         player.speed = value
         print(f"Set playback speed to {value}")
 
