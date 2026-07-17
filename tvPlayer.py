@@ -1233,9 +1233,12 @@ def get_mpv_property(property_name):
     if not player:
         return None
     try:
-        # Use command interface for reliable raw property name access
-        # This handles hyphens and slashes (e.g. "osd-dimensions/w")
-        return player.command('get_property', property_name)
+        # For properties with slashes (e.g. "osd-dimensions/w"), use command interface
+        if '/' in property_name:
+            return player.command('get_property', property_name)
+        # For normal properties, use python-mpv attribute access (returns proper Python types)
+        attr_name = property_name.replace('-', '_')
+        return getattr(player, attr_name)
     except Exception:
         return None
 
