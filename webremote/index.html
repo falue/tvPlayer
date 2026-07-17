@@ -177,8 +177,8 @@
                 <button onclick="sendCommand({'cmd': 'show_current_fill_color'}, false, true)">Show current selection</button>
             </div> -->
             <div class="button-row">
-                <button class="dense" style="white-space:nowrap" onclick="setToWait('note-cycle_green_screen'); sendCommand({'cmd': 'cycle_green_screen', 'value': -1}, false, true)"><img src="assets/icons/skip-previous.svg"> Style</button>
-                <button class="dense" style="white-space:nowrap; direction: rtl;" onclick="setToWait('note-cycle_green_screen'); sendCommand({'cmd': 'cycle_green_screen', 'value': 1}, false, true)"><img src="assets/icons/skip-next.svg"> Style</button>
+                <button class="dense" style="white-space:nowrap" onclick="setToWait('note-cycle_green_screen'); sendCommand({'cmd': 'cycle_green_screen', 'value': -1}, false, true); sendCommand({'cmd': 'toggle_green_screen'}, false, true); sendCommand({'cmd': 'toggle_green_screen'}, false, true)"><img src="assets/icons/skip-previous.svg"> Style</button>
+                <button class="dense" style="white-space:nowrap; direction: rtl;" onclick="setToWait('note-cycle_green_screen'); sendCommand({'cmd': 'cycle_green_screen', 'value': 1}, false, true); sendCommand({'cmd': 'toggle_green_screen'}, false, true); sendCommand({'cmd': 'toggle_green_screen'}, false, true)"><img src="assets/icons/skip-next.svg"> Style</button>
 
                 <button class="dense" style="opacity:0" disabled>&nbsp;</button>
                 <button class="dense" style="opacity:0" disabled>&nbsp;</button>
