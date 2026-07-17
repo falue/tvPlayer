@@ -233,7 +233,8 @@ def load_settings():
                     raise ValueError("Empty file")
                 data = json.loads(content)
         except (json.JSONDecodeError, ValueError) as e:
-            print(f"[WARN] Failed to load settings: {e}. Using fallback.")
+            # Print colorful warning here:
+            print(f"\033[93m[WARN] Failed to load settings: {e}. Using fallback.\033[0m")
             data = {"general_settings": {}, "file_dependent_settings": {}}
 
     # Load general settings
@@ -1325,10 +1326,7 @@ def display_image(image_path, overlay_id, x, y, width, height, display_duration=
 
         # Resize to target dimensions (handles zoom scaling)
         if img.size != (width, height) and width > 0 and height > 0:
-            # Use premultiplied alpha to avoid fringing/halo around transparent edges
-            img = img.convert('RGBa')
-            img = img.resize((width, height), Image.LANCZOS)
-            img = img.convert('RGBA')
+            img = img.resize((width, height), Image.NEAREST)
 
         # Convert RGBA to BGRA byte order for mpv overlay-add
         r, g, b, a = img.split()
