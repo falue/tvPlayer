@@ -1150,10 +1150,13 @@ def play_file(file, inpoint=0.0, outpoint=0.0):
         print(f"Swapping to new file: {os.path.basename(file)} at {inpoint} seconds.")
         # Set start position before loading (mpv applies 'start' to the next loaded file)
         player['start'] = str(inpoint) if inpoint > 0 else '0'
-        # Force stop before loading static images so mpv properly refreshes
-        if file.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp')):
-            player.command('stop')
         player.command('loadfile', file, 'replace')
+        # Force mpv to re-render when swapping between static images (PNG/JPG)
+        if file.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp')):
+            try:
+                player.command('seek', 0, 'absolute')
+            except Exception:
+                pass
 
         # ab-loop properties persist across loadfile in mpv, so we must always
         # set or clear them, otherwise a previous channel's outpoint can cause
