@@ -124,8 +124,6 @@ def handle_command(data):
         send_settings()
     elif cmd == "toggle_play":
         toggle_play()
-    elif cmd == "toggle_fullscreen":
-        toggle_fullscreen()
 
     elif cmd == "jump":
         jump(float(value))
@@ -1229,9 +1227,6 @@ def clear_ab_loop():
 def toggle_play():
     if player:
         player.cycle('pause')
-
-def toggle_fullscreen():
-    pass  # In DRM mode, always fullscreen — no-op
 
 def seek(seconds):
     if player:
