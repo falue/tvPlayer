@@ -21,11 +21,16 @@ function init() {
   logging("start!");
   const mqttHost = location.hostname; // returns "10.3.141.1"
   logging(mqttHost);
-  client = mqtt.connect(`ws://${mqttHost}:9001`);
+  try {
+    client = mqtt.connect(`ws://${mqttHost}:9001`);
+  } catch (e) {
+    console.log(e);
+    gebi('error').innerHTML = 'Cannot connect to websocket - system is running?';
+  }
   logging(`ws://${mqttHost}:9001`);
   logging(`scripts.js loaded`);
   logging(`mqtt: ` + typeof mqtt);
-  logging(`Using MQTT host: ` + mqttHost);
+  logging(`Using MQTT host: ` + (mqttHost ? mqttHost : 'error'));
 
   client.on("error", (err) => {
     logging(`MQTT connection error: ${err.message}`);
