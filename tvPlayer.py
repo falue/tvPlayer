@@ -777,95 +777,101 @@ def update_files_from_usb():
 
 def create_thumbnails(current_filelist):
     """
-    Remove all images from ./webremote/thumbnails.
-    For each file in current_filelist:
-        - If it's an image, convert to 600px wide PNG if not already in ./webremote/thumbnails
-        - If it's a video, extract a middle-frame PNG if not already in ./webremote/thumbnails
+    Synchronize ./webremote/thumbnails with current_filelist of USB device.
+    - Generate thumbnails only when missing current version (checks edit time with the filename combination).
+    - Show the "creating thumbnails" image only if any thumbnails at all must be generated.
     """
-    print("Create thumbnails from filelist..")
-    if(len(current_filelist) > 0) :
-        image_path = os.path.join(script_dir, 'assets', f'create_thumbnails.png')
-        display_image(image_path, 3, 50,50, 1600,150, 4.0)
+    print("Checking thumbnails...")
 
-    mqtt_handler.send("general", "createThumbnails")
+    if not current_filelist:
+        print("File list is empty.")
+        return
 
     thumbnail_folder = os.path.join(script_dir, "webremote", "thumbnails")
     os.makedirs(thumbnail_folder, exist_ok=True)
 
-    # Step 1: build set of expected thumbnail filenames
-    expected_thumbs = set()
-    for filepath in current_filelist:
-        if not filepath.lower().endswith(allowed_fileendings) or not os.path.exists(filepath):
-            continue
-        basename = os.path.splitext(os.path.basename(filepath))[0]
-        mtime = int(os.path.getmtime(filepath))
-        expected_thumbs.add(f"{basename}_{mtime}.png")
+    jobs = []
 
-    # Remove thumbnails not matching any expected filename
-    for f in os.listdir(thumbnail_folder):
-        if f.endswith(".png") and f not in expected_thumbs:
-            os.remove(os.path.join(thumbnail_folder, f))
-
-    # Step 2: generate new thumbnails
     for i, filepath in enumerate(current_filelist):
-        if not filepath.lower().endswith(allowed_fileendings):
-            continue
-
-        if not os.path.exists(filepath):
+        if (
+            not filepath.lower().endswith(allowed_fileendings)
+            or not os.path.exists(filepath)
+        ):
             continue
 
         basename = os.path.splitext(os.path.basename(filepath))[0]
         mtime = int(os.path.getmtime(filepath))
-        thumb_path = os.path.join(thumbnail_folder, f"{basename}_{mtime}.png")
+        thumb_path = os.path.join(
+            thumbnail_folder,
+            f"{basename}_{mtime}.png"
+        )
 
-        if os.path.exists(thumb_path):
-            continue
+        if not os.path.exists(thumb_path):
+            jobs.append((i, filepath, thumb_path))
 
-        image_path = os.path.join(script_dir, 'assets', 'channel_numbers', f'{i+1}.png')
-        display_image(image_path, 4, max(int(window_width/2)-105, 50),max(int(window_height/2)-75, 200), 210,150, 666)
+    if not jobs:
+        print("All thumbnails are up to date.")
+        return
 
-        if filepath.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.tiff', '.bmp')):
-            # Generate thumbnail from image using ImageMagick
+    display_image(
+        os.path.join(script_dir, "assets", "create_thumbnails.png"),
+        3, 50, 50, 1600, 150, 4.0
+    )
+
+    mqtt_handler.send("general", "createThumbnails")
+
+    for i, filepath, thumb_path in jobs:
+        display_image(
+            os.path.join(
+                script_dir,
+                "assets",
+                "channel_numbers",
+                f"{i + 1}.png"
+            ),
+            4,
+            max(window_width // 2 - 105, 50),
+            max(window_height // 2 - 75, 200),
+            210, 150, 666
+        )
+
+        if filepath.lower().endswith(
+            (".jpg", ".jpeg", ".png", ".gif", ".tiff", ".bmp")
+        ):
             subprocess.run([
-                "convert", filepath,
+                "convert",
+                filepath,
                 "-resize", "600x",
                 thumb_path
             ])
-        else:
-            # Get video duration to find midpoint
-            result = subprocess.run([
-                "ffprobe", "-v", "error",
-                "-hide_banner", "-loglevel", "error",
-                "-select_streams", "v:0",
-                "-show_entries", "format=duration",
-                "-of", "default=noprint_wrappers=1:nokey=1",
-                filepath
-            ], capture_output=True, text=True)
+            continue
 
-            try:
-                duration = float(result.stdout.strip())
-            except:
-                duration = 1
+        result = subprocess.run([
+            "ffprobe",
+            "-v", "error",
+            "-select_streams", "v:0",
+            "-show_entries", "format=duration",
+            "-of", "default=noprint_wrappers=1:nokey=1",
+            filepath
+        ], capture_output=True, text=True)
 
-            midpoint = duration / 2
+        try:
+            midpoint = float(result.stdout.strip()) / 2
+        except ValueError:
+            midpoint = 0.5
 
-            # Generate thumbnail from video using FFmpeg
-            subprocess.run([
-                "ffmpeg", "-y",
-                "-hide_banner", "-loglevel", "error",
-                "-ss", str(midpoint),
-                "-i", filepath,
-                "-vframes", "1",
-                "-vf", "scale=600:-1",
-                thumb_path
-            ])
+        subprocess.run([
+            "ffmpeg",
+            "-y",
+            "-hide_banner",
+            "-loglevel", "error",
+            "-ss", str(midpoint),
+            "-i", filepath,
+            "-frames:v", "1",
+            "-vf", "scale=600:-1",
+            thumb_path
+        ])
 
     print("Thumbnail creation complete.")
-
-    image_path = os.path.join(script_dir, 'assets', 'channel_numbers', f'--.png')
-    display_image(image_path, 4, max(int(window_width/2)-105, 50),max(int(window_height/2)-75, 200), 210,150, 0.1)
-
-
 
 def reset_in_outpoints_video_fitting():
     global inpoints, outpoints, video_fittings, video_speeds
