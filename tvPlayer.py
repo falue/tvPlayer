@@ -926,11 +926,11 @@ def show_fill_color():
     suffix = "mp4" if fill_color_type == 'noise' else "png"
     fill_color_path = os.path.join(script_dir, 'assets', 'fill_colors', f"{fill_color_type}{fill_color_index[fill_color_type]+1}.{suffix}")
 
-    # Set fill colors always to stretch
+    # Set fill colors to always play at default speed
     if player:
         player.speed = 1.0
-        player.video_zoom = zoom_level
-        player.keepaspect = False
+        # player.video_zoom = zoom_level
+        # player.keepaspect = False
 
     play_file(fill_color_path)
 
@@ -945,11 +945,11 @@ def hide_fill_color():
 def show_no_signal():
     # Show white noise in between channels or when no files on USB
     white_noise_path = os.path.join(script_dir, 'assets', 'fill_colors', f"noise{fill_color_index['noise']+1}.mp4")
-    # Set white noise to always stretch
+    # Set white noise to always play at default speed
     if player:
         player.speed = 1.0
-        player.video_zoom = zoom_level
-        player.keepaspect = False
+        # player.video_zoom = zoom_level
+        # player.keepaspect = False
     play_file(white_noise_path)
 
 def zoom(value, absolute=False):
