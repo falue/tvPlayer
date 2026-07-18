@@ -2,6 +2,7 @@ let client;
 let hasReceivedSettings = false;
 let raspi_available = false;
 let raspi_available_timer = null;
+let raspi_alert_timer = null;
 let settings = {};
 let lastThumbnail = "";
 let lastPlaystate = "";
@@ -122,6 +123,7 @@ function gebi(id) {
 function handleHeartbeat(temp=false) {
   raspi_available = true;
   clearTimeout(raspi_available_timer);
+  clearTimeout(raspi_alert_timer);
   if(temp !== false) {
     // Set CPU temp
     if(temp > 90) {
@@ -142,21 +144,24 @@ function handleHeartbeat(temp=false) {
     }
   }
 
-  // Add green class
+  // Add green heartbeat class
   gebi("heartbeat").classList.add("active");
-  // remove green class after 1s (+css-fadeout)
+
+  // Remove green class after 1s (+ CSS fadeout)
   setTimeout(() => {
     gebi("heartbeat").classList.remove("active");
   }, 1000);
+
+  // Mark Raspberry Pi unavailable after 8 seconds without a heartbeat
   raspi_available_timer = setTimeout(() => {
     logging("CONNECTION LOST AFTER 8s");
-    // Enable warning-alerts on button presses and siable them after 8s
     raspi_available = false;
-    setTimeout(() => {
-      // Warn the user anyhow out of the blue after total 16s of loss of connection
-      alert("Connection lost after 24s. Go closer or turn tvPlayer on.");
-    }, 16000);
   }, 8000);
+
+  // Warn once after 24 seconds without a heartbeat
+  raspi_alert_timer = setTimeout(() => {
+    alert("Connection lost after 24s. Go closer or turn tvPlayer on.");
+  }, 24000);
 }
 
 function showState() {
