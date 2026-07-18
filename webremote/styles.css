@@ -8,6 +8,7 @@ body {
     padding: 0;
     background-color: #121212;
     color: #fff;
+    transition: background 4s ease-in-out;
 }
 
 a {
@@ -418,7 +419,9 @@ img.wait {
 }
 
 #error {
+    text-align: center;
     color:rgb(255, 68, 0);
+    mix-blend-mode: difference;
 }
 
 .heartbeatContainer {

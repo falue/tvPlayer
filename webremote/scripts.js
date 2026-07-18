@@ -3,6 +3,7 @@ let hasReceivedSettings = false;
 let raspi_available = false;
 let raspi_available_timer = null;
 let raspi_alert_timer = null;
+let shownCriticalHeatAlert = false;
 let settings = {};
 let lastThumbnail = "";
 let lastPlaystate = "";
@@ -120,28 +121,43 @@ function gebi(id) {
   return document.getElementById(id);
 }
 
+function showTemperatureData(temp) {
+  // Set CPU temp
+  if(temp > 90) {
+    gebi('body').style.backgroundColor = 'rgb(255, 68, 0)';
+    gebi('note-temp').innerHTML = `!!! ${temp.toFixed(1)}°C !!!`;
+    gebi('note-temp').style.color= "rgb(255, 68, 0)";
+    gebi('error').innerHTML = `<h2 style="margin:0">${temp.toFixed(1)}°C - TURN OFF NOW</h2>`;
+    if(!shownCriticalHeatAlert) {
+      alert('tvPlayer is INCREDIBLY hot - turn off NOW!');
+      alert(`I'm serious. Its ${temp.toFixed(1)}°C, max before damage is 85°C.`);
+      shownCriticalHeatAlert = true;
+    }
+  } else if(temp > 85) {
+    gebi('note-temp').innerHTML = `!!! ${temp.toFixed(1)}°C !!!`;
+    gebi('note-temp').style.color= "rgb(255, 68, 0)";
+    gebi('error').innerHTML = `tvPlayer is VERY hot - <strong>${temp.toFixed(1)}°C</strong> - turn off NOW - CPU throttling`;
+    gebi('body').style.backgroundColor = '#121212'; // Revert red background if okay-ish
+  } else if(temp >= 80) {
+    gebi('note-temp').innerHTML = `${temp.toFixed(1)}°C!`;
+    gebi('note-temp').style.color= "rgb(255, 115, 0)";
+    gebi('error').innerHTML = `tvPlayer is hot - <strong>${temp.toFixed(1)}°C</strong> - cool down`;
+    gebi('body').style.backgroundColor = '#121212'; // Revert red background if okay-ish
+  } else {
+    gebi('note-temp').innerHTML = `${temp.toFixed(1)}°C`;
+    gebi('note-temp').style.color= "inherit";
+    gebi('error').innerHTML = '';
+    gebi('body').style.backgroundColor = '#121212'; // Revert red background if okay-ish
+    shownCriticalHeatAlert = false;  // Show next time when the temp reaches a lot of deg
+  }
+}
+
 function handleHeartbeat(temp=false) {
   raspi_available = true;
   clearTimeout(raspi_available_timer);
   clearTimeout(raspi_alert_timer);
   if(temp !== false) {
-    // Set CPU temp
-    if(temp > 90) {
-      alert('tvPlayer is INCREDIBLY hot - turn off NOW!')
-    }
-    if(temp > 85) {
-      gebi('note-temp').innerHTML = `!!! ${temp.toFixed(1)}°C !!!`;
-      gebi('note-temp').style.color= "rgb(255, 68, 0)";
-      gebi('error').innerHTML = 'tvPlayer is VERY hot - turn off NOW'
-    } else if(temp >= 80) {
-      gebi('note-temp').innerHTML = `${temp.toFixed(1)}°C!`;
-      gebi('note-temp').style.color= "rgb(255, 115, 0)";
-      gebi('error').innerHTML = 'tvPlayer is hot - turn off'
-    } else {
-      gebi('note-temp').innerHTML = `${temp.toFixed(1)}°C`;
-      gebi('note-temp').style.color= "inherit";
-      gebi('error').innerHTML = ''
-    }
+    showTemperatureData(temp);
   }
 
   // Add green heartbeat class

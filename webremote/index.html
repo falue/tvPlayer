@@ -18,11 +18,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 </head> 
 
-<body>
+<body id="body">
     <div class="container">
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <img src="./assets/logo.png?v=250528-B" alt="Logo" style="height: 40px; margin-left:-8px">
-            <div id="error"></div>
+            <div id="error" class="small"></div>
             <div class="heartbeatContainer pointer" onclick="showState()">
                 <div>
                     <div id="heartbeat"></div>
@@ -44,6 +44,15 @@
         <div class="playerInfo">
             <div id="currentFile" class="small">No current file. Insert USB with <a href="#" onclick="showValidFiles()">valid video or image files</a>.</div>
         </div>
+
+        <h1>Temp debug</h1>
+        <input type="text" oninput="showTemperatureData(parseInt(this.value))">
+        <button onclick="showTemperatureData(22)">22</button>
+        <button onclick="showTemperatureData(66)">66</button>
+        <button onclick="showTemperatureData(81)">81</button>
+        <button onclick="showTemperatureData(86)">86</button>
+        <button onclick="showTemperatureData(99)">99</button>
+
 
         <!-- TIMELINE -->
         <div id="timelineContainer" style="height: 2.5em;">
