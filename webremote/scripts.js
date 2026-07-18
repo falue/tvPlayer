@@ -13,7 +13,7 @@ let blockTimerUpdate = false;
 // let fill_color_active = false;
 let tvChannel = 0;
 let thumbnailMtimes = {};
-const ALERT_THROTTLE_MS = 6000; // 6seconds
+const ALERT_THROTTLE_MS = 222;
 let lastAlertTime = 0;
 
 function init() {
