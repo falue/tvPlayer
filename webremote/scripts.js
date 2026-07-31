@@ -266,13 +266,18 @@ function handleSettings(data) {
       img.className = "thumbnails";
       img.src = `./thumbnails/${basename}_${mtime}.png`;
 
-      const label = document.createTextNode(`#${index + 1}: ${basename}`);
+      const channelNumber = document.createElement("img");
+      channelNumber.src = `./assets/channel_numbers/${index + 1}.png`;
+      channelNumber.style.height = "1.25em";
+      channelNumber.style.paddingRight = "0.5em";
+      const label = document.createTextNode(`${basename}`);
       const span = document.createElement("span");
       span.className = "grey";
       span.textContent = `.${suffix}`;
 
       button.appendChild(img);
       const divText = document.createElement("div");
+      divText.appendChild(channelNumber);
       divText.appendChild(label);
       divText.appendChild(span);
       button.appendChild(divText);
