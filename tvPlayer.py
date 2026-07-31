@@ -699,7 +699,7 @@ def system_init():
             break
         display_image(
             os.path.join(script_dir, "assets", "loading.png"),
-            3, 50, 50, 660, 150, 0.5
+            4, 50, 50, 750, 150, 0.25
         )
         print(".", end="", flush=True)
         time.sleep(0.25)
@@ -713,7 +713,7 @@ def system_init():
         print(".", end="", flush=True)
         display_image(
             os.path.join(script_dir, "assets", "loading.png"),
-            3, 50, 50, 660, 150, 0.5
+            4, 50, 50, 750, 150, 0.25
         )
         time.sleep(0.25)
     print()
