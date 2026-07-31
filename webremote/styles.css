@@ -74,49 +74,6 @@ a:hover {
     text-align: center;
     user-select: none;
     pointer-events: none;
-
-
-    background-color: #3700b3;
-
-    position: relative;
-    width: 33vw;
-    height: 40vw;
-    margin: auto;
-    -webkit-tap-highlight-color: transparent;
-    user-select: none;
-    outline: none;
-}
-
-
-/* base for BOTH pseudo elems (important!) */
-#playstate::before,
-#playstate::after{
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: var(--mainColor);
-    clip-path: polygon(0 0, 100% 50%, 100% 50%, 0% 100%);
-    transition: clip-path 220ms ease-in-out;
-    will-change: clip-path;
-}
-#playstate::after{
-    transition: clip-path 185ms ease-in-out;
-}
-
-/* ▶ PLAY: draw the triangle only once (use ::before), hide ::after */
-#playstate:not(.pause)::before{
-    clip-path: polygon(0 0, 100% 50%, 100% 50%, 0% 100%);
-}
-#playstate:not(.pause)::after{
-    clip-path: polygon(0 85%, 100% 50%, 100% 50%, 0 15%);
-}
-
-/* ⏸ PAUSE: use both bars */
-#playstate.pause::before{
-    clip-path: polygon(0 0, 33% 0, 33% 100%, 0 100%);
-}
-#playstate.pause::after{
-    clip-path: polygon(66% 0, 100% 0, 100% 100%, 66% 100%);
 }
 
 .previewOnly {
