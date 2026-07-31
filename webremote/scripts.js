@@ -194,6 +194,16 @@ function showState() {
 }
 
 function handleSettings(data) {
+  // Populate thumbnailMtimes early so handleState can resolve the correct thumbnail
+  if (data.filelist) {
+    thumbnailMtimes = {};
+    data.filelist.forEach((filepath, index) => {
+      const filename = filepath.split("/").pop();
+      const mtime = data.filelist_mtimes ? data.filelist_mtimes[index] : 0;
+      thumbnailMtimes[filename] = mtime;
+    });
+  }
+
   handleState(data.state, data.settings.general_settings.fill_color_active ? {
     "fill_color_active": true,
     "fill_color_index": data.settings.general_settings.fill_color_index,
