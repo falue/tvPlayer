@@ -309,7 +309,7 @@ function handleSettings(data) {
 
 function handleState(data, fillColor=false) {
   if(!data) {
-    console.log("USB has no files");
+    console.log("USB has no files or is unplugged");
     return;
   }
 
