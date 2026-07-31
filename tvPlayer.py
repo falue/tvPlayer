@@ -73,6 +73,44 @@ file_settings = {}
 SETTINGS_FILE = "settings.json"
 settings_lock = threading.Lock()
 script_dir = os.path.dirname(os.path.abspath(__file__))
+VERSION_FILE = os.path.join(script_dir, "webremote", "update_metadata.json")
+
+def update_version_metadata():
+    """Update update_metadata.json with current git commit hash if source is 'git' or file is missing."""
+    try:
+        git_hash = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], cwd=script_dir, text=True, stderr=subprocess.DEVNULL
+        ).strip()
+        git_date = subprocess.check_output(
+            ["git", "log", "-1", "--format=%cI"], cwd=script_dir, text=True, stderr=subprocess.DEVNULL
+        ).strip()
+    except Exception:
+        return  # not a git repo or git not available
+
+    # Read existing metadata
+    meta = {}
+    if os.path.exists(VERSION_FILE):
+        try:
+            with open(VERSION_FILE, "r") as f:
+                meta = json.load(f)
+        except Exception:
+            pass
+
+    # Only overwrite if source is "git" (or missing/unknown) and hash differs
+    if meta.get("source") == "zip":
+        return
+
+    if meta.get("hash") == git_hash:
+        return
+
+    os.makedirs(os.path.dirname(VERSION_FILE), exist_ok=True)
+    with open(VERSION_FILE, "w") as f:
+        json.dump({
+            "hash": git_hash,
+            "installed_at": git_date,
+            "source": "git"
+        }, f, indent=2)
+    print(f"[VERSION] Updated metadata to git commit {git_hash[:7]}")
 
 def mqtt_init():
     mqtt_handler.set_command_handler(handle_command)
@@ -1481,6 +1519,7 @@ def main():
     no_signal_shown = False
     time.sleep(2)  #
     print("--------------------------------------------------------------------------------")
+    update_version_metadata()
     player_init()
     system_init()
     server_init()

@@ -494,7 +494,8 @@ function showValidFiles() {
 async function displayVersionUpdateDate() {
   const data = await (await fetch('./update_metadata.json?v=' + Date.now())).json();
 
-  gebi('zip_hash').textContent = data.zip_hash.slice(0, 7);
+  gebi('version_hash').textContent = data.hash.slice(0, 7);
+  gebi('version_hash').title = data.source === 'git' ? 'git commit hash' : 'sha256 of installed zip';
 
   const d = new Date(data.installed_at).toLocaleString('de-CH', {
     timeZone: 'Europe/Zurich',

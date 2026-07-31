@@ -48,7 +48,7 @@ def get_zip_hash():
     if VERSION_FILE.exists():
         try:
             with open(VERSION_FILE) as f:
-                return json.load(f).get("zip_hash", "")
+                return json.load(f).get("hash", "")
         except Exception:
             return ""
     return ""
@@ -60,8 +60,9 @@ def write_version_info(hash_value, timestamp):
     VERSION_FILE.parent.mkdir(parents=True, exist_ok=True)
     with open(VERSION_FILE, "w") as f:
         json.dump({
-            "zip_hash": hash_value,
-            "installed_at": timestamp
+            "hash": hash_value,
+            "installed_at": timestamp,
+            "source": "zip"
         }, f, indent=2)
 
 def prepare_update(zip_path):
@@ -78,8 +79,9 @@ def prepare_update(zip_path):
 def launch_update_script(hash_value, timestamp):
     script_path = script_dir / "run_update.sh"
     version_string = json.dumps({
-        "zip_hash": hash_value,
-        "installed_at": timestamp
+        "hash": hash_value,
+        "installed_at": timestamp,
+        "source": "zip"
     }, indent=2)
 
     with open(script_path, "w") as f:
