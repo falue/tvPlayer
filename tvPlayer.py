@@ -1256,18 +1256,6 @@ def play_file(file, inpoint=0.0, outpoint=0.0):
         # the property after loadfile, leading to a frozen first frame.
         player.pause = False
 
-        # WORKAROUND: vo=drm does not immediately page-flip after loadfile for
-        # images. Force a frame render by seeking after a short delay.
-        if file.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.tiff')):
-            def _force_frame():
-                try:
-                    if player:
-                        player.command('frame-step')
-                        player.pause = False
-                except Exception:
-                    pass
-            threading.Timer(0.25, _force_frame).start()
-
     current_file = os.path.basename(file)  # file
 
 def play():
