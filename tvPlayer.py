@@ -1009,6 +1009,9 @@ def _apply_video_eq():
     """Apply brightness/contrast/saturation via lavfi eq filter (works with any VO including drm)."""
     if not player:
         return
+    if brightness == 0 and contrast == 0 and saturation == 0:
+        player.vf = ''
+        return
     # eq filter ranges: brightness -1.0..1.0, contrast -1000..1000 (1.0=normal), saturation 0..3.0 (1.0=normal)
     b = brightness / 100.0              # -100..100 -> -1.0..1.0
     c = 1.0 + (contrast / 100.0)        # -100..100 -> 0.0..2.0
