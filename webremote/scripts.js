@@ -225,7 +225,7 @@ function handleSettings(data) {
     if(settings.show_tv_gui) {
       gebi('note-show_tv_gui').innerHTML = "On";
       show('channel_number');
-      let channelName = data.filelist[tvChannel].split("/").pop().startsWith('av.') ? "AV" : tvChannel +1;
+      let channelName = data.filelist.length && data.filelist[tvChannel].split("/").pop().startsWith('av.') ? "AV" : tvChannel +1;
       gebi('channel_number').src=`assets/channel_numbers/${channelName}.png`;
     } else {
       gebi('note-show_tv_gui').innerHTML = "Off";
