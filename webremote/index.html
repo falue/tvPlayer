@@ -74,22 +74,22 @@
             <!-- SEEKING -->
             <div id="seeking" class="button-row">
                 <button class="dense" style="white-space:nowrap" onclick="sendCommand({'cmd': 'seek', 'value': -60})">
-                    <img src="assets/icons/rewind.svg"><sup class="small">-1m</sup>
+                    <img src="assets/icons/rewind.svg"><span class="small">-1m</span>
                 </button>
                 <button class="dense" style="white-space:nowrap" onclick="sendCommand({'cmd': 'seek', 'value': -5})">
-                    <img src="assets/icons/step-backward-2.svg"><sup class="small">-5s</sup>
+                    <img src="assets/icons/step-backward-2.svg"><span class="small">-5s</span>
                 </button>
                 <button class="dense" style="white-space:nowrap" onclick="sendCommand({'cmd': 'seek', 'value': -0.04})">
-                    <img src="assets/icons/step-backward.svg"><sup class="small">-f</sup>
+                    <img src="assets/icons/step-backward.svg"><span class="small">-f</span>
                 </button>
                 <button class="dense" style="white-space:nowrap" onclick="sendCommand({'cmd': 'seek', 'value': 0.04})">
-                    <img src="assets/icons/step-forward.svg"><sup class="small">+f</sup>
+                    <img src="assets/icons/step-forward.svg"><span class="small">+f</span>
                 </button>
                 <button class="dense" style="white-space:nowrap" onclick="sendCommand({'cmd': 'seek', 'value': 5})">
-                    <img src="assets/icons/step-forward-2.svg"><sup class="small">+5s</sup>
+                    <img src="assets/icons/step-forward-2.svg"><span class="small">+5s</span>
                 </button>
                 <button class="dense" style="white-space:nowrap" onclick="sendCommand({'cmd': 'seek', 'value': 60})">
-                    <img src="assets/icons/fast-forward.svg"><sup class="small">+1m</sup>
+                    <img src="assets/icons/fast-forward.svg"><span class="small">+1m</span>
                 </button>
             </div>
             <!-- PLAYBACK SPEED -->
@@ -102,19 +102,19 @@
                     data-func="speed" 
                     data-args='-0.1'
                 >
-                    <img src="assets/icons/speedometer-slow.svg"><sup>-</sup>
+                    <img src="assets/icons/speedometer-slow.svg"><span>-</span>
                 </button>
                 <button onclick="setToWait('note-speed'); sendCommand({'cmd': 'speed', 'value': 'reset'}, false, true)" style="width:250%"
                     class="reset"
                 >
-                    <sup style="opacity: 0;">reset</sup> <img src="assets/icons/speedometer-medium.svg"> <sup>reset</sup>
+                    <span style="opacity: 0;">reset</span> <img src="assets/icons/speedometer-medium.svg"> <span>reset</span>
                 </button>
                 <button 
                     data-trigger 
                     data-func="speed" 
                     data-args='0.1'
                 >
-                    <img src="assets/icons/speedometer.svg"><sup>+</sup>
+                    <img src="assets/icons/speedometer.svg"><span>+</span>
                 </button>
             </div>
             <div class="small">
@@ -215,9 +215,9 @@
                 <button data-func="zoom" onclick="setToWait('note-zoom'); sendCommand({'cmd': 'zoom', 'value': 0}, false, true)" style="width:250%"
                     class="reset"
                 >
-                    <sup style="opacity: 0;">reset</sup>
+                    <span style="opacity: 0;">reset</span>
                     <img src="assets/icons/magnify.svg">
-                    <sup>reset</sup>
+                    <span>reset</span>
                 </button>
                 <button 
                     data-trigger 
@@ -259,9 +259,9 @@
                 <button data-func="pan" onclick="setToWait('note-pan-x'); setToWait('note-pan-y'); sendCommand({'cmd': 'pan_reset'}, false, true)"
                     class="reset"
                 >
-                    <sup style="opacity: 0;">reset</sup>
+                    <span style="opacity: 0;">reset</span>
                     <img src="assets/icons/arrow-all.svg">
-                    <sup>reset</sup>
+                    <span>reset</span>
                 </button>
                 <button
                     data-trigger 
@@ -308,42 +308,42 @@
                     data-func="brightness" 
                     data-args='-5'
                 >
-                    <img src="assets/icons/brightness-6.svg"><sup>-</sup>
+                    <img src="assets/icons/brightness-6.svg"><span>-</span>
                 </button>
                 <button
                     data-trigger 
                     data-func="brightness" 
                     data-args='5'
                 >
-                    <img src="assets/icons/brightness-6.svg"><sup>+</sup>
+                    <img src="assets/icons/brightness-6.svg"><span>+</span>
                 </button>
                 <button
                     data-trigger 
                     data-func="contrast" 
                     data-args='-5'
                 >
-                    <img src="assets/icons/image-filter-black-white.svg"><sup>-</sup>
+                    <img src="assets/icons/image-filter-black-white.svg"><span>-</span>
                 </button>
                 <button
                     data-trigger 
                     data-func="contrast" 
                     data-args='5'
                 >
-                    <img src="assets/icons/image-filter-black-white.svg"><sup>+</sup>
+                    <img src="assets/icons/image-filter-black-white.svg"><span>+</span>
                 </button>
                 <button
                     data-trigger 
                     data-func="saturation" 
                     data-args='-5'
                 >
-                    <img src="assets/icons/palette.svg"><sup>-</sup>
+                    <img src="assets/icons/palette.svg"><span>-</span>
                 </button>
                 <button
                     data-trigger 
                     data-func="saturation" 
                     data-args='5'
                 >
-                    <img src="assets/icons/palette.svg"><sup>+</sup>
+                    <img src="assets/icons/palette.svg"><span>+</span>
                 </button>
             </div>
             <div class="button-row">
