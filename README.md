@@ -129,7 +129,6 @@ To update the system:
 | CTRL + DOWN     | jump -60 seconds                         |      |
 | SHIFT + DOWN    | pause and jump one frame backwards       |      |
 | p *or* space    | toggle play / pause                      |      |
-| ESC             | toggle fullscreen                        |      |
 | q               | shutdown raspberry pi                    |      |
 | Q (SHIFT+q)     | exit program                             |      |
 | b               | toggle black screen on or off            | Also pauses the current video when entering black screen, resumes video when exiting black screen      |
