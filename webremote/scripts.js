@@ -255,6 +255,7 @@ function handleSettings(data) {
 
     if (data.filelist.length == 0) {
       filelistContainer.innerHTML = "No <a href='#' onclick='showValidFiles()'>valid files</a> on USB or no USB plugged.";
+      gebi('filelistIgnored').innerHTML = "";
       return;
     }
 
