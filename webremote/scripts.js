@@ -333,7 +333,7 @@ function handleState(data, fillColor=false) {
         }
       } else {
         hide("timeline", "seeking", "speed", "speedNoteRow", "togglePlayBtn", "abLoop");
-        gebi("timecode").innerHTML = "<span class='grey small'>No time available for images</span>";
+        gebi("timecode").innerHTML = `<span class='grey small'>Displaying image ${data.currentFileName}</span>`;
       }
       const mtime = thumbnailMtimes[data.currentFileName] || 0;
       gebi("display").style.backgroundImage = `url("thumbnails/${name.basename}_${mtime}.png")`;
