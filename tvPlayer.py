@@ -1266,7 +1266,7 @@ def play_file(file, inpoint=0.0, outpoint=0.0):
                         player.pause = False
                 except Exception:
                     pass
-            threading.Timer(0.15, _force_frame).start()
+            threading.Timer(0.25, _force_frame).start()
 
     current_file = os.path.basename(file)  # file
 
