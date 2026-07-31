@@ -357,6 +357,8 @@ function handleState(data, fillColor=false) {
       } else {
         gebi('note-speed').innerHTML = `1.00&times;`;
         gebi('note-videoFitting').innerHTML = `[no fitting modes for color overlays]`
+        document.querySelectorAll('[data-func="pan"]').forEach(btn => btn.disabled = false);
+        document.querySelectorAll('[data-func="zoom"]').forEach(btn => btn.disabled = false);
       }
 
       if(thisVideo.inpoints && thisVideo.inpoints > 0) {
