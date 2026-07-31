@@ -51,7 +51,7 @@ a:hover {
 
 .display {
     box-sizing: border-box;
-    border: solid #1e1e1e 1px;
+    border: solid #454545 1px;
     position: relative;
     background-color: black;
     width: 100%;
@@ -94,7 +94,6 @@ a:hover {
         -1px 1px grey,
         1px 1px grey
     ;
-    color: black;
 }
 
 .playerInfo {
