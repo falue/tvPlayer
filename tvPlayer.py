@@ -970,7 +970,6 @@ def show_fill_color():
     fill_color_active = True  # MUST BE SET TO False WHENEVER I CHANNEL NEXT / PREV / PLAY THIS CHANNEL THING
     suffix = "mp4" if fill_color_type == 'noise' else "png"
     fill_color_path = os.path.join(script_dir, 'assets', 'fill_colors', f"{fill_color_type}{fill_color_index[fill_color_type]+1}.{suffix}")
-    print(f"[DIAG] show_fill_color called at {time.time():.3f} -> {os.path.basename(fill_color_path)}")
 
     # Set fill colors to always play at default speed
     if player:
@@ -1238,11 +1237,9 @@ def play_file(file, inpoint=0.0, outpoint=0.0):
         fill_color_active = False
 
     if player:
-        print(f"[DIAG] play_file ENTRY at {time.time():.3f}: {os.path.basename(file)}")
         # Set start position before loading (mpv applies 'start' to the next loaded file)
         player['start'] = str(inpoint) if inpoint > 0 else '0'
         player.command('loadfile', file, 'replace')
-        print(f"[DIAG] play_file loadfile DONE at {time.time():.3f}")
 
         # ab-loop properties persist across loadfile in mpv, so we must always
         # set or clear them, otherwise a previous channel's outpoint can cause
