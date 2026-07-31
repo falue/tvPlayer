@@ -346,6 +346,14 @@ function handleState(data, fillColor=false) {
       if(Object.keys(thisVideo).length) {  // Greenscreen etc has no values here
         gebi('note-speed').innerHTML = `${thisVideo.video_speeds.toFixed(2)}&times;`;  // 1 = normal
         gebi('note-videoFitting').innerHTML = `<img src="assets/icons/fitting-${fitting_modes[thisVideo.video_fittings]}.svg"><br>${fitting_modes[thisVideo.video_fittings]}`
+        // if mode is stretch, disable pan and zoom buttons in UI
+        if(thisVideo.video_fittings === 1) {
+          document.querySelectorAll('[data-func="pan"]').forEach(btn => btn.disabled = true);
+          document.querySelectorAll('[data-func="zoom"]').forEach(btn => btn.disabled = true);
+        } else {
+          document.querySelectorAll('[data-func="pan"]').forEach(btn => btn.disabled = false);
+          document.querySelectorAll('[data-func="zoom"]').forEach(btn => btn.disabled = false);
+        }
       } else {
         gebi('note-speed').innerHTML = `1.00&times;`;
         gebi('note-videoFitting').innerHTML = `[no fitting modes for color overlays]`
