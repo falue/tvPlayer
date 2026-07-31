@@ -481,41 +481,113 @@ async function displayVersionUpdateDate() {
   gebi('installed_at').textContent = `${date} - ${time}`;
 }
 
-// Generic continuous trigger
-function continuousTrigger(fn, args = [], interval = 75, label = '') {
-  let activeInterval = null;
-  return {
-    start: (e) => {
-      if (e) e.preventDefault();
-      if (label) setToWait(label);
-      fn(...args);
-      activeInterval = setInterval(() => fn(...args), interval);
-    },
-    stop: () => clearInterval(activeInterval)
-  };
-}
-
 // Fully generic funcMap using Proxy
 const funcMap = new Proxy({}, {
   get: (_, funcName) => (...args) => {
     const value = args.length === 1 ? args[0] : args;
-    // console.log({ cmd: funcName, value }, false, true);
     sendCommand({ cmd: funcName, value }, false, true);
   }
 });
 
-// Automatically initialize all trigger buttons
+// Robust press-and-hold with state machine:
+//   idle → pointerdown → pending
+//   pending → release < HOLD_DELAY → fire once (tap) → idle
+//   pending → HOLD_DELAY elapsed → fire once + start repeating → holding
+//   pending → move > MOVE_THRESHOLD → cancelled → idle
+//   holding → release/cancel/blur → idle
+const HOLD_DELAY = 222;
+const MOVE_THRESHOLD = 10; // CSS pixels
+
 function setupTriggers() {
   document.querySelectorAll('[data-trigger]').forEach(el => {
     const funcName = el.dataset.func;
     const args = JSON.parse(el.dataset.args);
     const label = "note-" + funcName;
     const interval = 75;
+    const fn = funcMap[funcName];
+    const fnArgs = Array.isArray(args) ? args : [args];
+    const hasLabel = !!gebi(label);
 
-    const trigger = continuousTrigger(funcMap[funcName], Array.isArray(args) ? args : [args], interval, gebi(label) ? label : '');
+    // Per-button state
+    let state = 'idle'; // 'idle' | 'pending' | 'holding'
+    let holdTimer = null;
+    let repeatInterval = null;
+    let startX = 0;
+    let startY = 0;
 
-    ['mousedown', 'touchstart'].forEach(type => el.addEventListener(type, trigger.start));
-    ['mouseup', 'mouseleave', 'touchend'].forEach(type => el.addEventListener(type, trigger.stop));
+    function fire() {
+      if (hasLabel) setToWait(label);
+      fn(...fnArgs);
+    }
+
+    function reset() {
+      state = 'idle';
+      clearTimeout(holdTimer);
+      clearInterval(repeatInterval);
+      holdTimer = null;
+      repeatInterval = null;
+    }
+
+    function onPointerDown(e) {
+      if (state !== 'idle') return; // ignore overlapping sequences
+      e.preventDefault();
+      state = 'pending';
+      startX = e.clientX;
+      startY = e.clientY;
+
+      if (el.setPointerCapture) {
+        try { el.setPointerCapture(e.pointerId); } catch(_) {}
+      }
+
+      holdTimer = setTimeout(() => {
+        if (state !== 'pending') return;
+        state = 'holding';
+        fire();
+        repeatInterval = setInterval(fire, interval);
+      }, HOLD_DELAY);
+    }
+
+    function onPointerMove(e) {
+      if (state !== 'pending') return;
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      if (dx * dx + dy * dy > MOVE_THRESHOLD * MOVE_THRESHOLD) {
+        reset(); // scroll/drag detected — cancel entirely
+      }
+    }
+
+    function onPointerUp(e) {
+      if (state === 'pending') {
+        // Released before hold threshold — treat as tap
+        reset();
+        fire();
+      } else if (state === 'holding') {
+        reset();
+      }
+      // If idle, nothing to do
+    }
+
+    function onCancel() {
+      reset();
+    }
+
+    el.addEventListener('pointerdown', onPointerDown);
+    el.addEventListener('pointermove', onPointerMove);
+    el.addEventListener('pointerup', onPointerUp);
+    el.addEventListener('pointercancel', onCancel);
+    el.addEventListener('lostpointercapture', onCancel);
+
+    // Emergency stops: window blur / page hidden
+    window.addEventListener('blur', onCancel);
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) onCancel();
+    });
+
+    // Prevent context menu on long-press (mobile)
+    el.addEventListener('contextmenu', e => e.preventDefault());
+
+    // Disable touch-action so pointer events work properly on mobile
+    el.style.touchAction = 'none';
   });
 }
 
