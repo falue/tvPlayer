@@ -131,8 +131,8 @@
         <div id="abLoop" class="control-group">
             <h2>A &rlarr; B loop</h2>
             <div class="button-row">
-                <div class="buttonNote" id="note-inpoint" title="inpoint">-</div>
-                <div class="buttonNote" id="note-outpoint" title="outpoint">-</div>
+                <div class="buttonNote" id="note-inpoint" title="inpoint A">-</div>
+                <div class="buttonNote" id="note-outpoint" title="outpoint B">-</div>
             </div>
             <div class="button-row">
                 <button onclick="setToWait('note-inpoint'); sendCommand({'cmd': 'set_inpoint'}, false, true)">Set A <img src="assets/icons/ray-start-arrow.svg"></button>
@@ -177,14 +177,18 @@
                 <button onclick="sendCommand({'cmd': 'show_current_fill_color'}, false, true)">Show current selection</button>
             </div> -->
             <div class="button-row">
-                <button class="dense" style="white-space:nowrap" onclick="setToWait('note-cycle_green_screen'); sendCommand({'cmd': 'cycle_green_screen', 'value': -1}, false, true)"><img src="assets/icons/skip-previous.svg"> Style</button>
-                <button class="dense" style="white-space:nowrap; direction: rtl;" onclick="setToWait('note-cycle_green_screen'); sendCommand({'cmd': 'cycle_green_screen', 'value': 1}, false, true)"><img src="assets/icons/skip-next.svg"> Style</button>
+                <button class="dense" onclick="setToWait('note-cycle_green_screen'); sendCommand({'cmd': 'cycle_green_screen', 'value': -1}, false, true)"><img src="assets/icons/skip-previous.svg"></button>
+                <span class="small grey" style="margin:auto;">Style</span>
+                <button class="dense" onclick="setToWait('note-cycle_green_screen'); sendCommand({'cmd': 'cycle_green_screen', 'value': 1}, false, true)"><img src="assets/icons/skip-next.svg"></button>
 
+                <!-- To align stuff "properly" -->
                 <button class="dense" style="opacity:0" disabled>&nbsp;</button>
+                <span class="small"  style="opacity:0">Style</span>
                 <button class="dense" style="opacity:0" disabled>&nbsp;</button>
 
-                <button class="dense" style="white-space:nowrap" onclick="setToWait('note-cycle_white_noise'); sendCommand({'cmd': 'cycle_white_noise', 'value': -1}, false, true)"><img src="assets/icons/skip-previous.svg"> Style</button>
-                <button class="dense" style="white-space:nowrap; direction: rtl;" onclick="setToWait('note-cycle_white_noise'); sendCommand({'cmd': 'cycle_white_noise', 'value': 1}, false, true)"><img src="assets/icons/skip-next.svg"> Style</button>
+                <button class="dense" onclick="setToWait('note-cycle_white_noise'); sendCommand({'cmd': 'cycle_white_noise', 'value': -1}, false, true)"><img src="assets/icons/skip-previous.svg"></button>
+                <span class="small grey" style="margin:auto;">Style</span>
+                <button class="dense" onclick="setToWait('note-cycle_white_noise'); sendCommand({'cmd': 'cycle_white_noise', 'value': 1}, false, true)"><img src="assets/icons/skip-next.svg"></button>
             </div>
         </div>
 
@@ -287,13 +291,13 @@
                     style="width:auto; min-width: 120px;"
                     class="reset dense">
                     <img src="assets/icons/arrow-left-right.svg">
-                    Reset
+                    reset
                 </button>
                 <button data-func="pan" onclick="setToWait('note-pan-y'); sendCommand({'cmd': 'pan', 'value': ['reset', 'y']}, false, true)"
                     style="width:auto; min-width: 120px;"
                     class="reset dense"
                 >
-                    Reset
+                    reset
                     <img src="assets/icons/arrow-up-down.svg">
                 </button>
             </div>
@@ -361,12 +365,12 @@
             </div>
             <div class="button-row">
                 <button onclick="setToWait('note-show_tv_gui'); sendCommand({'cmd': 'toggle_show_tv_gui'}, false, true)">
-                    <img src="assets/icons/tv-gui.svg">
+                    <img src="assets/icons/tv-gui.svg" style="margin-bottom:0.5em">
                     <br>
                     Show/Hide TV channel numbers
                 </button>
                 <button onclick="setToWait('note-white_noise_on_channel_change'); sendCommand({'cmd': 'toggle_white_noise_on_channel_change'}, false, true)">
-                    <img src="assets/icons/noise.svg">
+                    <img src="assets/icons/noise.svg" style="margin-bottom:0.5em">
                     <br>
                     Show/Hide white noise between channel changes
                 </button>
