@@ -225,11 +225,7 @@ function handleSettings(data) {
     if(settings.show_tv_gui) {
       gebi('note-show_tv_gui').innerHTML = "On";
       show('channel_number');
-      console.log(data);
-      console.log(data.filelist[tvChannel]);
-      console.log(data.filelist[tvChannel].split("/").pop());
-      console.log(data.filelist[tvChannel].split("/").pop().startsWith('av.'));
-      const channelName = data.filelist[tvChannel].split("/").pop().startsWith('av.') ? "AV" : tvChannel;
+      let channelName = data.filelist[tvChannel].split("/").pop().startsWith('av.') ? "AV" : tvChannel +1;
       gebi('channel_number').src=`assets/channel_numbers/${channelName}.png`;
     } else {
       gebi('note-show_tv_gui').innerHTML = "Off";
