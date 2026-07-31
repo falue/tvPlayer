@@ -519,6 +519,7 @@ function setupTriggers() {
     let repeatInterval = null;
     let startX = 0;
     let startY = 0;
+    let activePointerId = null;
 
     function fire() {
       if (hasLabel) setToWait(label);
@@ -527,22 +528,27 @@ function setupTriggers() {
 
     function reset() {
       state = 'idle';
+      activePointerId = null;
       clearTimeout(holdTimer);
       clearInterval(repeatInterval);
       holdTimer = null;
       repeatInterval = null;
+      document.removeEventListener('pointermove', onDocMove);
+      document.removeEventListener('pointerup', onDocUp);
+      document.removeEventListener('pointercancel', onDocCancel);
     }
 
     function onPointerDown(e) {
-      if (state !== 'idle') return; // ignore overlapping sequences
-      e.preventDefault();
+      if (state !== 'idle') return;
       state = 'pending';
+      activePointerId = e.pointerId;
       startX = e.clientX;
       startY = e.clientY;
 
-      if (el.setPointerCapture) {
-        try { el.setPointerCapture(e.pointerId); } catch(_) {}
-      }
+      // Track on document so we never miss the up/cancel
+      document.addEventListener('pointermove', onDocMove);
+      document.addEventListener('pointerup', onDocUp);
+      document.addEventListener('pointercancel', onDocCancel);
 
       holdTimer = setTimeout(() => {
         if (state !== 'pending') return;
@@ -552,8 +558,8 @@ function setupTriggers() {
       }, HOLD_DELAY);
     }
 
-    function onPointerMove(e) {
-      if (state !== 'pending') return;
+    function onDocMove(e) {
+      if (e.pointerId !== activePointerId || state !== 'pending') return;
       const dx = e.clientX - startX;
       const dy = e.clientY - startY;
       if (dx * dx + dy * dy > MOVE_THRESHOLD * MOVE_THRESHOLD) {
@@ -561,7 +567,8 @@ function setupTriggers() {
       }
     }
 
-    function onPointerUp(e) {
+    function onDocUp(e) {
+      if (e.pointerId !== activePointerId) return;
       if (state === 'pending') {
         // Released before hold threshold — treat as tap
         reset();
@@ -569,30 +576,26 @@ function setupTriggers() {
       } else if (state === 'holding') {
         reset();
       }
-      // If idle, nothing to do
     }
 
-    function onCancel() {
+    function onDocCancel(e) {
+      if (e.pointerId !== activePointerId) return;
       reset();
     }
 
     el.addEventListener('pointerdown', onPointerDown);
-    el.addEventListener('pointermove', onPointerMove);
-    el.addEventListener('pointerup', onPointerUp);
-    el.addEventListener('pointercancel', onCancel);
-    el.addEventListener('lostpointercapture', onCancel);
 
     // Emergency stops: window blur / page hidden
-    window.addEventListener('blur', onCancel);
+    window.addEventListener('blur', () => reset());
     document.addEventListener('visibilitychange', () => {
-      if (document.hidden) onCancel();
+      if (document.hidden) reset();
     });
 
     // Prevent context menu on long-press (mobile)
     el.addEventListener('contextmenu', e => e.preventDefault());
 
-    // Disable touch-action so pointer events work properly on mobile
-    el.style.touchAction = 'none';
+    // Allow vertical scrolling; browser fires pointercancel when it takes over
+    el.style.touchAction = 'pan-y';
   });
 }
 
