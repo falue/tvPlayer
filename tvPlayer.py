@@ -697,6 +697,10 @@ def system_init():
         osd_w = get_mpv_property("osd-dimensions/w")
         if osd_w is not None and osd_w > 0:
             break
+        display_image(
+            os.path.join(script_dir, "assets", "loading.png"),
+            3, 50, 50, 660, 150, 0.5
+        )
         print(".", end="", flush=True)
         time.sleep(0.25)
     print()
@@ -707,6 +711,10 @@ def system_init():
         if vid_w is not None and vid_w > 0:
             break
         print(".", end="", flush=True)
+        display_image(
+            os.path.join(script_dir, "assets", "loading.png"),
+            3, 50, 50, 660, 150, 0.5
+        )
         time.sleep(0.25)
     print()
 
