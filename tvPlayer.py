@@ -450,7 +450,7 @@ def player_init():
     player = mpv.MPV(
         vo='drm',
         loop_file='inf',
-        image_display_duration='inf',
+        image_display_duration=86400,
         idle=True,
         # Disable all mpv UI elements
         osc=False,
