@@ -831,7 +831,7 @@ def create_thumbnails(current_filelist):
             4,
             max(window_width // 2 - 105, 50),
             max(window_height // 2 - 75, 200),
-            210, 150, 2.0
+            210, 150, 0.666
         )
 
         if filepath.lower().endswith(
