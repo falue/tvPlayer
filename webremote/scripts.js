@@ -84,12 +84,12 @@ function init() {
   requestSettingsLoop();
 
   window.addEventListener("blur", () => {
-    logging("Window lost focus — clearing timeouts");
+    // logging("Window lost focus — clearing timeouts");
     clearTimeout(raspi_available_timer);
   });
 
   window.addEventListener("focus", () => {
-    logging("Window gained focus — clearing timeouts");
+    // logging("Window gained focus — clearing timeouts");
     clearTimeout(raspi_available_timer);
   });
 
@@ -286,7 +286,7 @@ function handleSettings(data) {
     });
     if(data.settings.filelist_ignored.length) {
       gebi("filelistIgnored").innerHTML = `${data.settings.filelist_ignored.length} ignored files or folders on USB (?)`;
-      gebi("filelistIgnored").onclick = () => alert(`Some files where ignored. Check the specifications if you need them to play:\n\n${data.settings.filelist_ignored.join('\n')}`);
+      gebi("filelistIgnored").onclick = () => alert(`Some files or folders where ignored. Check the specifications if you need them to play:\n\n${data.settings.filelist_ignored.join('\n')}`);
     } else {
       gebi("filelistIgnored").innerHTML = ``;
     }
