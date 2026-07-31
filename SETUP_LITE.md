@@ -85,6 +85,15 @@ Append (all on one line):
 quiet loglevel=0 systemd.show_status=0 rd.systemd.show_status=0 vt.global_cursor_default=0 logo.nologo splash
 ```
 
+### Change CLI font size
+```
+sudo dpkg-reconfigure console-setup
+```
+Choose
+- `UTF-8`
+- `Guess optimal character set`
+- Choose font `Terminus` and size to `16x32` (for fuzzy or TVs)
+
 ### Custom splash image
 ```
 sudo apt install plymouth plymouth-themes
