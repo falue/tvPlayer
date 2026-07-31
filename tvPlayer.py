@@ -486,8 +486,9 @@ def evdev_init():
             try:
                 dev = evdev.InputDevice(path)
                 if ecodes.EV_KEY in dev.capabilities():
+                    dev.grab()
                     devices.append(dev)
-                    print(f"[EVDEV] Monitoring: {dev.name} ({dev.path})")
+                    print(f"[EVDEV] Monitoring (grabbed): {dev.name} ({dev.path})")
             except Exception:
                 pass
 
@@ -512,9 +513,10 @@ def evdev_init():
                         try:
                             dev = evdev.InputDevice(path)
                             if ecodes.EV_KEY in dev.capabilities():
+                                dev.grab()
                                 devices.append(dev)
                                 known_paths.add(path)
-                                print(f"[EVDEV] Hotplugged: {dev.name} ({dev.path})")
+                                print(f"[EVDEV] Hotplugged (grabbed): {dev.name} ({dev.path})")
                         except Exception:
                             pass
 
