@@ -225,7 +225,10 @@ function handleSettings(data) {
     if(settings.show_tv_gui) {
       gebi('note-show_tv_gui').innerHTML = "On";
       show('channel_number');
-      gebi('channel_number').src=`assets/channel_numbers/${tvChannel}.png`;
+      console.log(data);
+      console.log(data.filelist[tvChannel]);
+      const channelName = data.filelist[tvChannel].startsWith('av.') ? "AV" : tvChannel;
+      gebi('channel_number').src=`assets/channel_numbers/${channelName}.png`;
     } else {
       gebi('note-show_tv_gui').innerHTML = "Off";
       hide('channel_number');
@@ -277,7 +280,8 @@ function handleSettings(data) {
       img.src = `./thumbnails/${basename}_${mtime}.png`;
 
       const channelNumber = document.createElement("img");
-      channelNumber.src = `./assets/channel_numbers/${index + 1}.png`;
+      const channelName = basename.startsWith('av.') ? "AV" : index + 1;
+      channelNumber.src = `./assets/channel_numbers/${channelName}.png`;
       channelNumber.style.height = "1.25em";
       channelNumber.style.paddingRight = "0.5em";
       channelNumber.style.verticalAlign = "bottom";

@@ -1218,7 +1218,6 @@ def go_to_channel(number):
     if show_tv_gui:
         channel_to_display = tv_channel + tv_channel_offset
         if has_av_channel and tv_channel == len(filelist)-1:
-            print("This is the AV channel")
             channel_to_display = "AV"
         image_path = os.path.join(script_dir, 'assets', 'channel_numbers', f'{channel_to_display}.png')
         display_image(image_path, 1, window_width-315,50, 210,150, gui_display_duration)
