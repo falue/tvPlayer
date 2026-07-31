@@ -314,8 +314,8 @@ function handleState(data, fillColor=false) {
   // Check if data changed, if yes, update GUI
   if (lastPlaystate != md5(JSON.stringify(data))) {
     lastPlaystate = md5(JSON.stringify(data));
-    tvChannel = data.tvChannel;
-    if (data.isPlaying) {
+    tvChannel = data ? data.tvChannel : 0;
+    if (data && data.isPlaying) {
       gebi("playstate").src = "./assets/icons/pause.svg";
     } else {
       gebi("playstate").src = "./assets/icons/play.svg";
