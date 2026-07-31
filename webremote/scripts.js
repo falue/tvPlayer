@@ -270,6 +270,7 @@ function handleSettings(data) {
       channelNumber.src = `./assets/channel_numbers/${index + 1}.png`;
       channelNumber.style.height = "1.25em";
       channelNumber.style.paddingRight = "0.5em";
+      channelNumber.style.verticalAlign = "bottom";
       const label = document.createTextNode(`${basename}`);
       const span = document.createElement("span");
       span.className = "grey";
