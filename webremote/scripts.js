@@ -309,19 +309,20 @@ function handleSettings(data) {
 function handleState(data, fillColor=false) {
   if(!data) {
     console.log("USB has no files");
+    return;
   }
 
   // Check if data changed, if yes, update GUI
   if (lastPlaystate != md5(JSON.stringify(data))) {
     lastPlaystate = md5(JSON.stringify(data));
-    tvChannel = data ? data.tvChannel : 0;
-    if (data && data.isPlaying) {
+    tvChannel = data.tvChannel;
+    if (data.isPlaying) {
       gebi("playstate").src = "./assets/icons/pause.svg";
     } else {
       gebi("playstate").src = "./assets/icons/play.svg";
     }
 
-    if (data && data.currentFileName.length > 0 && !fillColor) {
+    if (data.currentFileName.length > 0 && !fillColor) {
       let name = splitFileName(data.currentFileName);
       gebi("currentFile").innerHTML = `#${data.tvChannel + 1} - ${name.basename}<span class='grey'>.${name.suffix}</span>`;
       let timeline = gebi("timeline");
