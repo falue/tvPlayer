@@ -225,7 +225,7 @@ function handleSettings(data) {
     if(settings.show_tv_gui) {
       gebi('note-show_tv_gui').innerHTML = "On";
       show('channel_number');
-      let channelName = data.filelist.length && data.filelist[tvChannel].split("/").pop().startsWith('av.') ? "AV" : tvChannel +1;
+      let channelName = data.filelist[tvChannel].split("/").pop().startsWith('av.') ? "AV" : tvChannel +1;
       gebi('channel_number').src=`assets/channel_numbers/${channelName}.png`;
     } else {
       gebi('note-show_tv_gui').innerHTML = "Off";
@@ -307,13 +307,13 @@ function handleSettings(data) {
 }
 
 function handleState(data, fillColor=false) {
+  if(!data.length) {
+    console.log("USB data was empty  - abort!");
+    return
+  }
   // Check if data changed, if yes, update GUI
   if (lastPlaystate != md5(JSON.stringify(data))) {
     lastPlaystate = md5(JSON.stringify(data));
-    // console.log("handleState", data, fillColor);
-
-    // FIXME: WHEN REPLUGGING USB:
-    // scripts.js?v=250611c:262 Uncaught (in promise) TypeError: Cannot read properties of undefined (reading 'tvChannel')
     tvChannel = data.tvChannel;
     if (data.isPlaying) {
       gebi("playstate").src = "./assets/icons/pause.svg";
