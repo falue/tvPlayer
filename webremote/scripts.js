@@ -317,10 +317,8 @@ function handleState(data, fillColor=false) {
     tvChannel = data.tvChannel;
     if (data.isPlaying) {
       gebi("playstate").src = "./assets/icons/pause.svg";
-      gebi("playstate").className = "pause";
     } else {
       gebi("playstate").src = "./assets/icons/play.svg";
-      gebi("playstate").className = "play";
     }
 
     if (data.currentFileName.length > 0 && !fillColor) {
