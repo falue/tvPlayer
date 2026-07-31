@@ -62,7 +62,7 @@ def start():
                 temp = get_cpu_temp()
                 heartbeat = json.dumps({"msg": "heartbeat from tvPlayer", "temp": temp})
                 client.publish("tvPlayer/heartbeat", heartbeat)
-                time.sleep(12)
+                time.sleep(5)
         except KeyboardInterrupt:
             client.loop_stop()
             client.disconnect()
