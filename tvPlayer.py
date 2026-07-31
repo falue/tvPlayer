@@ -450,7 +450,7 @@ def player_init():
     player = mpv.MPV(
         vo='drm',
         loop_file='inf',
-        image_display_duration=1,
+        image_display_duration=0.1,
         idle=True,
         # Disable all mpv UI elements
         osc=False,
@@ -1237,9 +1237,6 @@ def play_file(file, inpoint=0.0, outpoint=0.0):
         fill_color_active = False
 
     if player:
-        # Still-images are shown at least 5s, to show new ones, abort playback here
-        player.command("stop")
-
         # Set start position before loading (mpv applies 'start' to the next loaded file)
         player['start'] = str(inpoint) if inpoint > 0 else '0'
         player.command('loadfile', file, 'replace')
