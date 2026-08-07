@@ -7,7 +7,7 @@ User=dp
 WorkingDirectory=/home/dp/tvPlayer
 ExecStart=/usr/bin/python3 -u tvPlayer.py
 Restart=on-failure
-RestartSec=3
+RestartSec=1
 StandardOutput=journal
 StandardError=journal
 

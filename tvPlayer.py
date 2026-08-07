@@ -12,6 +12,7 @@ import mqtt_handler
 import traceback
 import socket
 import mpv
+import hdmi_manager
 import select
 import tempfile
 from PIL import Image
@@ -447,7 +448,10 @@ def player_init():
     global player
     print("Starting mpv player via python-mpv (vo=drm, no UI).")
 
-    player = mpv.MPV(
+    # Choose HDMI connector (prefers HDMI-A-2, falls back to HDMI-A-1)
+    active_connector = hdmi_manager.choose_connector()
+
+    mpv_kwargs = dict(
         vo='drm',
         loop_file='inf',
         image_display_duration=0.1,
@@ -463,7 +467,24 @@ def player_init():
         msg_level='all=no',
     )
 
-    print("mpv player initialized.")
+    if active_connector:
+        mpv_kwargs['drm_connector'] = active_connector
+
+    player = mpv.MPV(**mpv_kwargs)
+    print(f"mpv player initialized (connector={active_connector or 'auto'}).")
+
+    # Start hotplug monitor — restarts script on connector change
+    def hdmi_cleanup():
+        save_settings()
+        GPIO.output(LED_PIN, GPIO.LOW)
+        GPIO.cleanup()
+        if player:
+            try:
+                player.terminate()
+            except Exception:
+                pass
+
+    hdmi_manager.start_hotplug_monitor(active_connector, on_exit_cleanup=hdmi_cleanup)
 
 
 def evdev_init():

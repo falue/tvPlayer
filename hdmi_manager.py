@@ -1,0 +1,137 @@
+"""
+HDMI connector manager for tvPlayer.
+
+Auto-discovers HDMI connectors via /sys/class/drm/,
+selects the preferred one (HDMI-A-2 > HDMI-A-1),
+and monitors for hotplug changes.
+
+Priority:
+  - HDMI-A-2 (physical HDMI1) preferred
+  - HDMI-A-1 (physical HDMI0) fallback
+
+When the preferred connector state changes, triggers a clean restart
+via os._exit(75) so systemd restarts the service on the new output.
+"""
+
+import os
+import threading
+import time
+from pathlib import Path
+import mqtt_handler
+
+DRM_BASE = Path("/sys/class/drm")
+PREFERRED_CONNECTOR = "HDMI-A-2"
+FALLBACK_CONNECTOR = "HDMI-A-1"
+POLL_INTERVAL = 1.0  # seconds
+
+
+def discover_connectors():
+    """
+    Scan /sys/class/drm/ for HDMI connector entries.
+    Returns dict: {"HDMI-A-1": "/sys/class/drm/card1-HDMI-A-1", ...}
+    """
+    connectors = {}
+    if not DRM_BASE.exists():
+        return connectors
+    for entry in DRM_BASE.iterdir():
+        name = entry.name
+        # Entries look like: card1-HDMI-A-1, card0-HDMI-A-2, etc.
+        if "HDMI-A-1" in name:
+            connectors["HDMI-A-1"] = entry
+        elif "HDMI-A-2" in name:
+            connectors["HDMI-A-2"] = entry
+    return connectors
+
+
+def is_connected(connector_path):
+    """Check if a connector has a display attached."""
+    status_file = connector_path / "status"
+    try:
+        return status_file.read_text().strip() == "connected"
+    except Exception:
+        return False
+
+
+def choose_connector():
+    """
+    Choose the best available HDMI connector.
+    Prefers HDMI-A-2, falls back to HDMI-A-1.
+    Returns the connector name string for mpv's drm-connector option,
+    or None if no connectors found.
+    """
+    connectors = discover_connectors()
+    if not connectors:
+        print("[HDMI] No HDMI connectors found in /sys/class/drm/")
+        return None
+
+    if PREFERRED_CONNECTOR in connectors and is_connected(connectors[PREFERRED_CONNECTOR]):
+        print(f"[HDMI] Using preferred connector: {PREFERRED_CONNECTOR}")
+        return PREFERRED_CONNECTOR
+
+    if FALLBACK_CONNECTOR in connectors:
+        if is_connected(connectors[FALLBACK_CONNECTOR]):
+            print(f"[HDMI] Using fallback connector: {FALLBACK_CONNECTOR}")
+        else:
+            print(f"[HDMI] No display detected, starting on: {FALLBACK_CONNECTOR}")
+        return FALLBACK_CONNECTOR
+
+    # Only preferred exists but not connected — use it anyway
+    if PREFERRED_CONNECTOR in connectors:
+        print(f"[HDMI] No display detected, starting on: {PREFERRED_CONNECTOR}")
+        return PREFERRED_CONNECTOR
+
+    return None
+
+
+def start_hotplug_monitor(active_connector, on_exit_cleanup=None):
+    """
+    Start a daemon thread that polls connector states.
+    Triggers os._exit(75) when the preferred connector state changes
+    (i.e. HDMI-A-2 gets plugged in while on HDMI-A-1, or HDMI-A-2
+    gets unplugged while active).
+
+    Args:
+        active_connector: The connector currently in use (e.g. "HDMI-A-1")
+        on_exit_cleanup: Optional callable to run before exit (save settings, GPIO cleanup)
+    """
+    connectors = discover_connectors()
+    if not connectors:
+        print("[HDMI] No connectors to monitor, hotplug disabled.")
+        return
+
+    def monitor():
+        preferred_was_connected = is_connected(connectors[PREFERRED_CONNECTOR]) if PREFERRED_CONNECTOR in connectors else False
+
+        while True:
+            time.sleep(POLL_INTERVAL)
+
+            preferred_now_connected = is_connected(connectors[PREFERRED_CONNECTOR]) if PREFERRED_CONNECTOR in connectors else False
+
+            should_restart = False
+
+            if active_connector != PREFERRED_CONNECTOR and preferred_now_connected and not preferred_was_connected:
+                # Preferred just got plugged in, switch to it
+                msg = f"[HDMI] {PREFERRED_CONNECTOR} connected — switching output."
+                print(msg)
+                mqtt_handler.send("general", msg)
+                should_restart = True
+            elif active_connector == PREFERRED_CONNECTOR and not preferred_now_connected and preferred_was_connected:
+                # Preferred just got unplugged, fall back
+                msg = f"[HDMI] {PREFERRED_CONNECTOR} disconnected — falling back to {FALLBACK_CONNECTOR}."
+                print(msg)
+                mqtt_handler.send("general", msg)
+                should_restart = True
+
+            if should_restart:
+                if on_exit_cleanup:
+                    try:
+                        on_exit_cleanup()
+                    except Exception as e:
+                        print(f"[HDMI] Cleanup error: {e}")
+                os._exit(75)
+
+            preferred_was_connected = preferred_now_connected
+
+    thread = threading.Thread(target=monitor, daemon=True)
+    thread.start()
+    print(f"[HDMI] Hotplug monitor started (watching {PREFERRED_CONNECTOR}, polling every {POLL_INTERVAL}s)")
