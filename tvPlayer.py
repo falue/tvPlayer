@@ -476,13 +476,14 @@ def player_init():
     # Start hotplug monitor — restarts script on connector change
     def hdmi_cleanup():
         save_settings()
-        GPIO.output(LED_PIN, GPIO.LOW)
-        GPIO.cleanup()
-        if player:
-            try:
-                player.terminate()
-            except Exception:
-                pass
+        try:
+            GPIO.output(LED_PIN, GPIO.LOW)
+            GPIO.cleanup()
+        except Exception:
+            pass
+        # Do NOT terminate mpv here — its DRM driver may already be
+        # in a bad state from the disconnected connector (segfault).
+        # os._exit() will reclaim all resources.
 
     hdmi_manager.start_hotplug_monitor(active_connector, on_exit_cleanup=hdmi_cleanup)
 

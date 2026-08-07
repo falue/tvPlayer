@@ -128,6 +128,7 @@ def start_hotplug_monitor(active_connector, on_exit_cleanup=None):
                         on_exit_cleanup()
                     except Exception as e:
                         print(f"[HDMI] Cleanup error: {e}")
+                time.sleep(0.25)  # Let MQTT deliver the message
                 os._exit(75)
 
             preferred_was_connected = preferred_now_connected
