@@ -65,6 +65,14 @@ function init() {
     } else if (topic === "tvPlayer/command") {
       logging(`Acknowledged command: <pre>${JSON.stringify(data)}</pre>`, false);
 
+    } else if (topic === "tvPlayer/general") {
+      logging(`Received general message: <pre>${JSON.stringify(data)}</pre>`, false);
+      if (data.command.includes("[HDMI]")) {
+        // Display active HDMI port
+        let disconnected = data.command.includes("disconnected");
+        let targetPort = data.command.includes("[HDMI] HDMI-A-2") ? "HDMI-A-2" : "HDMI-A-1";
+        gebi(targetPort).innerHTML = disconnected ? "Disconnected" : "Connected";
+      }
     } else {
       logging(
         `Received message on ${topic}: <pre>${JSON.stringify(data)}</pre>`,
@@ -76,7 +84,6 @@ function init() {
       } else if (data.command == "error") {
         logging(data.payload);
         alert(`Oh snap, the tvPlayer crashed.\nTrying to restart program.\n\nIf this persists, reboot the tvPlayer!\n\nError:\n${data.payload.error}\n\nTraceback:\n${data.payload.traceback}`);
-
       }
     }
   });
