@@ -213,13 +213,16 @@ function handleSettings(data) {
   // remove so lastSettings is not dependent on the state of ..state
   delete data.state
 
+  // Always refresh the volume label so the "wait" icon is cleared
+  // even when a command does not change the stored value (mute or maxed out)
+  gebi('note-volume').innerHTML = data.settings.general_settings.volume + "%";
+ 
   if (lastSettings != md5(JSON.stringify(data))) {
     // update currentfile
     lastSettings = md5(JSON.stringify(data));
 
     // SET SOME GUI ELEMENTS OF GENERAL_SETTINGS
     let settings = data.settings.general_settings;
-    console.log("Settings updated:", settings);
     gebi('note-brightness').innerHTML = parseInt((settings.brightness+100)/2);  // Range from -100 - 100
     gebi('note-contrast').innerHTML = parseInt((settings.contrast+100)/2);  // Range from -100 - 100
     gebi('note-saturation').innerHTML = parseInt((settings.saturation+100)/2);  // Range from -100 - 100
@@ -246,7 +249,6 @@ function handleSettings(data) {
     gebi('note-zoom').innerHTML = ((settings.zoom_level+1)*100).toFixed(0)+"%";  // 0 = normal
     gebi('note-pan-x').innerHTML = (settings.pan_offsets.x*100).toFixed(1);
     gebi('note-pan-y').innerHTML = (settings.pan_offsets.y*100).toFixed(1);
-    gebi('note-volume').innerHTML = settings.volume+"%";  // 0 to 100
 
     // HANDLE FILE LIST
     const filelistContainer = gebi("filelist");
