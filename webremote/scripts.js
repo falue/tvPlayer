@@ -219,6 +219,7 @@ function handleSettings(data) {
 
     // SET SOME GUI ELEMENTS OF GENERAL_SETTINGS
     let settings = data.settings.general_settings;
+    console.log("Settings updated:", settings);
     gebi('note-brightness').innerHTML = parseInt((settings.brightness+100)/2);  // Range from -100 - 100
     gebi('note-contrast').innerHTML = parseInt((settings.contrast+100)/2);  // Range from -100 - 100
     gebi('note-saturation').innerHTML = parseInt((settings.saturation+100)/2);  // Range from -100 - 100
