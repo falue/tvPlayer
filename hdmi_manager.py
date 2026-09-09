@@ -83,6 +83,18 @@ def choose_connector():
     return None
 
 
+def report_state(connector, connected, active_connector):
+    """
+    Print and publish the state of a single connector so the webremote
+    can keep its status badges accurate.
+    """
+    state = "connected" if connected else "disconnected"
+    active = " (active)" if connector == active_connector else ""
+    msg = f"[HDMI] {connector} {state}{active}"
+    print(msg)
+    mqtt_handler.send("general", msg)
+
+
 def start_hotplug_monitor(active_connector, on_exit_cleanup=None):
     """
     Start a daemon thread that polls connector states.
@@ -100,22 +112,37 @@ def start_hotplug_monitor(active_connector, on_exit_cleanup=None):
         return
 
     def monitor():
-        preferred_was_connected = is_connected(connectors[PREFERRED_CONNECTOR]) if PREFERRED_CONNECTOR in connectors else False
+        # Track last known state of every discovered connector
+        was_connected = {name: is_connected(path) for name, path in connectors.items()}
+
+        # Wait for mqtt_init() — it runs after player_init() in main(),
+        # so an immediate report would be dropped.
+        time.sleep(5)
+        for name, state in was_connected.items():
+            report_state(name, state, active_connector)
 
         while True:
             time.sleep(POLL_INTERVAL)
 
-            preferred_now_connected = is_connected(connectors[PREFERRED_CONNECTOR]) if PREFERRED_CONNECTOR in connectors else False
+            now_connected = {name: is_connected(path) for name, path in connectors.items()}
+
+            # Report every state change, whether or not it causes a restart
+            for name, state in now_connected.items():
+                if state != was_connected[name]:
+                    report_state(name, state, active_connector)
+
+            preferred_was = was_connected.get(PREFERRED_CONNECTOR, False)
+            preferred_now = now_connected.get(PREFERRED_CONNECTOR, False)
 
             should_restart = False
 
-            if active_connector != PREFERRED_CONNECTOR and preferred_now_connected and not preferred_was_connected:
+            if active_connector != PREFERRED_CONNECTOR and preferred_now and not preferred_was:
                 # Preferred just got plugged in, switch to it
                 msg = f"[HDMI] {PREFERRED_CONNECTOR} connected — switching output."
                 print(msg)
                 mqtt_handler.send("general", msg)
                 should_restart = True
-            elif active_connector == PREFERRED_CONNECTOR and not preferred_now_connected and preferred_was_connected:
+            elif active_connector == PREFERRED_CONNECTOR and not preferred_now and preferred_was:
                 # Preferred just got unplugged, fall back
                 msg = f"[HDMI] {PREFERRED_CONNECTOR} disconnected — falling back to {FALLBACK_CONNECTOR}."
                 print(msg)
@@ -131,7 +158,7 @@ def start_hotplug_monitor(active_connector, on_exit_cleanup=None):
                 time.sleep(0.25)  # Let MQTT deliver the message
                 os._exit(75)
 
-            preferred_was_connected = preferred_now_connected
+            was_connected = now_connected
 
     thread = threading.Thread(target=monitor, daemon=True)
     thread.start()
