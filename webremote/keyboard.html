@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>tvPlayer Keyboard Controls</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 2em 0 12em 0;
+        }
+        table {
+            border-collapse: collapse;
+            max-width: 100%;
+        }
+        th {
+            text-align: left;
+        }
+        td {  padding: 5px 3px 5px 0; }
+        tr { border-top: solid grey 1px; }
+        tr:hover { background-color: #f0f0f0; }
+        tr:nth-child(odd) { background-color: #f9f9f9; }
+        .bold { font-weight: bold; }
+    </style>
+</head>
+
+<body>
+    <table>
+        <thead>
+            <tr>
+                <th>Key</th>
+                <th>Action</th>
+                <th>Notes</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="bold">LEFT</td>
+                <td>prev channel</td>
+                <td>aka &quot;previous file&quot; on USB drive (alphabetically)</td>
+            </tr>
+            <tr>
+                <td class="bold">RIGHT</td>
+                <td>next channel</td>
+                <td>aka &quot;next file&quot; on USB drive (alphabetically)</td>
+            </tr>
+            <tr>
+                <td class="bold">[number]</td>
+                <td>go to channel nr [number]</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td class="bold">UP</td>
+                <td>jump +5 seconds</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>CTRL + UP</td>
+                <td>jump +60 seconds</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>SHIFT + UP</td>
+                <td>pause and jump one frame forwards</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td class="bold">DOWN</td>
+                <td>jump -5 seconds</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>CTRL + DOWN</td>
+                <td>jump -60 seconds</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>SHIFT + DOWN</td>
+                <td>pause and jump one frame backwards</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td class="bold">p <em>or</em> space</td>
+                <td>toggle play / pause</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>q</td>
+                <td>shutdown raspberry pi</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>Q (SHIFT+q)</td>
+                <td>exit program</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td class="bold">b</td>
+                <td>toggle black screen on or off</td>
+                <td>Also pauses the current video when entering black screen, resumes video when exiting black screen
+                </td>
+            </tr>
+            <tr>
+                <td class="bold">g</td>
+                <td>toggle green screen</td>
+                <td>Available <a href="assets/greenscreen/">chroma screens</a>:<br>Green, Blue, Black, Grey,
+                    White<br>Each with 3 different tracking marker arrangements and one without.</td>
+            </tr>
+            <tr>
+                <td>G (SHIFT+g)</td>
+                <td>cycle through green screens →</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>CTRL + g</td>
+                <td>cycle through green screens ←</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>c</td>
+                <td>video fitting</td>
+                <td>&quot;Contain&quot;, &quot;stretch&quot; or &quot;cover&quot;</td>
+            </tr>
+            <tr>
+                <td>i</td>
+                <td>set inpoint</td>
+                <td>Set where this video starts to play when chaning channels</td>
+            </tr>
+            <tr>
+                <td>I (SHIFT+i)</td>
+                <td>clear inpoint on this video</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>o</td>
+                <td>set outpoint</td>
+                <td>Set where this video ends (loops back to inpoint)</td>
+            </tr>
+            <tr>
+                <td>O (SHIFT+o)</td>
+                <td>clear outpoint on this video</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>a</td>
+                <td>toggle tv GUI on or off</td>
+                <td>Show green channel numbers and volume bar</td>
+            </tr>
+            <tr>
+                <td>w</td>
+                <td>toggle white noise on or off between channel changes</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>W (SHIFT+w)</td>
+                <td>cycle through 4 different white noise effects</td>
+                <td>Also activates white noise between channel change and shows current white noise selection</td>
+            </tr>
+            <tr>
+                <td>j</td>
+                <td>decrease playback speed</td>
+                <td>Min. 0.01&times;</td>
+            </tr>
+            <tr>
+                <td>k</td>
+                <td>normalize playback speed</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>l</td>
+                <td>increase playback speed</td>
+                <td>Up to 3&times;</td>
+            </tr>
+            <tr>
+                <td>x</td>
+                <td>pan video to the right</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>X (SHIFT+x)</td>
+                <td>pan video to the left</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>y</td>
+                <td>pan video downwards</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>Y (SHIFT+y)</td>
+                <td>pan video upwards</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>CTRL + x (or CTRL + y)</td>
+                <td>reset pan</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>.</td>
+                <td>zoom out</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>SHIFT + .</td>
+                <td>zoom in</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>CTRL + .</td>
+                <td>zoom reset</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>,</td>
+                <td>reduce video brightness by 5%</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>SHIFT + ,</td>
+                <td>increase video brightness by 5%</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>m</td>
+                <td>reduce video contrast by 2.5%</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>SHIFT + m</td>
+                <td>increase video contrast by 2.5%</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>n</td>
+                <td>reduce video saturation by 2.5%</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>SHIFT + n</td>
+                <td>increase video saturation by 2.5%</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>+</td>
+                <td>reduce volume by 10%</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>-</td>
+                <td>increase volume by 10%</td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+
+</html>

@@ -505,34 +505,6 @@ function showValidFiles() {
   alert("Valid video files are: .mp4, .mkv, .avi, .mxf, .m4v or .mov.\nValid image files are: .jpg, .jpeg, .png, .gif, .tiff or .bmp.\n\nBest practice is .mp4 container with a h264 codec.\n\nDo NOT use 4K or other heavy files, they will not play smoothly.\n\nNote that .png files do not work when it has a color mode of “indexed colors”.\n\nBe sure to use an EXFat USB drive, not a MAC formatted one!")
 }
 
-function keyboardKeys() {
-  alert(`
-MOST KEYBOARD CONTROLS - for a keyboard attached to the RtvPlayer directly.
-← / →          Previous / next file
-0-9            Go to channel number
-↑ / ↓          Jump +5 / -5 seconds
-Ctrl + ↑ / ↓   Jump +60 / -60 seconds
-Shift + ↑ / ↓  Pause and move one frame
-P or Space     Play / pause
-J / K / L      Slower / normal / faster
-B              Toggle black screen
-G              Toggle green/chroma screen
-C              Cycle contain / stretch / cover
-I              Set inpoint
-Shift + I      Clear inpoint
-O              Set outpoint
-Shift + O      Clear outpoint
-X / Shift + X  Pan right / left
-Y / Shift + Y  Pan down / up
-Ctrl + X or Y  Reset pan
-.              Zoom out
-Shift + .      Zoom in
-Ctrl + .       Reset zoom
-Q              Shut down Raspberry Pi
-Shift + Q      Exit program
-`);
-}
-
 async function displayVersionUpdateDate() {
   const data = await (await fetch('./update_metadata.json?v=' + Date.now())).json();
 
