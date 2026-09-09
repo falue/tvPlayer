@@ -42,6 +42,21 @@ Whereas `tvPlayer` matches the hostname of the device.
 `:3` is the value `3` for the command (optional; colon is separator).
 `53534` is the default port.
 
+Every accepted message is answered with `tvPlayer_acknowledged`, sent back to the **source port** of the sender.
+Listen for it with `nc -u -l 53545` (or whichever port you sent from).
+
+## Sending UDP
+tvPlayer can also send messages itself via `udp_send("tvPlayer_whatever")`.
+Without arguments it sends to the default target configured at the top of `tvPlayer.py`:
+```python
+UDP_LOCAL_PORT = 53534           # port this device listens on
+UDP_TARGET_IP = "192.168.1.100"  # default target for udp_send()
+UDP_TARGET_PORT = 53545          # default target port for udp_send()
+```
+A specific target can be given per message: `udp_send("tvPlayer_hello", "192.168.1.42", 5006)`.
+
+The UDP logic lives in the reusable [udp.py](udp.py) module (`UDPNode`).
+
 
 # Hardware
 Tested successfully on Raspberry Pi 4 (Debian Bookworm 64-bit Lite).

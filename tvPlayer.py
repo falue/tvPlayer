@@ -10,7 +10,7 @@ import random
 import RPi.GPIO as GPIO
 import mqtt_handler
 import traceback
-import socket
+from udp import UDPNode
 import mpv
 import hdmi_manager
 import select
@@ -23,6 +23,14 @@ show_whitenoise_channel_change = True  # white noise in between channel switchin
 white_noise_duration = 0.1  # duration which shows white noise when changing channels, in seconds
 gui_display_duration = 2.0  # Duration of the gui numbers stays alive, minus the white_noise_duration, in seconds
 tv_channel_offset = 1  # display higher channel nr than actually available
+
+# UDP
+UDP_DEVICE_NAME = "tvPlayer"
+UDP_LOCAL_PORT = 53534  # port this device listens on
+UDP_TARGET_IP = "192.168.1.100"  # default target for udp_send()
+UDP_TARGET_PORT = 53545  # default target port for udp_send()
+UDP_PREPEND = UDP_DEVICE_NAME  # only accept packets starting with this
+UDP_REPLY = UDP_DEVICE_NAME + "_acknowledged"  # auto-reply on accepted packets
 
 allowed_fileendings = (
     '.mp4', '.mkv', '.avi', '.mxf', '.mov', '.m4v',
@@ -69,6 +77,7 @@ _save_timer = None  # timer for saving after mqtt msg
 quit_program_scheduled = False
 restart_program_scheduled = False
 evdev_thread = None
+udp_node = None  # UDPNode instance
 
 file_settings = {}
 SETTINGS_FILE = "settings.json"
@@ -117,40 +126,42 @@ def mqtt_init():
     mqtt_handler.set_command_handler(handle_command)
     mqtt_handler.start()
 
-def udp_init(port=53534):
+def udp_init():
     """
-        Initialize UDP listener for commands
+        Initialize UDP node for commands
         Plain text format: echo -n "tvPlayer_<command>[:<value>]" | nc -u -w1 <pi-ip> 53534
     """
-    def udp_listener():
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        sock.bind(("0.0.0.0", port))
-        try:
-            local_ip = subprocess.check_output(['hostname', '-I']).decode().strip().split()[0]
-        except Exception:
-            local_ip = "unknown"
+    global udp_node
 
-        print(f"[UDP] Listening on port {port} (ip={local_ip})", flush=True)
-        
-        while True:
-            try:
-                data, addr = sock.recvfrom(4096)
-                msg = data.decode().strip()
-                sep = msg.find("tvPlayer_")
-                if sep == -1:
-                    print(f"[UDP] Ignored malformed message from {addr}: {msg} (msg should start with 'tvPlayer_')")
-                    sock.sendto(b"tvPlayer Ignored malformed message (msg should start with 'tvPlayer_')", (addr[0], 53545))
-                    continue
-                msg_command = msg[sep+9:]
-                value = msg_command.split(":")[-1] if ":" in msg_command else 0
-                msg_command = msg_command.split(":")[0] if ":" in msg_command else msg_command
-                print(f"[UDP] From {addr}: {msg_command}, value: {value}")
-                handle_command({"command": msg_command, "value": value})
-                sock.sendto(b"tvPlayer_acknowledged", (addr[0], 53545))
-            except Exception as e:
-                print(f"[UDP] Error: {e}")
-    threading.Thread(target=udp_listener, daemon=True).start()
+    def on_udp_command(command, addr):
+        value = command.split(":")[-1] if ":" in command else 0
+        command = command.split(":")[0] if ":" in command else command
+        print(f"[UDP] From {addr[0]}:{addr[1]}: {command}, value: {value}")
+        handle_command({"command": command, "value": value})
+
+    try:
+        local_ip = subprocess.check_output(['hostname', '-I']).decode().strip().split()[0]
+    except Exception:
+        local_ip = "unknown"
+    print(f"[UDP] Local ip={local_ip}", flush=True)
+
+    udp_node = UDPNode(
+        local_port=UDP_LOCAL_PORT,
+        remote_ip=UDP_TARGET_IP,
+        remote_port=UDP_TARGET_PORT,
+        prepend=UDP_PREPEND,
+        reply=UDP_REPLY,
+        device_name=UDP_DEVICE_NAME,
+        on_command=on_udp_command,
+    )
+    udp_node.start()
+
+def udp_send(message, target_ip=None, target_port=None):
+    """
+        Send a UDP message to UDP_TARGET_IP:UDP_TARGET_PORT, or to a specific target.
+    """
+    if udp_node:
+        udp_node.send(message, target_ip, target_port)
 
 def handle_command(data):
     global quit_program_scheduled, restart_program_scheduled
@@ -1502,6 +1513,9 @@ def close_program():
     print("Close the program..")
     GPIO.output(LED_PIN, GPIO.LOW)  # Turn LED OFF before exit
     GPIO.cleanup()  # Reset GPIO pins
+
+    if udp_node:
+        udp_node.stop()
 
     # needs to kill server.py aswell? however, that script kills older versions of itself
 
