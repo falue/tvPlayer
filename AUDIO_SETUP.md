@@ -8,6 +8,7 @@ By default, mpv outputs audio to a single device. To get audio on **both HDMI an
 
 ```bash
 sudo apt install pipewire pipewire-pulse wireplumber
+sudo apt install pulseaudio-utils
 ```
 
 Verify PipeWire is running:
