@@ -459,8 +459,11 @@
             <div id="adminPanel" style="display: none;">
                 <div class="button-row">
                     <button onclick="sendCommand({'cmd': 'restart'})">Restart App</button>
-                    <button onclick="sendCommand({'cmd': 'close_program'})">Quit App</button>
-                    <button onclick="window.open('http://10.3.141.1', '_blank')">RaspAP Admin</button></a>
+                    <button onclick="sendCommand({'cmd': 'close_program'})" class="important">Quit App</button>
+                    <button onclick="window.open('http://10.3.141.1', '_blank')">
+                        RaspAP Admin
+                        <img src="assets/icons/arrow-top-right-thick.svg">
+                    </button>
                 </div>
                 <h2 style="margin-top:2em;">
                     MQTT Console
