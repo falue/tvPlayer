@@ -54,7 +54,7 @@ function init() {
     const data = JSON.parse(message.toString());
     if (topic === "tvPlayer/heartbeat") {
       logging(`Received heartbeat`, false);
-      handleHeartbeat(data.temp ? data.temp : false, data.ips ? data.ips : false);
+      handleHeartbeat(data.temp ? data.temp : false, data.ips ? data.ips : false, data.hdmi ? data.hdmi : false);
 
     } else if (topic === "tvPlayer/settings") {
       logging(`Received settings`, false);
@@ -172,7 +172,21 @@ function showIpAddresses(ips) {
   target.innerHTML = ips.length ? ips.join("<br>") : "No network connection";
 }
 
-function handleHeartbeat(temp=false, ips=false) {
+function showHdmiPorts(hdmi) {
+  // Elements only exist in the system section of index.html
+  Object.entries(hdmi).forEach(([connector, state]) => {
+    const target = gebi(connector);
+    if(!target) return;
+
+    if(!state.connected) {
+      target.innerHTML = "Disconnected";
+    } else {
+      target.innerHTML = state.active ? "Active" : "Connected";
+    }
+  });
+}
+
+function handleHeartbeat(temp=false, ips=false, hdmi=false) {
   raspi_available = true;
   clearTimeout(raspi_available_timer);
   clearTimeout(raspi_alert_timer);
@@ -181,6 +195,9 @@ function handleHeartbeat(temp=false, ips=false) {
   }
   if(ips !== false) {
     showIpAddresses(ips);
+  }
+  if(hdmi !== false) {
+    showHdmiPorts(hdmi);
   }
 
   // Add green heartbeat class

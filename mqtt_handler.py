@@ -77,6 +77,8 @@ def get_ip_addresses():
 def start():
     def mqtt_loop():
         global client
+        # Imported here, not at module level: hdmi_manager imports this module.
+        import hdmi_manager
         client = mqtt.Client()
         client.on_connect = on_connect
         client.on_message = on_message
@@ -86,7 +88,12 @@ def start():
         try:
             while True:
                 temp = get_cpu_temp()
-                heartbeat = json.dumps({"msg": "heartbeat from tvPlayer", "temp": temp, "ips": get_ip_addresses()})
+                heartbeat = json.dumps({
+                    "msg": "heartbeat from tvPlayer",
+                    "temp": temp,
+                    "ips": get_ip_addresses(),
+                    "hdmi": hdmi_manager.get_states(),
+                })
                 client.publish("tvPlayer/heartbeat", heartbeat)
                 time.sleep(5)
         except KeyboardInterrupt:

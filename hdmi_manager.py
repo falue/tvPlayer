@@ -24,6 +24,27 @@ PREFERRED_CONNECTOR = "HDMI-A-2"
 FALLBACK_CONNECTOR = "HDMI-A-1"
 POLL_INTERVAL = 1.0  # seconds
 
+ACTIVE_CONNECTOR = None  # set by choose_connector()
+_states = {}  # cached connector states, only written by the monitor thread
+
+
+def get_states():
+    """
+    Cached state of every HDMI connector, for the MQTT heartbeat.
+    Does no filesystem access — the monitor thread keeps this up to date.
+    Returns: {"HDMI-A-1": {"connected": bool, "active": bool}, ..}
+    """
+    return _states
+
+
+def _set_states(connected_map):
+    """Refresh the cache from a {name: bool} map."""
+    global _states
+    _states = {
+        name: {"connected": connected, "active": name == ACTIVE_CONNECTOR}
+        for name, connected in connected_map.items()
+    }
+
 
 def discover_connectors():
     """
@@ -59,6 +80,8 @@ def choose_connector():
     Returns the connector name string for mpv's drm-connector option,
     or None if no connectors found.
     """
+    global ACTIVE_CONNECTOR
+
     connectors = discover_connectors()
     if not connectors:
         print("[HDMI] No HDMI connectors found in /sys/class/drm/")
@@ -66,21 +89,24 @@ def choose_connector():
 
     if PREFERRED_CONNECTOR in connectors and is_connected(connectors[PREFERRED_CONNECTOR]):
         print(f"[HDMI] Using preferred connector: {PREFERRED_CONNECTOR}")
-        return PREFERRED_CONNECTOR
-
-    if FALLBACK_CONNECTOR in connectors:
+        ACTIVE_CONNECTOR = PREFERRED_CONNECTOR
+    elif FALLBACK_CONNECTOR in connectors:
         if is_connected(connectors[FALLBACK_CONNECTOR]):
             print(f"[HDMI] Using fallback connector: {FALLBACK_CONNECTOR}")
         else:
             print(f"[HDMI] No display detected, starting on: {FALLBACK_CONNECTOR}")
-        return FALLBACK_CONNECTOR
-
-    # Only preferred exists but not connected — use it anyway
-    if PREFERRED_CONNECTOR in connectors:
+        ACTIVE_CONNECTOR = FALLBACK_CONNECTOR
+    elif PREFERRED_CONNECTOR in connectors:
+        # Only preferred exists but not connected — use it anyway
         print(f"[HDMI] No display detected, starting on: {PREFERRED_CONNECTOR}")
-        return PREFERRED_CONNECTOR
+        ACTIVE_CONNECTOR = PREFERRED_CONNECTOR
+    else:
+        return None
 
-    return None
+    # Seed the cache so the heartbeat has data before the first poll
+    _set_states({name: is_connected(path) for name, path in connectors.items()})
+
+    return ACTIVE_CONNECTOR
 
 
 def report_state(connector, connected, active_connector):
@@ -114,12 +140,7 @@ def start_hotplug_monitor(active_connector, on_exit_cleanup=None):
     def monitor():
         # Track last known state of every discovered connector
         was_connected = {name: is_connected(path) for name, path in connectors.items()}
-
-        # Wait for mqtt_init() — it runs after player_init() in main(),
-        # so an immediate report would be dropped.
-        time.sleep(5)
-        for name, state in was_connected.items():
-            report_state(name, state, active_connector)
+        _set_states(was_connected)
 
         while True:
             time.sleep(POLL_INTERVAL)
@@ -127,9 +148,14 @@ def start_hotplug_monitor(active_connector, on_exit_cleanup=None):
             now_connected = {name: is_connected(path) for name, path in connectors.items()}
 
             # Report every state change, whether or not it causes a restart
+            changed = False
             for name, state in now_connected.items():
                 if state != was_connected[name]:
                     report_state(name, state, active_connector)
+                    changed = True
+
+            if changed:
+                _set_states(now_connected)
 
             preferred_was = was_connected.get(PREFERRED_CONNECTOR, False)
             preferred_now = now_connected.get(PREFERRED_CONNECTOR, False)
@@ -138,7 +164,7 @@ def start_hotplug_monitor(active_connector, on_exit_cleanup=None):
 
             if active_connector != PREFERRED_CONNECTOR and preferred_now and not preferred_was:
                 # Preferred just got plugged in, switch to it
-                msg = f"[HDMI] {PREFERRED_CONNECTOR} connected — switching output."
+                msg = f"[HDMI] {PREFERRED_CONNECTOR} connected — switching output (Restart manually if started with 'python3 tvPlayer.py')"
                 print(msg)
                 mqtt_handler.send("general", msg)
                 should_restart = True
