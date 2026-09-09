@@ -13,6 +13,7 @@ When the preferred connector state changes, triggers a clean restart
 via os._exit(75) so systemd restarts the service on the new output.
 """
 
+import subprocess
 import os
 import threading
 import time
@@ -182,6 +183,21 @@ def start_hotplug_monitor(active_connector, on_exit_cleanup=None):
                     except Exception as e:
                         print(f"[HDMI] Cleanup error: {e}")
                 time.sleep(0.25)  # Let MQTT deliver the message
+
+                # Restart audio services to avoid "No audio devices found" after switching HDMI outputs
+                subprocess.run(
+                    [
+                        "systemctl",
+                        "--user",
+                        "restart",
+                        "pipewire",
+                        "pipewire-pulse",
+                        "wireplumber",
+                    ],
+                    check=False,
+                )
+                time.sleep(1)
+
                 os._exit(75)
 
             was_connected = now_connected
