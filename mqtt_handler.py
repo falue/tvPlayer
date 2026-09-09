@@ -1,5 +1,6 @@
 import paho.mqtt.client as mqtt
 import json
+import subprocess
 import threading
 import time
 
@@ -47,6 +48,31 @@ def get_cpu_temp():
     temp = int(temp_str) / 1000  # in Celsius
     return temp
 
+_ip_cache = {"ips": [], "at": 0}
+IP_CACHE_SECONDS = 30
+
+def get_ip_addresses():
+    """Return ["<interface>: <ipv4>", ..] for all non-loopback interfaces, cached."""
+    now = time.time()
+    if now - _ip_cache["at"] < IP_CACHE_SECONDS and _ip_cache["ips"]:
+        return _ip_cache["ips"]
+
+    ips = []
+    try:
+        output = subprocess.check_output(
+            ["ip", "-4", "-oneline", "addr", "show", "scope", "global"],
+            text=True, stderr=subprocess.DEVNULL
+        )
+        for line in output.strip().splitlines():
+            parts = line.split()
+            if len(parts) >= 4:
+                ips.append(f"{parts[1]}: {parts[3].split('/')[0]}")
+    except Exception as e:
+        print("[MQTT] Could not read ip addresses:", e)
+
+    _ip_cache.update(ips=ips, at=now)
+    return ips
+
 
 def start():
     def mqtt_loop():
@@ -60,7 +86,7 @@ def start():
         try:
             while True:
                 temp = get_cpu_temp()
-                heartbeat = json.dumps({"msg": "heartbeat from tvPlayer", "temp": temp})
+                heartbeat = json.dumps({"msg": "heartbeat from tvPlayer", "temp": temp, "ips": get_ip_addresses()})
                 client.publish("tvPlayer/heartbeat", heartbeat)
                 time.sleep(5)
         except KeyboardInterrupt:

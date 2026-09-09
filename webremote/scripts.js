@@ -54,7 +54,7 @@ function init() {
     const data = JSON.parse(message.toString());
     if (topic === "tvPlayer/heartbeat") {
       logging(`Received heartbeat`, false);
-      handleHeartbeat(data.temp ? data.temp : false);
+      handleHeartbeat(data.temp ? data.temp : false, data.ips ? data.ips : false);
 
     } else if (topic === "tvPlayer/settings") {
       logging(`Received settings`, false);
@@ -164,12 +164,23 @@ function showTemperatureData(temp) {
   }
 }
 
-function handleHeartbeat(temp=false) {
+function showIpAddresses(ips) {
+  // Element only exists in the admin panel of index.html
+  const target = gebi('ipAddress');
+  if(!target) return;
+
+  target.innerHTML = ips.length ? ips.join("<br>") : "No network connection";
+}
+
+function handleHeartbeat(temp=false, ips=false) {
   raspi_available = true;
   clearTimeout(raspi_available_timer);
   clearTimeout(raspi_alert_timer);
   if(temp !== false) {
     showTemperatureData(temp);
+  }
+  if(ips !== false) {
+    showIpAddresses(ips);
   }
 
   // Add green heartbeat class
