@@ -1,5 +1,5 @@
 [Unit]
-Description=tvPlayer - Video Channel Player
+Description=tvPlayer
 After=multi-user.target
 StartLimitIntervalSec=30
 StartLimitBurst=10
@@ -7,11 +7,10 @@ StartLimitBurst=10
 [Service]
 User=dp
 WorkingDirectory=/home/dp/tvPlayer
-ExecStart=/usr/bin/python3 -u tvPlayer.py
-# Required for mpv to reach the user PipeWire socket. Without it the
-# pipewire/pulse AOs fail to init and there is no audio at all.
-# Check the real uid with `id -u dp`.
 Environment=XDG_RUNTIME_DIR=/run/user/1000
+ExecStartPre=/usr/bin/systemctl --user restart pipewire pipewire-pulse wireplumber
+ExecStartPre=/usr/bin/sleep 1
+ExecStart=/usr/bin/python3 -u tvPlayer.py
 Restart=on-failure
 RestartSec=2
 StandardOutput=journal

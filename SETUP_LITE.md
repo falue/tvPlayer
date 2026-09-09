@@ -199,14 +199,18 @@ sudo nano /etc/systemd/system/tvplayer.service
 [Unit]
 Description=tvPlayer
 After=multi-user.target
+StartLimitIntervalSec=30
+StartLimitBurst=10
 
 [Service]
 User=dp
 WorkingDirectory=/home/dp/tvPlayer
-ExecStart=/usr/bin/python3 -u tvPlayer.py
 Environment=XDG_RUNTIME_DIR=/run/user/1000
+ExecStartPre=/usr/bin/systemctl --user restart pipewire pipewire-pulse wireplumber
+ExecStartPre=/usr/bin/sleep 1
+ExecStart=/usr/bin/python3 -u tvPlayer.py
 Restart=on-failure
-RestartSec=3
+RestartSec=2
 StandardOutput=journal
 StandardError=journal
 
@@ -295,9 +299,14 @@ context.modules = [
             node.name = "combined-output"
             node.description = "HDMI + Analog Combined"
             combine.latency-compensate = true
+
             stream.rules = [
                 {
-                    matches = [ { media.class = "Audio/Sink" } ]
+                    matches = [
+                        { media.class = "Audio/Sink" node.name = "~alsa_output.*" }
+                        { media.class = "Audio/Sink" node.name = "pi-hdmi-0" }
+                        { media.class = "Audio/Sink" node.name = "pi-hdmi-1" }
+                    ]
                     actions = { create-stream = {} }
                 }
             ]
