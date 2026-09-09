@@ -282,7 +282,7 @@ def load_settings():
     Load settings from a JSON file and apply them to globals.
     For file-dependent settings, only load settings for the files in the given filelist.
     """
-    global pan_offsets, brightness, contrast, saturation, volume, show_tv_gui, zoom_level
+    global pan_offsets, brightness, contrast, saturation, volume, muted, show_tv_gui, zoom_level
     global file_settings, inpoints, video_fittings, video_speeds, tv_channel, show_whitenoise_channel_change
     global fill_color_type, fill_color_index, fill_color_active
 
@@ -311,6 +311,7 @@ def load_settings():
     contrast = general_settings.get("contrast", contrast)
     saturation = general_settings.get("saturation", saturation)
     volume = general_settings.get("volume", volume)
+    muted = general_settings.get("muted", muted)
     fill_color_type = general_settings.get("fill_color_type", fill_color_type)
     fill_color_index = general_settings.get("fill_color_index", fill_color_index)
     fill_color_active = general_settings.get("fill_color_active", fill_color_active)
@@ -412,6 +413,7 @@ def collect_settings():
         "contrast": contrast,
         "saturation": saturation,
         "volume": volume,
+        "muted": muted,
         "tv_channel": tv_channel,
         "fill_color_type": fill_color_type,
         "fill_color_index": fill_color_index,
@@ -755,7 +757,7 @@ def system_init():
     set_brightness(brightness)
     set_contrast(contrast)
     set_saturation(saturation)
-    set_volume(volume)
+    set_volume(0 if muted else volume)
     zoom(zoom_level, True)
 
     print("System initialized.\n")
