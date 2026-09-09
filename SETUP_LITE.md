@@ -204,6 +204,7 @@ After=multi-user.target
 User=dp
 WorkingDirectory=/home/dp/tvPlayer
 ExecStart=/usr/bin/python3 -u tvPlayer.py
+Environment=XDG_RUNTIME_DIR=/run/user/1000
 Restart=on-failure
 RestartSec=3
 StandardOutput=journal
@@ -212,6 +213,10 @@ StandardError=journal
 [Install]
 WantedBy=multi-user.target
 ```
+
+`Environment=XDG_RUNTIME_DIR=/run/user/1000` is **not optional** — it is how mpv finds the user
+PipeWire socket. Check the real uid with `id -u dp` first. Without it mpv cannot reach PipeWire
+and there is no audio at all. See the *Audio Setup* section below.
 
 Enable:
 ```bash
@@ -405,8 +410,8 @@ pactl list short sink-inputs
 - Only the outputs that physically exist produce sound. With one HDMI connected you get that HDMI
   plus analog; plug in the second and it joins automatically.
 - mpv needs no special audio configuration — it follows the system default sink.
-- HDMI audio needs `hdmi_drive=2` in `/boot/firmware/config.txt` on some setups. If HDMI is silent
-  while analog works, check that first.
+- `hdmi_drive=2` in `/boot/firmware/config.txt` does **nothing** on Bookworm — it was a
+  legacy-firmware setting and the `vc4-kms-v3d` driver ignores it. Do not go looking there.
 - `combine.latency-compensate = true` aligns the outputs. If you hear echo from having both a TV
   speaker and a jack-connected speaker in the same room, that is the physical distance between
   them, not a config problem.

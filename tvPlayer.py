@@ -466,6 +466,13 @@ def player_init():
 
     mpv_kwargs = dict(
         vo='drm',
+        # Route audio through PipeWire (or its pulse shim) and NEVER fall back to
+        # raw ALSA. Without this mpv auto-probes and, when it cannot reach the user
+        # PipeWire socket (no XDG_RUNTIME_DIR under systemd), silently opens hw:0 —
+        # which is vc4hdmi0/HDMI-A-1 regardless of which port has a display, and
+        # locks that PCM so PipeWire can never build a sink for it.
+        # A list without a trailing comma stops mpv probing any further AOs.
+        ao='pipewire,pulse',
         loop_file='inf',
         image_display_duration=0.1,
         idle=True,
