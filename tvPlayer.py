@@ -767,6 +767,17 @@ def system_init():
     set_volume(0 if muted else volume)
     zoom(zoom_level, True)
 
+    # Kick the audio system in the ass to make sure PipeWire is ready for mpv
+    # Works for hot swapping HDMI, and keeps analog jack active too
+    try:
+        subprocess.run(
+            ["systemctl", "--user", "restart", "wireplumber"],
+            check=False, timeout=15,
+        )
+        print("[AUDIO] WirePlumber restarted")
+    except Exception as e:
+        print(f"[AUDIO] WirePlumber restart failed: {e}")
+
     print("System initialized.\n")
 
 def detect_usb_root():
