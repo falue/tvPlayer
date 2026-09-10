@@ -199,8 +199,7 @@ sudo nano /etc/systemd/system/tvplayer.service
 [Unit]
 Description=tvPlayer
 After=multi-user.target user@1000.service
-StartLimitIntervalSec=30
-StartLimitBurst=10
+StartLimitIntervalSec=0
 
 [Service]
 User=dp

@@ -461,6 +461,13 @@ def player_init():
     global player
     print("Starting mpv player via python-mpv (vo=drm, no UI).")
 
+    # vo=drm cannot initialise without a connected display. If the Pi booted
+    # with no monitor, wait here instead of crashing into a systemd restart loop.
+    while not any(hdmi_manager.is_connected(p)
+                  for p in hdmi_manager.discover_connectors().values()):
+        print("[HDMI] No display connected, waiting...")
+        time.sleep(2)
+
     # Choose HDMI connector (prefers HDMI-A-2, falls back to HDMI-A-1)
     active_connector = hdmi_manager.choose_connector()
 
