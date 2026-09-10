@@ -265,6 +265,20 @@ Keep the user session (and with it PipeWire/WirePlumber) alive independent of tt
 sudo loginctl enable-linger dp
 ```
 
+### Set HDMI Volume
+
+WirePlumber defaults a never-seen HDMI output to 40%. Set each HDMI card to 100% once, with
+tvPlayer running and the cable in that port (the sink only exists while a display is on it):
+
+```bash
+# cable in HDMI-A-1:
+pactl set-sink-volume alsa_output.platform-fef00700.hdmi.hdmi-stereo 100%
+# cable in HDMI-A-2 (after tvPlayer restarts):
+pactl set-sink-volume alsa_output.platform-fef05700.hdmi.hdmi-stereo 100%
+```
+
+Stored in `~/.local/state/wireplumber/default-routes`; survives swaps and reboots.
+
 ---
 
 ## Combined Sink
@@ -309,19 +323,6 @@ pactl set-default-sink combined-output
 
 ---
 
-## mpv Audio Output
-
-In `tvPlayer.py` mpv is created with:
-```python
-ao='pipewire,pulse',
-```
-
-This is required. Without it mpv auto-probes and, when it cannot reach the user PipeWire socket,
-silently opens `hw:0` (HDMI-A-1) directly and locks that PCM so PipeWire can never build a sink
-for it. The list without trailing comma stops mpv falling back to raw ALSA.
-
----
-
 ## Hotplug — Why tvPlayer Restarts WirePlumber
 
 Two Pi 4 quirks, both handled in `system_init()`:
@@ -363,27 +364,3 @@ pactl list short sink-inputs
 
 Test the three cases: boot with cable in HDMI-A-1, boot with cable in HDMI-A-2, live swap.
 
----
-
-## If HDMI Is Silent
-
-- `systemctl --user restart wireplumber` by hand fixes it → the automatic restart ran too early
-  (before mpv had the display on). Check the `[AUDIO]` line in `journalctl -u tvplayer`.
-- `pactl list cards` shows the connected card with `Active Profile: off` and no `hdmi-stereo`
-  profile → WirePlumber has not re-probed since the cable was plugged.
-- `~/.local/state/wireplumber/default-profile` must not contain `pro-audio` entries for the HDMI
-  cards; delete any such lines and restart WirePlumber.
-- `sudo fuser -v /dev/snd/*` must not show `python3` holding an HDMI PCM — if it does, mpv is
-  bypassing PipeWire (check `ao=` and `XDG_RUNTIME_DIR`).
-
----
-
-## Notes
-
-- Only the outputs that physically exist produce sound: analog always, plus the connected HDMI.
-- `hdmi_drive=2` in `/boot/firmware/config.txt` does **nothing** on Bookworm — legacy firmware
-  setting, ignored by `vc4-kms-v3d`.
-- `combine.latency-compensate = true` aligns the outputs. Echo between a TV speaker and a
-  jack-connected speaker in the same room is physical distance, not a config problem.
-
----
