@@ -198,7 +198,9 @@ sudo nano /etc/systemd/system/tvplayer.service
 ```ini
 [Unit]
 Description=tvPlayer
-After=multi-user.target
+After=multi-user.target user@1000.service
+StartLimitIntervalSec=30
+StartLimitBurst=10
 
 [Service]
 User=dp
@@ -206,7 +208,7 @@ WorkingDirectory=/home/dp/tvPlayer
 ExecStart=/usr/bin/python3 -u tvPlayer.py
 Environment=XDG_RUNTIME_DIR=/run/user/1000
 Restart=on-failure
-RestartSec=3
+RestartSec=2
 StandardOutput=journal
 StandardError=journal
 
@@ -216,7 +218,11 @@ WantedBy=multi-user.target
 
 `Environment=XDG_RUNTIME_DIR=/run/user/1000` is **not optional** — it is how mpv finds the user
 PipeWire socket. Check the real uid with `id -u dp` first. Without it mpv cannot reach PipeWire
-and there is no audio at all. See the *Audio Setup* section below.
+and there is no audio at all. `After=user@1000.service` makes sure the user's audio session is
+up before tvPlayer starts (needs linger, see *Audio Setup* below).
+
+Do **not** add `ExecStartPre`/`ExecStartPost` lines that restart PipeWire or WirePlumber — the
+audio kick has to happen *after* mpv is running and is done inside `tvPlayer.py`.
 
 Enable:
 ```bash
@@ -225,48 +231,27 @@ sudo systemctl enable tvplayer.service
 
 ---
 
-## Verify DRM Works
+# Audio Setup — Analog Jack + Connected HDMI at Once
 
-```bash
-mpv --vo=drm --drm-connector=HDMI-A-1 /path/to/test.mp4
-```
+Goal: audio plays simultaneously from the **3.5mm analog jack** and **whichever HDMI port has a
+display**. Either port works, and moving the cable between ports at runtime works without
+touching anything.
 
-If this plays fullscreen without X, the base system is ready.
+How it fits together:
 
----
-
-## Refactor Steps (after OS is ready)
-
-1. Replace pygame + socat IPC → python-mpv
-2. Disable all mpv built-in UI (osc, osd, keybinds)
-3. Replace pygame keyboard → evdev thread
-4. Configure `vo=drm`, systemd service on tty1
-5. Multi-HDMI hotplug (EDID poll, connector select)
-6. Overlay routing via python-mpv
-7. Multi-monitor: one process, multiple players, per-screen state
-
-
-# Audio Setup — Sound Out of Every Output at Once
-
-Goal: audio plays simultaneously from the **3.5mm analog jack** and **both HDMI ports**, so you
-can plug into whichever you like and it just works.
-
-By default mpv outputs to a single device. The fix is a PipeWire **combined sink**: one virtual
-output that mirrors audio to every real output present on the system.
-
-**Volume and mute stay in tvPlayer.** mpv applies them in software (`player.volume`) *before*
-the audio reaches the combined sink, so whatever you set in the webremote applies to all outputs
-equally. Do not use `pactl set-sink-volume` or `alsamixer` to control level — leave those at 100%
-and let the webremote own it. Otherwise you end up with two independent volume stages fighting
-each other.
+- mpv plays to one PipeWire **combined sink** that mirrors audio to every real ALSA output.
+- WirePlumber creates the HDMI sink for the port that has a display. It only probes the HDMI
+  cards once, when it starts, so tvPlayer restarts WirePlumber after mpv is up (see *Hotplug*).
+- **Volume and mute stay in tvPlayer.** mpv applies them in software before the audio reaches
+  the combined sink, so the webremote level applies to all outputs equally. Leave `pactl`/
+  `alsamixer` levels at 100%.
 
 ---
 
 ## Prerequisites
 
 ```bash
-sudo apt install pipewire pipewire-pulse wireplumber
-sudo apt install pulseaudio-utils
+sudo apt install pipewire pipewire-pulse wireplumber pulseaudio-utils
 ```
 
 Verify PipeWire is running:
@@ -275,11 +260,15 @@ pactl info | grep "Server Name"
 # Should show: PulseAudio (on PipeWire ...)
 ```
 
+Keep the user session (and with it PipeWire/WirePlumber) alive independent of tty logins:
+```bash
+sudo loginctl enable-linger dp
+```
+
 ---
 
-## Create a Combined Sink
+## Combined Sink
 
-Create the config file:
 ```bash
 mkdir -p ~/.config/pipewire/pipewire.conf.d
 nano ~/.config/pipewire/pipewire.conf.d/combined-sink.conf
@@ -295,9 +284,12 @@ context.modules = [
             node.name = "combined-output"
             node.description = "HDMI + Analog Combined"
             combine.latency-compensate = true
+
             stream.rules = [
                 {
-                    matches = [ { media.class = "Audio/Sink" } ]
+                    matches = [
+                        { media.class = "Audio/Sink" node.name = "~alsa_output.*" }
+                    ]
                     actions = { create-stream = {} }
                 }
             ]
@@ -306,121 +298,92 @@ context.modules = [
 ]
 ```
 
-This mirrors audio to **all** available sinks. The `matches` rule deliberately targets every
-`Audio/Sink` rather than naming devices, which matters for two reasons:
+The rule matches real ALSA sinks only (`alsa_output.*`), so the combined sink never tries to
+feed itself. Sinks that appear later are picked up automatically.
 
-- On a Pi 4 the outputs appear as `vc4-hdmi0`, `vc4-hdmi1` and the analog `bcm2835-headphones` —
-  naming them individually is brittle.
-- **An HDMI sink only exists while a display is plugged in.** The `combine-stream` module picks up
-  sinks as they appear and drops them as they vanish, so hotplugging a second screen adds its
-  audio automatically with no reconfiguration.
-
----
-
-## Set as Default
-
-Restart PipeWire:
+Restart and set as default (WirePlumber remembers this across reboots):
 ```bash
 systemctl --user restart pipewire pipewire-pulse wireplumber
-```
-
-List sinks and find the combined one:
-```bash
-pactl list short sinks
-```
-
-Set it as default:
-```bash
 pactl set-default-sink combined-output
 ```
 
-To make it persistent across reboots, add to `~/.config/pipewire/pipewire.conf.d/default-sink.conf`:
+---
+
+## mpv Audio Output
+
+In `tvPlayer.py` mpv is created with:
+```python
+ao='pipewire,pulse',
 ```
-context.properties = {
-    default.audio.sink = "combined-output"
-}
-```
+
+This is required. Without it mpv auto-probes and, when it cannot reach the user PipeWire socket,
+silently opens `hw:0` (HDMI-A-1) directly and locks that PCM so PipeWire can never build a sink
+for it. The list without trailing comma stops mpv falling back to raw ALSA.
 
 ---
 
-## Make it work under systemd
+## Hotplug — Why tvPlayer Restarts WirePlumber
 
-PipeWire runs as a **user** service, but tvPlayer is started by a system unit. Two things are
-needed so the player can reach the user's audio session:
+Two Pi 4 quirks, both handled in `system_init()`:
 
-**1.** Keep the user session alive even when nobody is logged in:
-```bash
-sudo loginctl enable-linger dp
+1. **WirePlumber probes the HDMI cards only once, at startup.** A port that had no display at
+   that moment gets no `hdmi-stereo` profile, and plugging a display in later does not add it.
+   Restarting WirePlumber re-probes. (Known issue, forum thread `t=343523`.)
+2. **The HDMI audio stream must be opened after the display is on.** If WirePlumber opens the
+   HDMI sink before mpv has set the video mode, the sink shows `RUNNING` but stays silent.
+
+So `system_init()` waits until mpv reports video dimensions, then runs:
+```python
+subprocess.run(["systemctl", "--user", "restart", "wireplumber"], check=False, timeout=15)
 ```
 
-**2.** Confirm the service runs as that same user and can see the session bus. The unit file lives
-**on the Pi** at `/etc/systemd/system/tvplayer.service` (see the *Systemd Service* section of
-`SETUP_LITE.md` for how it is created — the `tvplayer.service` file in this repo is only a
-reference copy, systemd does not read it):
-
-```bash
-sudo nano /etc/systemd/system/tvplayer.service
-```
-
-It already contains `User=dp` in its `[Service]` block. If audio is silent when started by
-systemd but works when you run `python3 tvPlayer.py` by hand, add one line to that same
-`[Service]` block:
-
-```ini
-[Service]
-User=dp
-WorkingDirectory=/home/dp/tvPlayer
-ExecStart=/usr/bin/python3 -u tvPlayer.py
-Environment=XDG_RUNTIME_DIR=/run/user/1000
-...
-```
-
-Check the real uid first with `id -u dp` — it is usually `1000`. Then reload and restart:
-
-```bash
-sudo systemctl daemon-reload
-sudo systemctl restart tvplayer
-```
+Only WirePlumber restarts. PipeWire, the combined sink and mpv's connection to it all stay up,
+so playback continues; the new HDMI sink is simply added to the combine. tvPlayer already exits
+with code 75 when the HDMI connector changes and systemd restarts it, so every boot and every
+cable move ends with a WirePlumber restart at the right moment.
 
 ---
 
 ## Verify
 
-List sinks and confirm the outputs are all there:
 ```bash
 pactl list short sinks
 ```
-
-Test the combined sink directly:
-```bash
-speaker-test -c 2 -t wav
+Expected with one display connected:
+```
+combined-output
+alsa_output.platform-fe00b840.mailbox.stereo-fallback        # analog
+alsa_output.platform-fef00700.hdmi.hdmi-stereo               # HDMI-A-1 (fef05700 = HDMI-A-2)
 ```
 
-You should hear audio from the analog jack and every connected HDMI display at once.
-
-Then confirm mpv is actually feeding the combined sink while tvPlayer runs:
+Confirm mpv feeds the combined sink while tvPlayer runs:
 ```bash
 pactl list short sink-inputs
 ```
+
+Test the three cases: boot with cable in HDMI-A-1, boot with cable in HDMI-A-2, live swap.
+
+---
+
+## If HDMI Is Silent
+
+- `systemctl --user restart wireplumber` by hand fixes it → the automatic restart ran too early
+  (before mpv had the display on). Check the `[AUDIO]` line in `journalctl -u tvplayer`.
+- `pactl list cards` shows the connected card with `Active Profile: off` and no `hdmi-stereo`
+  profile → WirePlumber has not re-probed since the cable was plugged.
+- `~/.local/state/wireplumber/default-profile` must not contain `pro-audio` entries for the HDMI
+  cards; delete any such lines and restart WirePlumber.
+- `sudo fuser -v /dev/snd/*` must not show `python3` holding an HDMI PCM — if it does, mpv is
+  bypassing PipeWire (check `ao=` and `XDG_RUNTIME_DIR`).
 
 ---
 
 ## Notes
 
-- Only the outputs that physically exist produce sound. With one HDMI connected you get that HDMI
-  plus analog; plug in the second and it joins automatically.
-- mpv needs no special audio configuration — it follows the system default sink.
-- `hdmi_drive=2` in `/boot/firmware/config.txt` does **nothing** on Bookworm — it was a
-  legacy-firmware setting and the `vc4-kms-v3d` driver ignores it. Do not go looking there.
-- `combine.latency-compensate = true` aligns the outputs. If you hear echo from having both a TV
-  speaker and a jack-connected speaker in the same room, that is the physical distance between
-  them, not a config problem.
-- If PipeWire is unavailable, PulseAudio's `module-combine-sink` achieves the same thing.
+- Only the outputs that physically exist produce sound: analog always, plus the connected HDMI.
+- `hdmi_drive=2` in `/boot/firmware/config.txt` does **nothing** on Bookworm — legacy firmware
+  setting, ignored by `vc4-kms-v3d`.
+- `combine.latency-compensate = true` aligns the outputs. Echo between a TV speaker and a
+  jack-connected speaker in the same room is physical distance, not a config problem.
 
 ---
-
-## Status
-
-**Untested.** Expect to iterate on this. `journalctl --user -u pipewire -n 50` is the first place
-to look when something does not come up.
-
