@@ -25,7 +25,7 @@ FALLBACK_CONNECTOR = "HDMI-A-2"
 POLL_INTERVAL = 1.0  # seconds
 
 ACTIVE_CONNECTOR = None  # set by choose_connector()
-_states = {}  # cached connector states, only written by the monitor thread
+_states = {}  # cached connector states, written by refresh_states() and the monitor thread
 
 
 def get_states():
@@ -35,6 +35,16 @@ def get_states():
     Returns: {"HDMI-A-1": {"connected": bool, "active": bool}, ..}
     """
     return _states
+
+
+def refresh_states():
+    """
+    Read every connector's status, update the cache and return True if any
+    display is connected. Used while waiting for a display at startup.
+    """
+    connected_map = {name: is_connected(path) for name, path in discover_connectors().items()}
+    _set_states(connected_map)
+    return any(connected_map.values())
 
 
 def _set_states(connected_map):

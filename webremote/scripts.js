@@ -1,5 +1,6 @@
 let client;
 let hasReceivedSettings = false;
+let systemReady = false;  // false while the tvPlayer starts up or waits for a display
 let raspi_available = false;
 let raspi_available_timer = null;
 let raspi_alert_timer = null;
@@ -56,19 +57,26 @@ function init() {
     if (topic === "tvPlayer/heartbeat") {
       logging(`Received heartbeat`, false);
       handleHeartbeat(data.temp ? data.temp : false, data.ips ? data.ips : false, data.hdmi ? data.hdmi : false);
+      setSystemReady(data.ready !== false);
 
     } else if (topic === "tvPlayer/settings") {
       logging(`Received settings`, false);
       hasReceivedSettings = true;
       handleSettings(data.payload);
       handleHeartbeat();  // Treat as heartbeat because it comes every second
+      if (data.payload.state) {
+        setSystemReady(data.payload.state.ready !== false);
+      }
 
     } else if (topic === "tvPlayer/command") {
       logging(`Acknowledged command: <pre>${JSON.stringify(data)}</pre>`, false);
 
     } else if (topic === "tvPlayer/general") {
       logging(`Received general message: <pre>${JSON.stringify(data)}</pre>`, false);
-      if (data.command.includes("[HDMI]")) {
+      if (data.command == "waitingForDisplay" && !hasReceivedSettings) {
+        // tvPlayer is up but blocks until a monitor is plugged in
+        gebi("filelist").innerHTML = "No display connected - waiting for a monitor on HDMI..";
+      } else if (data.command.includes("[HDMI]")) {
         // Display active HDMI port
         let disconnected = data.command.includes("disconnected");
         let targetPort = data.command.includes("[HDMI] HDMI-A-2") ? "HDMI-A-2" : "HDMI-A-1";
@@ -159,9 +167,20 @@ function showTemperatureData(temp) {
   } else {
     gebi('note-temp').innerHTML = `${temp.toFixed(1)}°C`;
     gebi('note-temp').style.color= "inherit";
-    gebi('error').innerHTML = '';
+    gebi('error').innerHTML = systemReady ? '' : 'loading..';
     gebi('body').style.backgroundColor = '#121212'; // Revert red background if okay-ish
     shownCriticalHeatAlert = false;  // Show next time when the temp reaches a lot of deg
+  }
+}
+
+function setSystemReady(ready) {
+  systemReady = ready;
+  // Only touch the error div if it's empty or shows "loading..", never hide a temperature warning
+  const target = gebi('error');
+  if (!ready && target.innerHTML === '') {
+    target.innerHTML = 'loading..';
+  } else if (ready && target.innerHTML === 'loading..') {
+    target.innerHTML = '';
   }
 }
 

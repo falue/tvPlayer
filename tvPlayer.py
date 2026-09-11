@@ -78,6 +78,7 @@ quit_program_scheduled = False
 restart_program_scheduled = False
 evdev_thread = None
 udp_node = None  # UDPNode instance
+system_ready = False  # set once player_init() and system_init() are done
 
 file_settings = {}
 SETTINGS_FILE = "settings.json"
@@ -170,6 +171,17 @@ def handle_command(data):
 
     cmd = data.get("command")
     value = data.get("value", 0)
+
+    # MQTT starts before the player exists (it waits for a display), so until
+    # then only accept commands that don't need mpv or the filelist.
+    if not system_ready:
+        if cmd == "shutdown":
+            shutdown()
+        elif cmd == "reboot":
+            reboot()
+        elif cmd != "give_settings":  # webremote polls this every second, don't spam the log
+            print(f"[tvPlayer] Not ready yet (no display?), ignoring command: {cmd}")
+        return
 
     if cmd == "give_settings":
         # Collect settings and send it by mqtt
@@ -376,7 +388,8 @@ def send_settings(data=False):
         "tvChannel": tv_channel,
         "tvChannelOffset": effective_channel_offset(),  # tv_channel_offset, or 1 if it has no images
         "position": get_current_video_position(),
-        "duration": get_mpv_property("duration")
+        "duration": get_mpv_property("duration"),
+        "ready": system_ready,
     }
 
     filelist_mtimes = []
@@ -467,9 +480,11 @@ def player_init():
 
     # vo=drm cannot initialise without a connected display. If the Pi booted
     # with no monitor, wait here instead of crashing into a systemd restart loop.
-    while not any(hdmi_manager.is_connected(p)
-                  for p in hdmi_manager.discover_connectors().values()):
+    # The webserver and MQTT already run, so the webremote shows IPs, temp and
+    # HDMI state (via the heartbeat) while we wait.
+    while not hdmi_manager.refresh_states():
         print("[HDMI] No display connected, waiting...")
+        mqtt_handler.send("general", "waitingForDisplay")
         time.sleep(2)
 
     # Choose HDMI connector (prefers HDMI-A-1, falls back to HDMI-A-2)
@@ -1607,15 +1622,17 @@ def ensure_valid_settings():
             json.dump(default, f, indent=2)
 
 def main():
-    global last_sent_settings, fill_color_type, no_signal_shown
+    global last_sent_settings, fill_color_type, no_signal_shown, system_ready
     no_signal_shown = False
     time.sleep(2)  #
     print("--------------------------------------------------------------------------------")
     update_version_metadata()
     server_init()
+    mqtt_init()  # early, so the webremote gets heartbeats (IP, temp, HDMI) while player_init() waits for a display
     player_init()
     system_init()
-    mqtt_init()
+    system_ready = True  # from now on handle_command() accepts all commands
+    mqtt_handler.system_ready = True  # webremote hides "loading.."
     udp_init()
     gpio_init()
     evdev_init()

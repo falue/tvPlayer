@@ -6,6 +6,7 @@ import time
 
 on_command_callback = None
 client = None  # global client
+system_ready = False  # set by tvPlayer once player and filelist are up, sent with the heartbeat
 
 def set_command_handler(callback):
     global on_command_callback
@@ -82,7 +83,9 @@ def start():
         client = mqtt.Client()
         client.on_connect = on_connect
         client.on_message = on_message
-        client.connect("localhost", 1883, 60)
+        # connect_async + loop_start keeps retrying in the background, so this
+        # survives mosquitto not being up yet this early in boot.
+        client.connect_async("localhost", 1883, 60)
         client.loop_start()
 
         try:
@@ -93,6 +96,7 @@ def start():
                     "temp": temp,
                     "ips": get_ip_addresses(),
                     "hdmi": hdmi_manager.get_states(),
+                    "ready": system_ready,
                 })
                 client.publish("tvPlayer/heartbeat", heartbeat)
                 time.sleep(5)
