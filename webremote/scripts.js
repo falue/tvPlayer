@@ -1,6 +1,8 @@
 let client;
 let hasReceivedSettings = false;
 let systemReady = false;  // false while the tvPlayer starts up or waits for a display
+let hdmiConnected = {};  // {"HDMI-A-1": bool, ..} from heartbeat and [HDMI] messages
+const STATUS_NOTICES = { noScreen: "No screen connected", loading: "loading.." };
 let raspi_available = false;
 let raspi_available_timer = null;
 let raspi_alert_timer = null;
@@ -81,6 +83,7 @@ function init() {
         let disconnected = data.command.includes("disconnected");
         let targetPort = data.command.includes("[HDMI] HDMI-A-2") ? "HDMI-A-2" : "HDMI-A-1";
         gebi(targetPort).innerHTML = disconnected ? "Disconnected" : "Connected";
+        setHdmiConnected(targetPort, !disconnected);
       }
     } else {
       logging(
@@ -167,21 +170,36 @@ function showTemperatureData(temp) {
   } else {
     gebi('note-temp').innerHTML = `${temp.toFixed(1)}°C`;
     gebi('note-temp').style.color= "inherit";
-    gebi('error').innerHTML = systemReady ? '' : 'loading..';
+    gebi('error').innerHTML = statusNotice();
     gebi('body').style.backgroundColor = '#121212'; // Revert red background if okay-ish
     shownCriticalHeatAlert = false;  // Show next time when the temp reaches a lot of deg
   }
 }
 
+function statusNotice() {
+  // Text for the error div when there is no temperature warning
+  const ports = Object.values(hdmiConnected);
+  if (ports.length && !ports.some(Boolean)) return STATUS_NOTICES.noScreen;
+  if (!systemReady) return STATUS_NOTICES.loading;
+  return '';
+}
+
+function updateStatusNotice() {
+  // Only touch the error div if it's empty or shows a status notice, never hide a temperature warning
+  const target = gebi('error');
+  if (target.innerHTML === '' || Object.values(STATUS_NOTICES).includes(target.innerHTML)) {
+    target.innerHTML = statusNotice();
+  }
+}
+
 function setSystemReady(ready) {
   systemReady = ready;
-  // Only touch the error div if it's empty or shows "loading..", never hide a temperature warning
-  const target = gebi('error');
-  if (!ready && target.innerHTML === '') {
-    target.innerHTML = 'loading..';
-  } else if (ready && target.innerHTML === 'loading..') {
-    target.innerHTML = '';
-  }
+  updateStatusNotice();
+}
+
+function setHdmiConnected(connector, connected) {
+  hdmiConnected[connector] = connected;
+  updateStatusNotice();
 }
 
 function showIpAddresses(ips) {
@@ -195,6 +213,7 @@ function showIpAddresses(ips) {
 function showHdmiPorts(hdmi) {
   // Elements only exist in the system section of index.html
   Object.entries(hdmi).forEach(([connector, state]) => {
+    setHdmiConnected(connector, state.connected);
     const target = gebi(connector);
     if(!target) return;
 
