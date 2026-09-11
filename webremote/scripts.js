@@ -13,6 +13,7 @@ let currentFile = "";
 let blockTimerUpdate = false;
 // let fill_color_active = false;
 let tvChannel = 0;
+let tvChannelOffset = 1;  // mirrors tv_channel_offset of the player, only affects displayed numbers
 let thumbnailMtimes = {};
 const ALERT_THROTTLE_MS = 222;
 let lastAlertTime = 0;
@@ -229,6 +230,14 @@ function showState() {
 }
 
 function handleSettings(data) {
+  // Pick up the channel number offset before anything renders a channel number.
+  // It only shifts what is displayed, never the actual channel index.
+  const offset = data.settings.general_settings.tv_channel_offset;
+  if (typeof offset === "number" && offset !== tvChannelOffset) {
+    tvChannelOffset = offset;
+    lastPlaystate = "";  // force handleState to redraw the current file label
+  }
+
   // Populate thumbnailMtimes early so handleState can resolve the correct thumbnail
   if (data.filelist) {
     thumbnailMtimes = {};
@@ -264,7 +273,7 @@ function handleSettings(data) {
     if(settings.show_tv_gui) {
       gebi('note-show_tv_gui').innerHTML = "On";
       show('channel_number');
-      let channelName = data && data.filelist && data.filelist[tvChannel] ? data.filelist[tvChannel].split("/").pop().startsWith('av.') ? "AV" : tvChannel +1 : tvChannel +1;
+      let channelName = data && data.filelist && data.filelist[tvChannel] ? data.filelist[tvChannel].split("/").pop().startsWith('av.') ? "AV" : tvChannel + tvChannelOffset : tvChannel + tvChannelOffset;
       gebi('channel_number').src=`assets/channel_numbers/${channelName}.png`;
     } else {
       gebi('note-show_tv_gui').innerHTML = "Off";
@@ -317,7 +326,7 @@ function handleSettings(data) {
       img.src = `./thumbnails/${basename}_${mtime}.png`;
 
       const channelNumber = document.createElement("img");
-      const channelName = basename.startsWith('av.') ? "AV" : index + 1;
+      const channelName = basename.startsWith('av.') ? "AV" : index + tvChannelOffset;
       channelNumber.src = `./assets/channel_numbers/${channelName}.png`;
       channelNumber.style.height = "1.25em";
       channelNumber.style.paddingRight = "0.5em";
@@ -363,7 +372,7 @@ function handleState(data, fillColor=false) {
 
     if (data.currentFileName.length > 0 && !fillColor) {
       let name = splitFileName(data.currentFileName);
-      gebi("currentFile").innerHTML = `#${data.tvChannel + 1} - ${name.basename}<span class='grey'>.${name.suffix}</span>`;
+      gebi("currentFile").innerHTML = `#${data.tvChannel + tvChannelOffset} - ${name.basename}<span class='grey'>.${name.suffix}</span>`;
       let timeline = gebi("timeline");
       if(data.duration > 1){  // somehow, images have a duration of 1
         show("timeline", "togglePlayBtn", "abLoop");

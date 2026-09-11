@@ -12,6 +12,7 @@
         "saturation": 0,
         "volume": 100,
         "tv_channel": 0,
+        "tv_channel_offset": 1,
         "show_tv_gui": false,
         "show_whitenoise_channel_change": false,
         "fill_color_type": "green",

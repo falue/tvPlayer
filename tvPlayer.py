@@ -22,7 +22,7 @@ show_tv_gui = True  # show number of channels top right and volume bar
 show_whitenoise_channel_change = True  # white noise in between channel switching
 white_noise_duration = 0.1  # duration which shows white noise when changing channels, in seconds
 gui_display_duration = 2.0  # Duration of the gui numbers stays alive, minus the white_noise_duration, in seconds
-tv_channel_offset = 1  # display higher channel nr than actually available
+tv_channel_offset = 1  # display higher channel nr than actually available (overridden by settings.json)
 
 # UDP
 UDP_DEVICE_NAME = "tvPlayer"
@@ -284,7 +284,7 @@ def load_settings():
     """
     global pan_offsets, brightness, contrast, saturation, volume, muted, show_tv_gui, zoom_level
     global file_settings, inpoints, video_fittings, video_speeds, tv_channel, show_whitenoise_channel_change
-    global fill_color_type, fill_color_index, fill_color_active
+    global fill_color_type, fill_color_index, fill_color_active, tv_channel_offset
 
     if not os.path.exists(os.path.join(script_dir, SETTINGS_FILE)):
         print(f"Settings file {SETTINGS_FILE} not found. Using defaults.")
@@ -319,6 +319,7 @@ def load_settings():
     show_tv_gui = general_settings.get("show_tv_gui", show_tv_gui)
     show_whitenoise_channel_change = general_settings.get("show_whitenoise_channel_change", show_whitenoise_channel_change)
     zoom_level = general_settings.get("zoom_level", zoom_level)
+    tv_channel_offset = general_settings.get("tv_channel_offset", tv_channel_offset)
 
     # Load filelist-dependent settings
     file_settings = data.get("file_dependent_settings", {})
@@ -421,6 +422,7 @@ def collect_settings():
         "show_tv_gui": show_tv_gui,
         "show_whitenoise_channel_change": show_whitenoise_channel_change,
         "zoom_level": zoom_level,
+        "tv_channel_offset": tv_channel_offset,
     })
 
     # Add new files or update old ones to file_dependent_settings
