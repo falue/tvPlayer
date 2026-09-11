@@ -769,23 +769,15 @@ def system_init():
         print("No USB plugged in during startup")
         show_no_signal()
 
-    print("Wait for mpv to be ready (osd-dimensions)")
-    for _ in range(40):  # up to 10s
-        osd_w = get_mpv_property("osd-dimensions/w")
-        if osd_w is not None and osd_w > 0:
-            break
-        display_image(
-            os.path.join(script_dir, "assets", "loading.png"),
-            4, 50, 50, 750, 150, 0.25
-        )
-        print(".", end="", flush=True)
-        time.sleep(0.25)
-    print()
-
+    # pan() needs the video width, but loadfile is async: right after it, "width"
+    # can still be the no-signal clip's from show_no_signal() above. So wait until
+    # mpv reports the file we asked for AND has a width for it.
+    # (No osd-dimensions wait: with vo=drm + osd_level=0 it never becomes available.)
     print("Wait for mpv to be ready (video width)")
     for _ in range(40):  # up to 10s
+        path = get_mpv_property("path")
         vid_w = get_mpv_property("width")
-        if vid_w is not None and vid_w > 0:
+        if path and os.path.basename(path) == current_file and vid_w is not None and vid_w > 0:
             break
         print(".", end="", flush=True)
         display_image(
