@@ -76,41 +76,17 @@ a:hover {
     pointer-events: none;
 }
 
-/* Spinner always exists, but is invisible */
-div:has(> #playstate)::before,
-div:has(> #playstate)::after {
-    content: "";
-    filter: blur(2px);
-    width: 70px;
-    height: 70px;
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    margin-left: -47px;
-    margin-top: -47px;
-    border: 12px solid #3700b3;
-    border-top-color: transparent;
-    border-radius: 50%;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 500ms ease;
-    animation: spin 1s linear infinite;
+/* Pulse the pause icon: sine-shaped fade between 75% and 100% */
+#playstate[src$="pause.svg"] {
+    animation: pulse 1s cubic-bezier(0.37, 0, 0.63, 1) infinite alternate;
 }
 
-/* Second spinner speed */
-div:has(> #playstate)::before {
-    animation-duration: 920ms;
-}
-
-/* Fade IN when pause.svg is active */
-div:has(> #playstate[src$="pause.svg"])::before,
-div:has(> #playstate[src$="pause.svg"])::after {
-    opacity: 1;
-}
-
-@keyframes spin {
+@keyframes pulse {
+    from {
+        opacity: 0.75;
+    }
     to {
-        transform: rotate(360deg);
+        opacity: 1;
     }
 }
 
