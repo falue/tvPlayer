@@ -470,7 +470,7 @@ def player_init():
         print("[HDMI] No display connected, waiting...")
         time.sleep(2)
 
-    # Choose HDMI connector (prefers HDMI-A-2, falls back to HDMI-A-1)
+    # Choose HDMI connector (prefers HDMI-A-1, falls back to HDMI-A-2)
     active_connector = hdmi_manager.choose_connector()
 
     mpv_kwargs = dict(
