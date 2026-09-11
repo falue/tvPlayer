@@ -199,7 +199,8 @@ sudo nano /etc/systemd/system/tvplayer.service
 [Unit]
 Description=tvPlayer
 After=multi-user.target user@1000.service
-StartLimitIntervalSec=0
+StartLimitIntervalSec=30
+StartLimitBurst=10
 
 [Service]
 User=dp
@@ -207,7 +208,7 @@ WorkingDirectory=/home/dp/tvPlayer
 ExecStart=/usr/bin/python3 -u tvPlayer.py
 Environment=XDG_RUNTIME_DIR=/run/user/1000
 Restart=on-failure
-RestartSec=2
+RestartSec=200ms
 StandardOutput=journal
 StandardError=journal
 

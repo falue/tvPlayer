@@ -1,7 +1,8 @@
 [Unit]
 Description=tvPlayer - Video Channel Player
 After=multi-user.target
-StartLimitIntervalSec=0
+StartLimitIntervalSec=30
+StartLimitBurst=10
 
 [Service]
 User=dp
@@ -12,7 +13,7 @@ ExecStart=/usr/bin/python3 -u tvPlayer.py
 # Check the real uid with `id -u dp`.
 Environment=XDG_RUNTIME_DIR=/run/user/1000
 Restart=on-failure
-RestartSec=2
+RestartSec=200ms
 StandardOutput=journal
 StandardError=journal
 
