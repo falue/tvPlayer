@@ -113,6 +113,9 @@ The alphabetically first file (case insensitive, numbers before letters) is the 
 If you want to change the order, rename the files approprietly.
 
 > *TIP:* If any file name starts with `AV.`(mp4 or any other) its always the channel "zero" and the channel number is shown as **"AV"**.
+> *TIP 2:* Change the starting number - e.g. you want the first file to be channel 52 - change `tv_channel_offset` in `settings.json`.
+*Make sure you set this when tvPlayer is not ruinning!*
+Dont offset more than `amount of files + n <= 100`
 
 ## Channel number and volume bar styling
 If you want to change the appearance of the channel numbers or the volume bar, update the `.png` files in `assets/channel_numbers/` and `assets/volume_bars/`.

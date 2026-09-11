@@ -232,7 +232,9 @@ function showState() {
 function handleSettings(data) {
   // Pick up the channel number offset before anything renders a channel number.
   // It only shifts what is displayed, never the actual channel index.
-  const offset = data.settings.general_settings.tv_channel_offset;
+  // Use the player's effective offset, not tv_channel_offset from the settings: the player
+  // falls back to 1 if the offset points at channel number images that don't exist.
+  const offset = data.state && data.state.tvChannelOffset;
   if (typeof offset === "number" && offset !== tvChannelOffset) {
     tvChannelOffset = offset;
     lastPlaystate = "";  // force handleState to redraw the current file label

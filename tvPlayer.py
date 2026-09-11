@@ -84,6 +84,7 @@ SETTINGS_FILE = "settings.json"
 settings_lock = threading.Lock()
 script_dir = os.path.dirname(os.path.abspath(__file__))
 VERSION_FILE = os.path.join(script_dir, "webremote", "update_metadata.json")
+MAX_CHANNEL_NUMBER = 100  # highest assets/channel_numbers/<N>.png there is
 
 def update_version_metadata():
     """Update update_metadata.json with current git commit hash if source is 'git' or file is missing."""
@@ -372,7 +373,8 @@ def send_settings(data=False):
         "fillColorIndex": fill_color_index[fill_color_type],  # already in general_settings?
         "currentFileName": current_file,
         "currentFileSettings": data["file_dependent_settings"].get(current_file, {}),
-        "tvChannel": tv_channel, 
+        "tvChannel": tv_channel,
+        "tvChannelOffset": effective_channel_offset(),  # tv_channel_offset, or 1 if it has no images
         "position": get_current_video_position(),
         "duration": get_mpv_property("duration")
     }
@@ -1272,6 +1274,16 @@ def next_channel():
     tv_channel += 1
     go_to_channel(tv_channel)
 
+def effective_channel_offset():
+    """
+    tv_channel_offset, or 1 if the highest channel would exceed MAX_CHANNEL_NUMBER.
+    """
+    numbered_channels = len(filelist) - (1 if has_av_channel else 0)  # AV shows "AV", not a number
+    # Last channel (index numbered_channels-1) is displayed as numbered_channels-1 + offset
+    if isinstance(tv_channel_offset, int) and 0 <= tv_channel_offset <= MAX_CHANNEL_NUMBER - numbered_channels + 1:
+        return tv_channel_offset
+    return 1
+
 def go_to_channel(number):
     global tv_channel
 
@@ -1284,7 +1296,7 @@ def go_to_channel(number):
     tv_channel = number
 
     if show_tv_gui:
-        channel_to_display = tv_channel + tv_channel_offset
+        channel_to_display = tv_channel + effective_channel_offset()
         if has_av_channel and tv_channel == len(filelist)-1:
             channel_to_display = "AV"
         image_path = os.path.join(script_dir, 'assets', 'channel_numbers', f'{channel_to_display}.png')
