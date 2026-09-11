@@ -1612,9 +1612,9 @@ def main():
     time.sleep(2)  #
     print("--------------------------------------------------------------------------------")
     update_version_metadata()
+    server_init()
     player_init()
     system_init()
-    server_init()
     mqtt_init()
     udp_init()
     gpio_init()
