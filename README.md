@@ -10,20 +10,21 @@ Fill a USB stick with video (or *image!*) files; plug it in; have a fake TV.
 Channel number is shown when switching them, white noise is shown when nothing is available and the volume bar is there for you when you expect it. Both can be turned off on-the-fly.
 
 # What you can do
+- Switch between files as if they were TV channels.
+- Control the playback with the webremote from your mobile device.
+- Video playback do not auto-progress from one to another. Each video loops itself until you "switch the channel" (play the next file on the USB device).
 - You can set inpoints for each video, so when you switch channels, it starts directly at the key moment, like when the journalist says, "*...some minor accident today in the hospital of Dunwich was contained and we have nothing to worry about. Now to the weather..*"
-- You can turn the TV fake-off ("blackout").
+- Set inpoints on each video, so the video plays from that point whenever you select the video
+- You can turn the TV fake-off ("blackout") or display different kinds of white noise.
 - You can "unplug" the TV: it collapses into a CRT power-off animation, and plugging it back in fades the picture up from black over 2 seconds.
 - You can switch video-fitting-mode from contain to stretch to cover, to get rid of potential letterboxes.
 - Control saturation/brightness/contrast
 - Control playback speed
-- Set inpoints on each video, so the video plays from that point whenever you select the video
 - Loop: Set in- and outpoints to be looped
 - Zoom and pan video
 - You can turn off the fancy effects. 
-- The files do not auto-progress from one to another. Each video loops itself until you "switch the channel" (play the next file on the USB device).
 - Change the brightness of the video to match exposure times of the camera.
 - If everythings lost, theres a [green screen](assets/greenscreen/) button
-- Control the playback with the webremote from your mobile device
 
 ![screencapture.gif](assets/screencapture.gif)
 
