@@ -376,6 +376,16 @@
                 </button>
             </div>
             <div class="button-row">
+                <div class="buttonNote" id="note-onoff" title="TV is plugged">-</div>
+            </div>
+            <div class="button-row">
+                <button data-func="tv_power" onclick="setToWait('note-onoff'); sendCommand({'cmd': 'toggle_tv_power'}, false, true)">
+                    <img id="tvPowerIcon" src="assets/icons/power-plug-off.svg" style="margin-bottom:0.5em">
+                    <br>
+                    <span id="tvPowerLabel">Unplug the TV</span>
+                </button>
+            </div>
+            <div class="button-row">
                 <div class="buttonNote" id="note-volume" title="volume">100%</div>
             </div>
             <div class="button-row">

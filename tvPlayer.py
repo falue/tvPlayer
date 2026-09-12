@@ -22,6 +22,8 @@ show_tv_gui = True  # show number of channels top right and volume bar
 show_whitenoise_channel_change = True  # white noise in between channel switching
 white_noise_duration = 0.1  # duration which shows white noise when changing channels, in seconds
 gui_display_duration = 2.0  # Duration of the gui numbers stays alive, minus the white_noise_duration, in seconds
+tv_off_animation_duration = 0.72  # fallback length of assets/animations/off.mp4 (18 frames @ 25fps), in seconds
+tv_on_fade_duration = 2.0  # seconds it takes to fade brightness & contrast back in when the TV is switched on
 tv_channel_offset = 1  # display higher channel nr than actually available (overridden by settings.json)
 
 # UDP
@@ -62,18 +64,21 @@ fill_color_type = "green"  # default
 fill_color_index = {"green": 0, "black": 0, "noise": 0}
 fill_color_max_index = {"green": 19, "black": 0, "noise": 3}  # Amount of files in assets/fill_color -1
 fill_color_active = False
+tv_is_off = False  # TV is "unplugged": off.mp4 played, black screen held (overridden by settings.json)
 current_file = ""
 pan_offsets = {'x': 0.0, 'y': 0.0, 'x-real': 0, 'y-real': 0}  # Global variables to track the pan offsets
 has_av_channel = False
 brightness = 0  # -100 to 100, default 0
 contrast = 0  # -100 to 100, default 0
 saturation = 0  # -100 to 100, default 0
+video_eq_override = None  # {"brightness": x, "contrast": y} while the TV fades on; None = use the user's values
 volume = 100  # 0 to 100, 100 means max loudness
 muted = False
 active_overlays = {}  # Dictionary to store active overlay threads
 last_sent_settings = 0
 zoom_level = 0.0
 _save_timer = None  # timer for saving after mqtt msg
+_tv_on_fade_generation = 0  # bumped on every power switch so old fade threads stop
 quit_program_scheduled = False
 restart_program_scheduled = False
 evdev_thread = None
@@ -242,6 +247,14 @@ def handle_command(data):
     elif cmd == "toggle_white_noise":
         toggle_fill_color("noise")
 
+    # TV on/off effect
+    elif cmd == "toggle_tv_power":
+        toggle_tv_power()
+    elif cmd == "tv_off":
+        turn_tv_off()
+    elif cmd == "tv_on":
+        turn_tv_on()
+
     elif cmd == "set_inpoint":
         set_inpoint(tv_channel)
     elif cmd == "clear_inpoint":
@@ -297,7 +310,7 @@ def load_settings():
     """
     global pan_offsets, brightness, contrast, saturation, volume, muted, show_tv_gui, zoom_level
     global file_settings, inpoints, video_fittings, video_speeds, tv_channel, show_whitenoise_channel_change
-    global fill_color_type, fill_color_index, fill_color_active, tv_channel_offset
+    global fill_color_type, fill_color_index, fill_color_active, tv_channel_offset, tv_is_off
 
     if not os.path.exists(os.path.join(script_dir, SETTINGS_FILE)):
         print(f"Settings file {SETTINGS_FILE} not found. Using defaults.")
@@ -328,6 +341,7 @@ def load_settings():
     fill_color_type = general_settings.get("fill_color_type", fill_color_type)
     fill_color_index = general_settings.get("fill_color_index", fill_color_index)
     fill_color_active = general_settings.get("fill_color_active", fill_color_active)
+    tv_is_off = general_settings.get("tv_is_off", tv_is_off)
     tv_channel = general_settings.get("tv_channel", tv_channel)
     show_tv_gui = general_settings.get("show_tv_gui", show_tv_gui)
     show_whitenoise_channel_change = general_settings.get("show_whitenoise_channel_change", show_whitenoise_channel_change)
@@ -383,6 +397,7 @@ def send_settings(data=False):
         "fillColorActive": fill_color_active,  # already in general_settings?
         "fillColorType": fill_color_type,  # already in general_settings?
         "fillColorIndex": fill_color_index[fill_color_type],  # already in general_settings?
+        "tvIsOff": tv_is_off,  # already in general_settings?
         "currentFileName": current_file,
         "currentFileSettings": data["file_dependent_settings"].get(current_file, {}),
         "tvChannel": tv_channel,
@@ -434,6 +449,7 @@ def collect_settings():
         "fill_color_type": fill_color_type,
         "fill_color_index": fill_color_index,
         "fill_color_active": fill_color_active,
+        "tv_is_off": tv_is_off,
         "show_tv_gui": show_tv_gui,
         "show_whitenoise_channel_change": show_whitenoise_channel_change,
         "zoom_level": zoom_level,
@@ -654,6 +670,8 @@ def handle_evdev_key(code, shift=False, ctrl=False):
         shutdown()
     elif code == ecodes.KEY_B:
         toggle_fill_color("black")
+    elif code == ecodes.KEY_T:
+        toggle_tv_power()
     elif code == ecodes.KEY_X and ctrl:
         pan("reset", "x")
         pan("reset", "y")
@@ -1074,6 +1092,130 @@ def show_no_signal():
         # player.keepaspect = False
     play_file(white_noise_path)
 
+def toggle_tv_power():
+    """Fake switching the TV off (power-off animation, then black) or on again (fade in)."""
+    if tv_is_off:
+        turn_tv_on()
+    else:
+        turn_tv_off()
+
+def turn_tv_off():
+    """
+    Play the short power-off animation over the current channel, then hold a black screen.
+    This is the black fill color with extra steps, so the state is saved and restored like it.
+    """
+    global tv_is_off, fill_color_type
+    if tv_is_off:
+        return
+
+    _cancel_tv_on_fade()  # the animation plays with the user's own brightness & contrast
+
+    animation = os.path.join(script_dir, 'assets', 'animations', 'off.mp4')
+    if os.path.exists(animation):
+        if player:
+            player.speed = 1.0  # animation always plays at its intended speed
+        started = time.time()
+        play_file(animation)
+        # mpv runs with loop_file=inf, so the clip would start over: time the switch to
+        # black ourselves instead of waiting for an end of file that never comes.
+        # animation_duration() takes a moment to answer, so only wait for what is left -
+        # being a frame early just cuts an almost black frame, being late restarts the clip.
+        remaining = animation_duration(animation, tv_off_animation_duration) - (time.time() - started)
+        if remaining > 0:
+            time.sleep(remaining)
+    else:
+        print(f"[TVPOWER] No power-off animation at {animation} - going black right away")
+
+    tv_is_off = True  # after play_file(), which clears it for everything but fill colors
+    fill_color_type = "black"
+    show_fill_color()
+    print("[TVPOWER] TV is off")
+
+def turn_tv_on():
+    """Bring the current channel back, fading it in from black over tv_on_fade_duration."""
+    global tv_is_off, fill_color_active
+    if not tv_is_off and not fill_color_active:
+        return  # a channel is playing already
+
+    tv_is_off = False
+    fill_color_active = False  # play_file() does this too, except for the no-files case below
+
+    # Start at black. This only dims what is on screen - the user's brightness and
+    # contrast settings stay untouched, so nothing gets saved or displayed wrong.
+    _set_video_eq_override(-100, -100)
+
+    if len(filelist) > 0:
+        set_video_fitting(video_fittings[tv_channel])  # Set fit for this channel
+        set_playback_speed(video_speeds[tv_channel])   # Set speed for this channel
+        play_file(filelist[tv_channel], inpoints[tv_channel], outpoints[tv_channel])
+    else:
+        show_no_signal()  # nothing to play, at least fade up some white noise
+
+    _start_tv_on_fade()
+    print(f"[TVPOWER] TV is on, fading in over {tv_on_fade_duration}s")
+
+def animation_duration(file, fallback):
+    """
+    Real length of the clip that was just loaded, or `fallback` if mpv won't say.
+    Right after loadfile mpv can still report the previous file's duration, so wait until
+    it reports ours, and ignore anything too long to be a short animation.
+    """
+    for _ in range(15):  # up to ~0.3s
+        loaded = get_mpv_property("path")
+        duration = get_mpv_property("duration")
+        if loaded and os.path.basename(loaded) == os.path.basename(file) and duration and 0 < duration <= 5:
+            return duration
+        time.sleep(0.02)
+    return fallback
+
+def _set_video_eq_override(brightness_value, contrast_value):
+    """Show these brightness & contrast values instead of the stored ones."""
+    global video_eq_override
+    video_eq_override = {"brightness": brightness_value, "contrast": contrast_value}
+    _apply_video_eq()
+
+def _cancel_tv_on_fade():
+    """Stop a running fade-in and go back to the user's own brightness & contrast."""
+    global video_eq_override, _tv_on_fade_generation
+    _tv_on_fade_generation += 1  # any running fade thread notices and stops
+    if video_eq_override is not None:
+        video_eq_override = None
+        _apply_video_eq()
+
+def _start_tv_on_fade():
+    global _tv_on_fade_generation
+    _tv_on_fade_generation += 1
+    threading.Thread(target=_tv_on_fade, args=(_tv_on_fade_generation,), daemon=True).start()
+
+def _tv_on_fade(generation):
+    """
+    Fade brightness & contrast from black up to whatever the user has set, like a tube
+    warming up. Only the override values move; brightness/contrast themselves never
+    change, so settings.json and the webremote keep showing the user's settings.
+    """
+    global video_eq_override
+    try:
+        step = 0.05  # 20 updates/s - smooth enough, and easy on the mpv filter chain
+        steps = max(1, int(tv_on_fade_duration / step))
+        for i in range(1, steps + 1):
+            time.sleep(step)
+            if generation != _tv_on_fade_generation:
+                return  # superseded by another power switch
+            progress = i / steps
+            eased = progress * progress * (3 - 2 * progress)  # smoothstep, no hard start/stop
+            _set_video_eq_override(-100 + (brightness + 100) * eased, -100 + (contrast + 100) * eased)
+        if generation == _tv_on_fade_generation:
+            video_eq_override = None  # land exactly on the user's values
+            _apply_video_eq()
+    except Exception as e:
+        # Never raise out of this thread; just snap to the user's values
+        print(f"[TVPOWER] Fade in failed: {e}")
+        video_eq_override = None
+        try:
+            _apply_video_eq()
+        except Exception:
+            pass
+
 def zoom(value, absolute=False):
     global zoom_level
 
@@ -1091,12 +1233,16 @@ def _apply_video_eq():
     """Apply brightness/contrast/saturation via lavfi eq filter (works with any VO including drm)."""
     if not player:
         return
-    if brightness == 0 and contrast == 0 and saturation == 0:
+    # While the TV fades on, display the dimmed values of the fade instead of the stored
+    # ones - see _tv_on_fade(). The user's settings are never touched by it.
+    brightness_value = video_eq_override["brightness"] if video_eq_override else brightness
+    contrast_value = video_eq_override["contrast"] if video_eq_override else contrast
+    if brightness_value == 0 and contrast_value == 0 and saturation == 0:
         player.vf = ''
         return
     # eq filter ranges: brightness -1.0..1.0, contrast -1000..1000 (1.0=normal), saturation 0..3.0 (1.0=normal)
-    b = brightness / 100.0              # -100..100 -> -1.0..1.0
-    c = 1.0 + (contrast / 100.0)        # -100..100 -> 0.0..2.0
+    b = brightness_value / 100.0        # -100..100 -> -1.0..1.0
+    c = 1.0 + (contrast_value / 100.0)  # -100..100 -> 0.0..2.0
     s = 1.0 + (saturation / 100.0)      # -100..100 -> 0.0..2.0
     player.vf = f'lavfi=[eq=brightness={b:.2f}:contrast={c:.2f}:saturation={s:.2f}]'
 
@@ -1319,9 +1465,12 @@ def go_to_channel(number):
     play_file(filelist[number], inpoints[number], outpoints[number])
 
 def play_file(file, inpoint=0.0, outpoint=0.0):
-    global current_file, fill_color_active
+    global current_file, fill_color_active, tv_is_off
     if "assets/fill_colors" not in file:
         fill_color_active = False
+        if "assets/animations" not in file:
+            # Anything but a fill color or the power-off animation means the TV is on again
+            tv_is_off = False
 
     if player:
         # Set start position before loading (mpv applies 'start' to the next loaded file)

@@ -12,6 +12,7 @@ Channel number is shown when switching them, white noise is shown when nothing i
 # What you can do
 - You can set inpoints for each video, so when you switch channels, it starts directly at the key moment, like when the journalist says, "*...some minor accident today in the hospital of Dunwich was contained and we have nothing to worry about. Now to the weather..*"
 - You can turn the TV fake-off ("blackout").
+- You can "unplug" the TV: it collapses into a CRT power-off animation, and plugging it back in fades the picture up from black over 2 seconds.
 - You can switch video-fitting-mode from contain to stretch to cover, to get rid of potential letterboxes.
 - Control saturation/brightness/contrast
 - Control playback speed
@@ -150,6 +151,7 @@ To update the system:
 | q               | shutdown raspberry pi                    |      |
 | Q (SHIFT+q)     | exit program                             |      |
 | b               | toggle black screen on or off            | Also pauses the current video when entering black screen, resumes video when exiting black screen      |
+| t               | turn the TV off or on                    | Off: plays [the power-off animation](assets/animations/off.mp4), then holds a black screen. On: back to the current channel, fading brightness and contrast up from black over 2 seconds. The stored brightness and contrast are not changed by the fade. |
 | g               | toggle green screen                      | Available [chroma screens](assets/greenscreen/):<br>Green, Blue, Black, Grey, White<br>Each with 3 different tracking marker arrangements and one without. |
 | G (SHIFT+g)     | cycle through green screens →           |      |
 | CTRL + g        | cycle through green screens ←           |      |

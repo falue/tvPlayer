@@ -300,6 +300,9 @@ function handleSettings(data) {
   // Always refresh the volume label so the "wait" icon is cleared
   // even when a command does not change the stored value (mute or maxed out)
   gebi('note-volume').innerHTML = data.settings.general_settings.volume + "%";
+
+  // Same for the TV power button - the player owns the state, this only mirrors it
+  showTvPower(data.settings.general_settings.tv_is_off);
  
   if (lastSettings != md5(JSON.stringify(data))) {
     // update currentfile
@@ -496,6 +499,13 @@ function handleState(data, fillColor=false) {
     display.style.backgroundImage = lastThumbnail;
   }
 } */
+
+function showTvPower(isOff) {
+  // "Unplugged" means the player ran the power-off animation and holds a black screen
+  gebi('note-onoff').innerHTML = isOff ? "OUT" : "IN";
+  gebi('tvPowerIcon').src = isOff ? 'assets/icons/power-plug.svg' : 'assets/icons/power-plug-off.svg';
+  gebi('tvPowerLabel').innerHTML = isOff ? "Plug the TV back in" : "Unplug the TV";
+}
 
 function setToWait(id) {
   if(gebi(id).src) {
