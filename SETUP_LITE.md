@@ -267,14 +267,14 @@ sudo loginctl enable-linger dp
 
 ### Set HDMI Volume
 
-WirePlumber defaults a never-seen HDMI output to 40%. Set each HDMI card to 66% once, with
+WirePlumber defaults a never-seen HDMI output to 40%. Set each HDMI card to 40% once, with
 tvPlayer running and the cable in that port (the sink only exists while a display is on it):
 
 ```bash
 # cable in HDMI-A-1:
-pactl set-sink-volume alsa_output.platform-fef00700.hdmi.hdmi-stereo 66%
+pactl set-sink-volume alsa_output.platform-fef00700.hdmi.hdmi-stereo 40%
 # cable in HDMI-A-2 (after tvPlayer restarts):
-pactl set-sink-volume alsa_output.platform-fef05700.hdmi.hdmi-stereo 66%
+pactl set-sink-volume alsa_output.platform-fef05700.hdmi.hdmi-stereo 40%
 ```
 
 Stored in `~/.local/state/wireplumber/default-routes`; survives swaps and reboots.
