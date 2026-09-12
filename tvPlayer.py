@@ -503,7 +503,7 @@ def player_init():
         mqtt_handler.send("general", "waitingForDisplay")
         time.sleep(2)
 
-    # Choose HDMI connector (prefers HDMI-A-1, falls back to HDMI-A-2)
+    # Choose HDMI connector (prefers HDMI-A-2, falls back to HDMI-A-1)
     active_connector = hdmi_manager.choose_connector()
 
     mpv_kwargs = dict(

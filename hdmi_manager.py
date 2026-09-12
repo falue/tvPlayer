@@ -2,12 +2,12 @@
 HDMI connector manager for tvPlayer.
 
 Auto-discovers HDMI connectors via /sys/class/drm/,
-selects the preferred one (HDMI-A-1 > HDMI-A-2),
+selects the preferred one (HDMI-A-2 > HDMI-A-1),
 and monitors for hotplug changes.
 
 Priority:
-  - HDMI-A-1 (physical HDMI0, next to USB-C power) preferred
-  - HDMI-A-2 (physical HDMI1, next to audio jack) fallback
+  - HDMI-A-2 (physical HDMI1) preferred
+  - HDMI-A-1 (physical HDMI0) fallback
 
 When the preferred connector state changes, triggers a clean restart
 via os._exit(75) so systemd restarts the service on the new output.
@@ -20,8 +20,8 @@ from pathlib import Path
 import mqtt_handler
 
 DRM_BASE = Path("/sys/class/drm")
-PREFERRED_CONNECTOR = "HDMI-A-1"
-FALLBACK_CONNECTOR = "HDMI-A-2"
+PREFERRED_CONNECTOR = "HDMI-A-2"
+FALLBACK_CONNECTOR = "HDMI-A-1"
 POLL_INTERVAL = 1.0  # seconds
 
 ACTIVE_CONNECTOR = None  # set by choose_connector()
@@ -86,7 +86,7 @@ def is_connected(connector_path):
 def choose_connector():
     """
     Choose the best available HDMI connector.
-    Prefers HDMI-A-1, falls back to HDMI-A-2.
+    Prefers HDMI-A-2, falls back to HDMI-A-1.
     Returns the connector name string for mpv's drm-connector option,
     or None if no connectors found.
     """
@@ -135,11 +135,11 @@ def start_hotplug_monitor(active_connector, on_exit_cleanup=None):
     """
     Start a daemon thread that polls connector states.
     Triggers os._exit(75) when the preferred connector state changes
-    (i.e. HDMI-A-1 gets plugged in while on HDMI-A-2, or HDMI-A-1
+    (i.e. HDMI-A-2 gets plugged in while on HDMI-A-1, or HDMI-A-2
     gets unplugged while active).
 
     Args:
-        active_connector: The connector currently in use (e.g. "HDMI-A-2")
+        active_connector: The connector currently in use (e.g. "HDMI-A-1")
         on_exit_cleanup: Optional callable to run before exit (save settings, GPIO cleanup)
     """
     connectors = discover_connectors()
