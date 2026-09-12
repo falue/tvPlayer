@@ -27,14 +27,17 @@ Channel number is shown when switching them, white noise is shown when nothing i
 
 ![screencapture.gif](assets/screencapture.gif)
 
+See full demo video [here](assets/screencapture.mp4).
+
 # Webremote
 Once booted, connect your mobile device to the SSID `tvPlayer` and visit `http://10.3.141.1:8080`.
 
 ![webremote_snippet.png](assets/webremote_snippet.png)
-> See full screenshot [here](assets/webremote.png)
+
+See full screenshot [here](assets/webremote.png)
 
 # UDP
-Send UDP commands to control the player:
+Control the player by UDP, for an escape room for example:
 ```
 echo -n "tvPlayer_go_to_channel:3" | nc -u -w1 192.168.1.153 53534
 ```
@@ -44,25 +47,9 @@ Whereas `tvPlayer` matches the hostname of the device.
 `53534` is the default port.
 
 Every accepted message is answered with `tvPlayer_acknowledged`, sent back to the **source port** of the sender.
-Listen for it with `nc -u -l 53545` (or whichever port you sent from).
-
-## Sending UDP
-tvPlayer can also send messages itself via `udp_send("tvPlayer_whatever")`.
-Without arguments it sends to the default target configured at the top of `tvPlayer.py`:
-```python
-UDP_LOCAL_PORT = 53534           # port this device listens on
-UDP_TARGET_IP = "192.168.1.100"  # default target for udp_send()
-UDP_TARGET_PORT = 53545          # default target port for udp_send()
-```
-A specific target can be given per message: `udp_send("tvPlayer_hello", "192.168.1.42", 5006)`.
-
-The UDP logic lives in the reusable [udp.py](udp.py) module (`UDPNode`).
-
 
 # Hardware
 Tested successfully on Raspberry Pi 4 (Debian Bookworm 64-bit Lite).
-
-Raspberry Pi 3 (Debian Bookworm 32bit) may ***not*** work.
 
 Combine it with a [HDMI-to-RCA](https://www.amazon.de/QGECEN-Cinch-Adapter-Konverter-Kabel/dp/B09JVHHXMV/) adapter **and** a [RCA-to-RF](https://aliexpress.com/item/1005002132207554.html) adapter to display on an old TV. Even sound works!
 
