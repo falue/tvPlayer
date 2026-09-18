@@ -1778,6 +1778,7 @@ def main():
     udp_init()
     gpio_init()
     evdev_init()
+    udp_send("tvPlayer_started")
 
     while True:
         now = time.time()
