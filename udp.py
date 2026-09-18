@@ -9,6 +9,7 @@ Usage in main script:
        or call listen() / listen_all() in your main loop to poll them
     4. Call send(msg) to send to the default target
     5. Call send(msg, ip, port) to send to a specific target
+    6. Call send_qlab(cue) to send "/cue/<cue>/start" (QLab plain-text OSC)
 
 prepend (device name):
     Only packets starting with this prefix are accepted.
@@ -128,6 +129,15 @@ class UDPNode:
                 print(f"[UDP] sent '{message}' -> {ip}:{port}", flush=True)
         except OSError as exc:
             print(f"[UDP] send failed: {exc}", flush=True)
+
+    def send_qlab(
+        self,
+        cue: str,
+        target_ip: Optional[str] = None,
+        target_port: Optional[int] = None,
+    ) -> None:
+        """Start a QLab cue via plain-text OSC ("/cue/<cue>/start")."""
+        self.send(f"/cue/{cue}/start", target_ip, target_port)
 
     def stop(self) -> None:
         """Stop the listener thread and close the socket."""

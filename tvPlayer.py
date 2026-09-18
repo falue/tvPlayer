@@ -165,10 +165,11 @@ def udp_init():
 
 def udp_send(message, target_ip=None, target_port=None):
     """
-        Send a UDP message to UDP_TARGET_IP:UDP_TARGET_PORT, or to a specific target.
+        Send "/cue/<message>/start" as message to UDP_TARGET_IP:UDP_TARGET_PORT, or at a specific target.
+        If not using qlab, just use udp_node.udp_send(message, target_ip, target_port).
     """
     if udp_node:
-        udp_node.send(message, target_ip, target_port)
+        udp_node.send_qlab(message, target_ip, target_port)
 
 def handle_command(data):
     global quit_program_scheduled, restart_program_scheduled

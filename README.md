@@ -49,6 +49,8 @@ Whereas `tvPlayer` matches the hostname of the device.
 
 Every accepted message is answered with `tvPlayer_acknowledged`, sent back to the **source port** of the sender.
 
+Outgoing messages are QLab-compatible: `/cue/<message>/start` as plain-text OSC to port `53535` (currently unused).
+
 # Hardware
 Tested successfully on Raspberry Pi 4 (Debian Bookworm 64-bit Lite).
 
